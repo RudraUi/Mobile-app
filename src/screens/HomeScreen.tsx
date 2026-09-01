@@ -33,31 +33,31 @@ function Chevron({ direction = "down" }: { direction?: "down" | "right" }) {
   );
 }
 
-function StatIcon({ id }: { id: string }) {
+function StatIcon({ id, color = "#ffffff" }: { id: string; color?: string }) {
   if (id === "today") {
     return (
-      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <rect x="2.5" y="3.5" width="11" height="10" rx="2" />
         <line x1="2.5" y1="6.5" x2="13.5" y2="6.5" />
         <line x1="5.5" y1="2" x2="5.5" y2="4.5" />
         <line x1="10.5" y1="2" x2="10.5" y2="4.5" />
-        <circle cx="5.5" cy="9.5" r="0.75" fill="white" stroke="none" />
-        <circle cx="8" cy="9.5" r="0.75" fill="white" stroke="none" />
-        <circle cx="10.5" cy="9.5" r="0.75" fill="white" stroke="none" />
+        <circle cx="5.5" cy="9.5" r="0.75" fill={color} stroke="none" />
+        <circle cx="8" cy="9.5" r="0.75" fill={color} stroke="none" />
+        <circle cx="10.5" cy="9.5" r="0.75" fill={color} stroke="none" />
       </svg>
     );
   }
   if (id === "not-started") {
     return (
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-        <circle cx="8" cy="8" r="6" fill="#0055FF" />
-        <path d="M6.8 5.8L10.5 8L6.8 10.2V5.8Z" fill="white" />
+        <circle cx="8" cy="8" r="6" stroke={color} strokeWidth="1.6" />
+        <path d="M6.8 5.8L10.5 8L6.8 10.2V5.8Z" fill={color} />
       </svg>
     );
   }
   if (id === "in-progress") {
     return (
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#7525FA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M8 2.5A5.5 5.5 0 1 0 13.5 8" strokeDasharray="2 1.5" />
         <polyline points="8 4.8 8 8 10.2 9.5" />
       </svg>
@@ -66,14 +66,14 @@ function StatIcon({ id }: { id: string }) {
   if (id === "in-review") {
     return (
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-        <path d="M1.5 8S4 4.2 8 4.2s6.5 3.8 6.5 3.8-2.5 3.8-6.5 3.8S1.5 8 1.5 8Z" stroke="#FF9500" strokeWidth="1.4" strokeLinejoin="round" />
-        <circle cx="8" cy="8" r="2" fill="#FF9500" />
+        <path d="M1.5 8S4 4.2 8 4.2s6.5 3.8 6.5 3.8-2.5 3.8-6.5 3.8S1.5 8 1.5 8Z" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+        <circle cx="8" cy="8" r="2" fill={color} />
       </svg>
     );
   }
   if (id === "blocked") {
     return (
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#FF2D55" strokeWidth="1.6">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth="1.6">
         <circle cx="8" cy="8" r="6" />
         <line x1="3.8" y1="12.2" x2="12.2" y2="3.8" />
       </svg>
@@ -82,8 +82,8 @@ function StatIcon({ id }: { id: string }) {
   if (id === "completed") {
     return (
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-        <circle cx="8" cy="8" r="6" stroke="#00A868" strokeWidth="1.6" />
-        <polyline points="5.5 8 7.2 9.8 10.8 6.2" stroke="#00A868" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="8" cy="8" r="6" stroke={color} strokeWidth="1.6" />
+        <polyline points="5.5 8 7.2 9.8 10.8 6.2" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     );
   }
@@ -422,15 +422,15 @@ export function HomeScreen({
         ) : (
           /* Standard Home View - Dynamically Adapts to Selected Project & Top Tab */
           <div key={selectedProject.id + markupFilter} className="animate-fade-in flex flex-col flex-1 min-h-full">
-            {/* Top Cards Section with Drag/Pan-to-scroll & compact height */}
-            <section className="bg-[#F5F6F8] pt-1.5 pb-3 shrink-0" aria-label="Task summary">
+            {/* Top Cards Section inside Expanded Blue Section */}
+            <section className="bg-gradient-to-b from-[#1651e5] to-[#0f48d6] pt-1 pb-4 shrink-0 shadow-xs" aria-label="Task summary">
               <div
                 ref={scrollRef}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUpOrLeave}
                 onMouseLeave={handleMouseUpOrLeave}
-                className="flex gap-2 overflow-x-auto px-4 select-none cursor-grab active:cursor-grabbing"
+                className="flex gap-2.5 overflow-x-auto px-4 select-none cursor-grab active:cursor-grabbing no-scrollbar"
                 style={{
                   WebkitOverflowScrolling: "touch",
                   scrollbarWidth: "none",
@@ -446,32 +446,23 @@ export function HomeScreen({
                         return;
                       }
                     }}
-                    className="flex flex-col justify-between rounded-[16px] p-2.5 text-left transition-all active:scale-[0.97] flex-shrink-0 cursor-pointer shadow-xs hover:shadow-md"
+                    className="flex flex-col justify-between rounded-[18px] p-3 text-left transition-all active:scale-[0.97] flex-shrink-0 cursor-pointer bg-white/[0.18] hover:bg-white/[0.26] border border-white/30 backdrop-blur-md text-white shadow-2xs"
                     style={{
-                      width: "128px",
+                      width: "130px",
                       height: "88px",
-                      background: card.background,
-                      color: card.color,
-                      border: card.hasBorder ? "1px solid #e2e8f0" : "none",
                     }}
                   >
-                    {/* Icon Badge */}
-                    <div
-                      className="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] shadow-xs"
-                      style={{ background: card.iconBackground, color: card.iconColor }}
-                    >
-                      <StatIcon id={card.id} />
+                    {/* Icon Badge in translucent light-blue / white box */}
+                    <div className="flex h-[24px] w-[24px] items-center justify-center rounded-[8px] bg-white/20 text-white shadow-2xs">
+                      <StatIcon id={card.id} color="#ffffff" />
                     </div>
 
                     {/* Text Content */}
                     <div className="mt-auto">
-                      <div className="text-[13.5px] font-bold leading-tight tracking-[-0.2px] whitespace-nowrap">
+                      <div className="text-[13px] font-bold leading-tight tracking-[-0.2px] whitespace-nowrap text-white">
                         {card.title}
                       </div>
-                      <div
-                        className="text-[11px] font-medium leading-tight mt-0.5 whitespace-nowrap"
-                        style={{ opacity: card.id === "today" ? 0.75 : 0.95 }}
-                      >
+                      <div className="text-[10.5px] font-medium leading-tight mt-0.5 whitespace-nowrap text-blue-100/90">
                         {card.subtitle}
                       </div>
                     </div>
@@ -482,7 +473,7 @@ export function HomeScreen({
             </section>
 
             {/* Rounded Top White Bottom Container Sheet */}
-            <div className="rounded-t-[26px] bg-white pt-4 pb-8 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] border-t border-slate-100 flex-1 min-h-full flex flex-col">
+            <div className="rounded-t-[26px] bg-white pt-4 pb-8 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] border-t border-slate-100 flex-1 min-h-full flex flex-col -mt-2 z-10 relative">
               {/* Recents Section for Current Tab */}
               <section className="px-4" aria-labelledby="recents-heading">
                 <div id="recents-heading">

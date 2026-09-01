@@ -144,7 +144,6 @@ select {
 }
 
 .home-header {
-  border-radius: 0 0 16px 16px;
   background: linear-gradient(180deg, #075cff 0%, #1651e5 100%);
 }
 
