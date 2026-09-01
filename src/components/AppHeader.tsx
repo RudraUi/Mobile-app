@@ -167,28 +167,28 @@ export function AppHeader({
     <header className="home-header shrink-0 text-white shadow-md relative z-40">
       <StatusBar />
 
-      <div className="flex h-[44px] items-center justify-between px-[16px] pt-1 pb-1 mb-2">
+      <div className="flex h-[46px] items-center justify-between px-[16px] pt-1 pb-1 mb-2">
         {/* Project Selector Button with Anchored Dropdown */}
         <div className="relative">
           <button
             type="button"
             onClick={handleToggleProject}
-            className="flex min-w-0 items-center gap-[8px] cursor-pointer hover:opacity-90 active:scale-98 transition-all group"
+            className="flex min-w-0 items-center gap-[9px] cursor-pointer hover:opacity-90 active:scale-98 transition-all group"
             aria-label="Select workspace project"
           >
             <span
-              className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[8px] border border-white/25 text-[14px] font-bold text-white shadow-xs"
+              className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[10px] border border-white/30 text-[16px] font-bold text-white shadow-xs"
               style={{ backgroundColor: effectiveBadgeBg }}
             >
               {effectiveBadge}
             </span>
-            <span className="text-[16px] font-semibold tracking-[-0.2px]">{effectiveName}</span>
+            <span className="text-[18px] font-bold tracking-[-0.3px]">{effectiveName}</span>
             <div
               className="transition-transform duration-200"
               style={{ transform: isDropdownVisible ? "rotate(180deg)" : "rotate(0deg)" }}
             >
-              <svg width="11" height="7" viewBox="0 0 12 8" fill="none" aria-hidden="true">
-                <path d="m2 2 4 4 4-4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              <svg width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true">
+                <path d="m2 2 4 4 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
           </button>
@@ -274,12 +274,12 @@ export function AppHeader({
         </div>
 
         {/* Right side: Search, Filter, Invite, Profile */}
-        <div className="flex items-center gap-[8px]">
+        <div className="flex items-center gap-[7px]">
           {/* Search Icon Button */}
           <button
             type="button"
             onClick={onSearchClick}
-            className="w-[30px] h-[30px] rounded-full bg-white/[0.14] hover:bg-white/25 active:scale-95 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xs"
+            className="w-[32px] h-[32px] rounded-full bg-white/[0.14] hover:bg-white/25 active:scale-95 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xs"
             aria-label="Search items"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
@@ -292,7 +292,7 @@ export function AppHeader({
           <button
             type="button"
             onClick={onFilterClick}
-            className={`relative w-[30px] h-[30px] rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+            className={`relative w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
               isFilterActive
                 ? "bg-white text-[#0055ff] shadow-md scale-105"
                 : "bg-white/[0.14] hover:bg-white/25 text-white shadow-2xs"
@@ -314,7 +314,7 @@ export function AppHeader({
           <button
             type="button"
             onClick={onInviteClick}
-            className="relative w-[30px] h-[30px] rounded-full bg-white/[0.14] hover:bg-white/25 active:scale-95 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xs"
+            className="relative w-[32px] h-[32px] rounded-full bg-white/[0.14] hover:bg-white/25 active:scale-95 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xs"
             aria-label="Add team member"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -325,11 +325,11 @@ export function AppHeader({
             </svg>
           </button>
 
-          {/* Profile Avatar */}
+          {/* Profile Avatar (DP) */}
           <button
             type="button"
             onClick={onProfileClick}
-            className="h-[30px] w-[30px] overflow-hidden rounded-full bg-[#7fb5dc] border border-white/40 shadow-xs cursor-pointer hover:opacity-90 active:scale-95 transition-all"
+            className="h-[34px] w-[34px] overflow-hidden rounded-full bg-[#7fb5dc] border-2 border-white/50 shadow-xs cursor-pointer hover:opacity-90 active:scale-95 transition-all shrink-0"
             aria-label="Open profile"
           >
             <img
