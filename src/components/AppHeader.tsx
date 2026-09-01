@@ -164,7 +164,7 @@ export function AppHeader({
   };
 
   return (
-    <header className="home-header shrink-0 text-white shadow-md relative z-40">
+    <header className="home-header shrink-0 text-white relative z-40">
       <StatusBar />
 
       <div className="flex h-[46px] items-center justify-between px-[16px] pt-1 pb-1 mb-3">

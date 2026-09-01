@@ -423,7 +423,7 @@ export function HomeScreen({
           /* Standard Home View - Dynamically Adapts to Selected Project & Top Tab */
           <div key={selectedProject.id + markupFilter} className="animate-fade-in flex flex-col flex-1 min-h-full">
             {/* Top Cards Section inside Expanded Blue Section */}
-            <section className="bg-gradient-to-b from-[#1651e5] to-[#0d44cf] pt-2 pb-7 shrink-0 shadow-xs" aria-label="Task summary">
+            <section className="bg-gradient-to-b from-[#1651e5] to-[#0d44cf] pt-2 pb-7 shrink-0" aria-label="Task summary">
               <div
                 ref={scrollRef}
                 onMouseDown={handleMouseDown}
@@ -446,14 +446,14 @@ export function HomeScreen({
                         return;
                       }
                     }}
-                    className="flex flex-col justify-between rounded-[18px] p-3.5 text-left transition-all active:scale-[0.97] flex-shrink-0 cursor-pointer bg-white/[0.18] hover:bg-white/[0.26] border border-white/30 backdrop-blur-md text-white shadow-2xs"
+                    className="flex flex-col justify-between rounded-[18px] p-3.5 text-left transition-all active:scale-[0.97] flex-shrink-0 cursor-pointer bg-white/[0.18] hover:bg-white/[0.26] backdrop-blur-md text-white"
                     style={{
                       width: "136px",
                       height: "96px",
                     }}
                   >
                     {/* Icon Badge in translucent light-blue / white box */}
-                    <div className="flex h-[26px] w-[26px] items-center justify-center rounded-[8px] bg-white/20 text-white shadow-2xs">
+                    <div className="flex h-[26px] w-[26px] items-center justify-center rounded-[8px] bg-white/20 text-white">
                       <StatIcon id={card.id} color="#ffffff" />
                     </div>
 
