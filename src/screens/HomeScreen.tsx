@@ -291,7 +291,7 @@ export function HomeScreen({
   const isSearchingOrFiltering = searchQuery.trim().length > 0 || isFilterActive;
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#F5F6F8] text-[#18243D]">
+    <div className="flex h-full min-h-0 flex-col bg-[#0055ff] text-[#18243D]">
       <AppHeader
         markupFilter={markupFilter}
         onFilterChange={onFilterChange}
@@ -307,10 +307,10 @@ export function HomeScreen({
         onSelectProject={onSelectProject}
       />
 
-      <main className="min-h-0 flex-1 overflow-y-auto bg-[#F5F6F8] flex flex-col">
+      <main className="min-h-0 flex-1 overflow-y-auto bg-[#0055ff] flex flex-col no-scrollbar">
         {/* Dynamic Search & Active Filter Mode */}
         {isSearchingOrFiltering ? (
-          <div className="p-4 space-y-3 flex-1">
+          <div className="p-4 space-y-3 flex-1 bg-[#F5F6F8] rounded-t-[26px] min-h-full">
             {/* Filter tags bar */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -421,9 +421,9 @@ export function HomeScreen({
           </div>
         ) : (
           /* Standard Home View - Dynamically Adapts to Selected Project & Top Tab */
-          <div key={selectedProject.id + markupFilter} className="animate-fade-in flex flex-col flex-1 min-h-full">
+          <div key={selectedProject.id + markupFilter} className="animate-fade-in flex flex-col flex-1 min-h-full bg-[#0055ff]">
             {/* Top Cards Section inside Expanded Blue Section */}
-            <section className="bg-gradient-to-b from-[#1651e5] to-[#0d44cf] pt-2 pb-7 shrink-0" aria-label="Task summary">
+            <section className="bg-[#0055ff] pt-2 pb-7 shrink-0" aria-label="Task summary">
               <div
                 ref={scrollRef}
                 onMouseDown={handleMouseDown}
@@ -473,7 +473,7 @@ export function HomeScreen({
             </section>
 
             {/* Rounded Top White Bottom Container Sheet */}
-            <div className="rounded-t-[26px] bg-white pt-4 pb-8 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] border-t border-slate-100 flex-1 min-h-full flex flex-col -mt-3 z-10 relative">
+            <div className="rounded-t-[30px] bg-white pt-5 pb-8 shadow-[0_-10px_35px_rgba(0,0,0,0.08)] flex-1 min-h-full flex flex-col -mt-3 z-10 relative">
               {/* Recents Section for Current Tab */}
               <section className="px-4" aria-labelledby="recents-heading">
                 <div id="recents-heading">
