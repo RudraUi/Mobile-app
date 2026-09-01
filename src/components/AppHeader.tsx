@@ -29,7 +29,7 @@ const filters = [
     id: "all",
     label: "All",
     icon: (
-      <svg width="11" height="11" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor" style={{ width: "11px", height: "11px", minWidth: "11px", minHeight: "11px" }}>
+      <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor" style={{ width: "13px", height: "13px", minWidth: "13px", minHeight: "13px" }}>
         <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1.5" />
         <rect x="9" y="1.5" width="5.5" height="5.5" rx="1.5" />
         <rect x="1.5" y="9" width="5.5" height="5.5" rx="1.5" />
@@ -41,7 +41,7 @@ const filters = [
     id: "task",
     label: "Task",
     icon: (
-      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ width: "11px", height: "11px", minWidth: "11px", minHeight: "11px" }}>
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ width: "13px", height: "13px", minWidth: "13px", minHeight: "13px" }}>
         <rect x="1.5" y="1.5" width="13" height="13" rx="3" />
         <path d="m4.8 8 2.2 2.2 4.2-4.5" />
       </svg>
@@ -51,7 +51,7 @@ const filters = [
     id: "issue",
     label: "Issue",
     icon: (
-      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" aria-hidden="true" style={{ width: "11px", height: "11px", minWidth: "11px", minHeight: "11px" }}>
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" aria-hidden="true" style={{ width: "13px", height: "13px", minWidth: "13px", minHeight: "13px" }}>
         <circle cx="8" cy="8" r="6.5" />
         <path d="M8 4.8v3.6" />
         <circle cx="8" cy="11.2" r=".9" fill="currentColor" stroke="none" />
@@ -62,7 +62,7 @@ const filters = [
     id: "rfi",
     label: "RFI",
     icon: (
-      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true" style={{ width: "11px", height: "11px", minWidth: "11px", minHeight: "11px" }}>
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true" style={{ width: "13px", height: "13px", minWidth: "13px", minHeight: "13px" }}>
         <path d="M3.5 1.5h6l4 4v9h-10z" />
         <path d="M9.5 1.5v4h4" />
         <path d="M5.5 7.5h4M5.5 10.5h3.2" />
@@ -73,7 +73,7 @@ const filters = [
     id: "fieldnote",
     label: "Field Note",
     icon: (
-      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true" style={{ width: "11px", height: "11px", minWidth: "11px", minHeight: "11px" }}>
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true" style={{ width: "13px", height: "13px", minWidth: "13px", minHeight: "13px" }}>
         <path d="M2.8 2.2h7.8a1.5 1.5 0 0 1 1.5 1.5v9H4.2a1.5 1.5 0 0 1-1.4-1.5z" />
         <path d="m6.2 9.5 1-2.2 3.2-3.2.8.8-3.2 3.2z" fill="currentColor" stroke="none" />
       </svg>
@@ -341,8 +341,8 @@ export function AppHeader({
         </div>
       </div>
 
-      {/* Modern Capsule Navigation Tabs with 1:1 Equal Font and Icon Size */}
-      <nav className="flex items-center gap-[5px] overflow-x-auto px-[16px] pb-[8px] no-scrollbar" aria-label="Work item filters">
+      {/* Modern Capsule Navigation Tabs with Balanced 12px Font and 13px Icon Size */}
+      <nav className="flex items-center gap-[6px] overflow-x-auto px-[16px] pb-[8px] no-scrollbar" aria-label="Work item filters">
         {filters.map((filter) => {
           const isActive = markupFilter === filter.id;
           return (
@@ -350,18 +350,18 @@ export function AppHeader({
               type="button"
               key={filter.id}
               onClick={() => onFilterChange(filter.id)}
-              className={`flex shrink-0 items-center gap-[4.5px] rounded-full px-[10px] py-[4.5px] font-bold leading-none transition-all duration-150 cursor-pointer active:scale-95 ${
+              className={`flex shrink-0 items-center gap-[5px] rounded-full px-[12px] py-[6px] font-bold leading-none transition-all duration-150 cursor-pointer active:scale-95 ${
                 isActive
                   ? "bg-white text-[#0055ff] shadow-xs"
                   : "bg-white/[0.14] hover:bg-white/25 text-white"
               }`}
-              style={{ fontSize: "10px" }}
+              style={{ fontSize: "12px" }}
               aria-current={isActive ? "page" : undefined}
             >
-              <span className={`shrink-0 flex items-center justify-center ${isActive ? "text-[#0055ff]" : "text-white"}`} style={{ width: "11px", height: "11px" }}>
+              <span className={`shrink-0 flex items-center justify-center ${isActive ? "text-[#0055ff]" : "text-white"}`} style={{ width: "13px", height: "13px" }}>
                 {filter.icon}
               </span>
-              <span style={{ fontSize: "10px", lineHeight: "1", fontWeight: 700 }}>{filter.label}</span>
+              <span style={{ fontSize: "12px", lineHeight: "1", fontWeight: 700 }}>{filter.label}</span>
             </button>
           );
         })}
