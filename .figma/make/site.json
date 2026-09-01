@@ -1,0 +1,10 @@
+{
+  "description": "Streamline construction site management with a mobile app that allows field personnel to create tasks, issues, and RFIs while navigating the site efficiently.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
