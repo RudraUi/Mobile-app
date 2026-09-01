@@ -423,7 +423,7 @@ export function HomeScreen({
           /* Standard Home View - Dynamically Adapts to Selected Project & Top Tab */
           <div key={selectedProject.id + markupFilter} className="animate-fade-in flex flex-col flex-1 min-h-full">
             {/* Top Cards Section inside Expanded Blue Section */}
-            <section className="bg-gradient-to-b from-[#1651e5] to-[#0f48d6] pt-1 pb-4 shrink-0 shadow-xs" aria-label="Task summary">
+            <section className="bg-gradient-to-b from-[#1651e5] to-[#0d44cf] pt-2 pb-7 shrink-0 shadow-xs" aria-label="Task summary">
               <div
                 ref={scrollRef}
                 onMouseDown={handleMouseDown}
@@ -446,23 +446,23 @@ export function HomeScreen({
                         return;
                       }
                     }}
-                    className="flex flex-col justify-between rounded-[18px] p-3 text-left transition-all active:scale-[0.97] flex-shrink-0 cursor-pointer bg-white/[0.18] hover:bg-white/[0.26] border border-white/30 backdrop-blur-md text-white shadow-2xs"
+                    className="flex flex-col justify-between rounded-[18px] p-3.5 text-left transition-all active:scale-[0.97] flex-shrink-0 cursor-pointer bg-white/[0.18] hover:bg-white/[0.26] border border-white/30 backdrop-blur-md text-white shadow-2xs"
                     style={{
-                      width: "130px",
-                      height: "88px",
+                      width: "136px",
+                      height: "96px",
                     }}
                   >
                     {/* Icon Badge in translucent light-blue / white box */}
-                    <div className="flex h-[24px] w-[24px] items-center justify-center rounded-[8px] bg-white/20 text-white shadow-2xs">
+                    <div className="flex h-[26px] w-[26px] items-center justify-center rounded-[8px] bg-white/20 text-white shadow-2xs">
                       <StatIcon id={card.id} color="#ffffff" />
                     </div>
 
                     {/* Text Content */}
                     <div className="mt-auto">
-                      <div className="text-[13px] font-bold leading-tight tracking-[-0.2px] whitespace-nowrap text-white">
+                      <div className="text-[13.5px] font-bold leading-tight tracking-[-0.2px] whitespace-nowrap text-white">
                         {card.title}
                       </div>
-                      <div className="text-[10.5px] font-medium leading-tight mt-0.5 whitespace-nowrap text-blue-100/90">
+                      <div className="text-[11px] font-medium leading-tight mt-0.5 whitespace-nowrap text-blue-100/90">
                         {card.subtitle}
                       </div>
                     </div>
@@ -473,7 +473,7 @@ export function HomeScreen({
             </section>
 
             {/* Rounded Top White Bottom Container Sheet */}
-            <div className="rounded-t-[26px] bg-white pt-4 pb-8 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] border-t border-slate-100 flex-1 min-h-full flex flex-col -mt-2 z-10 relative">
+            <div className="rounded-t-[26px] bg-white pt-4 pb-8 shadow-[0_-4px_20px_rgba(0,0,0,0.03)] border-t border-slate-100 flex-1 min-h-full flex flex-col -mt-3 z-10 relative">
               {/* Recents Section for Current Tab */}
               <section className="px-4" aria-labelledby="recents-heading">
                 <div id="recents-heading">

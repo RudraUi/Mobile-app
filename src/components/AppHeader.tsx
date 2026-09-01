@@ -167,7 +167,7 @@ export function AppHeader({
     <header className="home-header shrink-0 text-white shadow-md relative z-40">
       <StatusBar />
 
-      <div className="flex h-[46px] items-center justify-between px-[16px] pt-1 pb-1 mb-2">
+      <div className="flex h-[46px] items-center justify-between px-[16px] pt-1 pb-1 mb-3">
         {/* Project Selector Button with Anchored Dropdown */}
         <div className="relative">
           <button
@@ -342,7 +342,7 @@ export function AppHeader({
       </div>
 
       {/* Modern Capsule Navigation Tabs with Balanced 12px Font and 13px Icon Size */}
-      <nav className="flex items-center gap-[6px] overflow-x-auto px-[16px] pb-[8px] no-scrollbar" aria-label="Work item filters">
+      <nav className="flex items-center gap-[6px] overflow-x-auto px-[16px] pb-[12px] no-scrollbar" aria-label="Work item filters">
         {filters.map((filter) => {
           const isActive = markupFilter === filter.id;
           return (
