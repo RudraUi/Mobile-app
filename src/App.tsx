@@ -13,12 +13,13 @@ import { WalkthroughScreen } from "./screens/WalkthroughScreen";
 import { SplitViewScreen } from "./screens/SplitViewScreen";
 import { ListScreen, type ListFilterInitialParams } from "./screens/ListScreen";
 import { ItemDetailScreen } from "./screens/ItemDetailScreen";
-import { CreateItemScreen } from "./screens/CreateItemScreen";
+import { TaskDetailScreen } from "./screens/TaskDetailScreen";
+import { CreateItemScreen, type CreateItemDraft } from "./screens/CreateItemScreen";
 import { NavigateScreen } from "./screens/NavigateScreen";
 import { ProfileScreen, type UserProfileData } from "./screens/ProfileScreen";
 import { InviteModal } from "./components/InviteModal";
 import { projectsList, type Project } from "./data/projectsData";
-import type { Item, ItemType, Severity, Status } from "./data/mockData";
+import type { Item, ItemType, Status } from "./data/mockData";
 import { mockItems } from "./data/mockData";
 import type { MainTab } from "./components/BottomNav";
 
@@ -108,28 +109,20 @@ export default function App() {
   }, []);
 
   const handleCreateSubmit = useCallback(
-    (
-      type: ItemType,
-      title: string,
-      description: string,
-      severity: Severity,
-      dueDate: string,
-      assignToMe: boolean,
-    ) => {
+    (draft: CreateItemDraft) => {
+      const { type, title, description, severity, dueDate, assignees, status, tags, photos } = draft;
       const prefix: Record<ItemType, string> = { issue: "ISSUE", task: "TASK", rfi: "RFI", fieldnote: "FN" };
       const newItem: Item = {
         id: `${prefix[type]}-${Math.floor(Math.random() * 900) + 100}`,
         type,
         title,
         description,
-        status: "TO DO",
+        status,
         severity,
-        assignees: assignToMe
-          ? [{ id: "you", name: "You", initials: "YO", color: "#1558F5" }]
-          : [],
+        assignees,
         dueDate: dueDate || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
         location: { x: 150 + Math.random() * 180, y: 200 + Math.random() * 450, label: `${selectedProject.name} location` },
-        photos: [],
+        photos,
         activity: [
           {
             id: "init",
@@ -137,7 +130,7 @@ export default function App() {
             date: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
           },
         ],
-        tags: [selectedProject.code],
+        tags: Array.from(new Set([...tags, selectedProject.code])),
         phase: "Construction Execution",
         category: "Structural",
       };
@@ -228,12 +221,21 @@ export default function App() {
           )}
 
           {screen === "detail" && currentSelectedItem && (
-            <ItemDetailScreen
-              item={currentSelectedItem}
-              onBack={() => setScreen(prevScreen || activeTab)}
-              onNavigate={handleNavigate}
-              onUpdate={handleUpdate}
-            />
+            currentSelectedItem.type === "task" ? (
+              <TaskDetailScreen
+                item={currentSelectedItem}
+                onBack={() => setScreen(prevScreen || activeTab)}
+                onNavigate={handleNavigate}
+                onUpdate={handleUpdate}
+              />
+            ) : (
+              <ItemDetailScreen
+                item={currentSelectedItem}
+                onBack={() => setScreen(prevScreen || activeTab)}
+                onNavigate={handleNavigate}
+                onUpdate={handleUpdate}
+              />
+            )
           )}
 
           {screen === "create" && (

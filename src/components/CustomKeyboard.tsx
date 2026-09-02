@@ -46,7 +46,7 @@ export function CustomKeyboard({
   // =========================================================================
   if (type === "numeric") {
     return (
-      <div className="w-full bg-[#E4E8EE]/95 backdrop-blur-md pt-2.5 pb-2 px-2.5 select-none shrink-0 border-t border-slate-200/80 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+      <div className="w-full bg-[#E4E8EE]/95 backdrop-blur-md pt-2.5 pb-2 px-2.5 select-none shrink-0 border-t border-slate-200/80">
         <div className="grid grid-cols-3 gap-2 max-w-[370px] mx-auto">
           {NUMERIC_PAD.map((item, idx) => {
             if (item.num === "backspace") {
@@ -107,7 +107,7 @@ export function CustomKeyboard({
   const row3 = isSymbols ? NUM_SYMBOLS_ROW_3 : ALPHA_ROW_3;
 
   return (
-    <div className="w-full bg-[#D7DCE3]/95 backdrop-blur-md pt-2 pb-2 px-1 select-none shrink-0 border-t border-slate-300/70 shadow-[0_-4px_25px_rgba(0,0,0,0.06)]">
+    <div className="w-full bg-[#D7DCE3]/95 backdrop-blur-md pt-2 pb-2 px-1 select-none shrink-0 border-t border-slate-300/70">
       <div className="flex flex-col gap-2 max-w-[390px] mx-auto">
         {/* ROW 1 */}
         <div className="flex justify-center gap-1.5 px-0.5">
