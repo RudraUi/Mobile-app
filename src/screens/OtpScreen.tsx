@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { BimboxLogo } from "./LoginScreen";
+import { CustomKeyboard } from "../components/CustomKeyboard";
 
 interface OtpScreenProps {
   email: string;
@@ -48,15 +49,38 @@ export function OtpScreen({ email, onVerify, onBack: _onBack }: OtpScreenProps) 
     }
   };
 
+  const handleNumericKeyPress = (num: string) => {
+    const next = [...otp];
+    next[activeIndex] = num;
+    setOtp(next);
+    if (activeIndex < 5) {
+      setActiveIndex(activeIndex + 1);
+      inputRefs.current[activeIndex + 1]?.focus();
+    }
+  };
+
+  const handleNumericBackspace = () => {
+    const next = [...otp];
+    if (next[activeIndex]) {
+      next[activeIndex] = "";
+      setOtp(next);
+    } else if (activeIndex > 0) {
+      next[activeIndex - 1] = "";
+      setOtp(next);
+      setActiveIndex(activeIndex - 1);
+      inputRefs.current[activeIndex - 1]?.focus();
+    }
+  };
+
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     onVerify();
   };
 
   return (
-    <div className="flex flex-col justify-between h-full bg-white px-7 pt-14 pb-8 select-none">
-      {/* Top Header & Form */}
-      <div>
+    <div className="flex flex-col justify-between h-full bg-white select-none">
+      {/* Top Header & Form Container */}
+      <div className="px-7 pt-24 pb-2 overflow-y-auto no-scrollbar">
         {/* Logo */}
         <div className="animate-slide-up">
           <BimboxLogo size={46} />
@@ -70,7 +94,7 @@ export function OtpScreen({ email, onVerify, onBack: _onBack }: OtpScreenProps) 
           >
             Verify OTP
           </h1>
-          <p className="text-[13px] mt-1 text-slate-500 font-normal">
+          <p className="text-[14px] mt-1 text-slate-800 font-normal">
             Code has been sent to{" "}
             <span style={{ color: "#0055ff" }}>
               {email || "get@ziontutorial.com"}
@@ -79,8 +103,8 @@ export function OtpScreen({ email, onVerify, onBack: _onBack }: OtpScreenProps) 
         </div>
 
         {/* Enter OTP Label & Inputs */}
-        <form onSubmit={handleSubmit} className="mt-8 animate-slide-up" style={{ animationDelay: "0.08s" }}>
-          <label className="block text-[13.5px] font-medium text-slate-700 mb-3">
+        <form onSubmit={handleSubmit} className="mt-7 animate-slide-up" style={{ animationDelay: "0.08s" }}>
+          <label className="block text-[15px] font-normal text-slate-700 mb-3.5">
             Enter OTP
           </label>
 
@@ -91,7 +115,20 @@ export function OtpScreen({ email, onVerify, onBack: _onBack }: OtpScreenProps) 
               const isActive = activeIndex === idx;
 
               return (
-                <div key={idx} className="relative flex-1 max-w-[50px] h-[52px]">
+                <div
+                  key={idx}
+                  onClick={() => {
+                    setActiveIndex(idx);
+                    inputRefs.current[idx]?.focus();
+                  }}
+                  className={`relative flex-1 max-w-[48px] h-[52px] rounded-[18px] flex items-center justify-center cursor-pointer transition-all duration-150 ${
+                    isFilled
+                      ? "bg-[#0055ff] text-white shadow-xs"
+                      : isActive
+                      ? "bg-white border-[1.5px] border-[#0055ff]"
+                      : "bg-[#f1f4f9] border border-slate-200/50"
+                  }`}
+                >
                   <input
                     ref={(el) => {
                       inputRefs.current[idx] = el;
@@ -103,36 +140,31 @@ export function OtpScreen({ email, onVerify, onBack: _onBack }: OtpScreenProps) 
                     onFocus={() => setActiveIndex(idx)}
                     onChange={(e) => handleChange(idx, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(idx, e)}
-                    className={`w-full h-full text-center text-[19px] font-bold rounded-2xl outline-none transition-all duration-150 ${
-                      isFilled
-                        ? "bg-[#0055ff] text-white border-transparent"
-                        : isActive
-                        ? "bg-white border-[1.5px] border-[#0055ff] text-slate-900 caret-[#0055ff]"
-                        : "bg-[#f1f5f9] text-transparent border-transparent"
-                    }`}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
                   />
-                  {/* Blinking cursor line emulation if active and empty */}
-                  {isActive && !isFilled && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="w-[1.5px] h-5 bg-slate-400 animate-pulse" />
-                    </div>
-                  )}
+                  {isFilled ? (
+                    <span className="text-[20px] font-bold text-white select-none">
+                      {digit}
+                    </span>
+                  ) : isActive ? (
+                    <div className="w-[1.5px] h-[22px] bg-slate-400 animate-pulse pointer-events-none" />
+                  ) : null}
                 </div>
               );
             })}
           </div>
 
-          {/* Resend countdown */}
-          <div className="flex justify-end mt-3">
+          {/* Resend Countdown (Right Aligned matching reference image) */}
+          <div className="text-right mt-3.5">
             {timer > 0 ? (
-              <span className="text-[13px] text-slate-700 font-normal">
+              <span className="text-[13.5px] text-slate-800 font-normal">
                 Resend code in {timer}s
               </span>
             ) : (
               <button
                 type="button"
                 onClick={() => setTimer(30)}
-                className="text-[13px] font-semibold hover:underline"
+                className="text-[13.5px] font-semibold hover:underline cursor-pointer"
                 style={{ color: "#0055ff" }}
               >
                 Resend code
@@ -140,10 +172,10 @@ export function OtpScreen({ email, onVerify, onBack: _onBack }: OtpScreenProps) 
             )}
           </div>
 
-          {/* Verify Button */}
+          {/* Verify Button (Rounded & Sleek less height) */}
           <button
             type="submit"
-            className="w-full h-[50px] mt-10 rounded-2xl flex items-center justify-center text-white text-[15px] font-semibold transition-all active:scale-[0.98] shadow-sm hover:opacity-95"
+            className="w-full h-[42px] mt-4 rounded-full flex items-center justify-center text-white text-[14.5px] font-bold transition-all active:scale-[0.98] shadow-xs hover:opacity-95 cursor-pointer"
             style={{ backgroundColor: "#0055ff" }}
           >
             Verify
@@ -151,15 +183,13 @@ export function OtpScreen({ email, onVerify, onBack: _onBack }: OtpScreenProps) 
         </form>
       </div>
 
-      {/* Bottom Brand */}
-      <div className="text-center pb-2">
-        <span
-          className="text-[26px] font-black tracking-wider select-none"
-          style={{ color: "#cbd5e1", letterSpacing: "0.04em" }}
-        >
-          BIMBOX.AI
-        </span>
-      </div>
+      {/* Custom Numeric Mobile Keypad (For look & interactive digit entry) */}
+      <CustomKeyboard
+        type="numeric"
+        onKeyPress={handleNumericKeyPress}
+        onBackspace={handleNumericBackspace}
+        onSubmit={() => handleSubmit()}
+      />
     </div>
   );
 }

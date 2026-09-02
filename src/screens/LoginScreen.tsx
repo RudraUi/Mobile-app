@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CustomKeyboard } from "../components/CustomKeyboard";
 
 interface LoginScreenProps {
   onLogin: (email: string) => void;
@@ -21,8 +22,8 @@ export function LoginScreen({ onLogin, onOtp }: LoginScreenProps) {
   const [email, setEmail] = useState("alphainvent@gmail.com");
   const [password, setPassword] = useState("••••••••");
   const [showPassword, setShowPassword] = useState(false);
-  const [passFocused, setPassFocused] = useState(true);
-  const [emailFocused, setEmailFocused] = useState(false);
+  const [passFocused, setPassFocused] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(true);
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -32,9 +33,9 @@ export function LoginScreen({ onLogin, onOtp }: LoginScreenProps) {
   const isEmailValid = email.trim().length > 0 && email.includes("@");
 
   return (
-    <div className="flex flex-col justify-between h-full bg-white px-7 pt-14 pb-8 select-none">
-      {/* Top Header & Form */}
-      <div>
+    <div className="flex flex-col justify-between h-full bg-white select-none">
+      {/* Top Header & Form Container */}
+      <div className="px-7 pt-24 pb-2 overflow-y-auto no-scrollbar">
         {/* Logo */}
         <div className="animate-slide-up">
           <BimboxLogo size={46} />
@@ -135,7 +136,7 @@ export function LoginScreen({ onLogin, onOtp }: LoginScreenProps) {
           {/* Login Button */}
           <button
             type="submit"
-            className="w-full h-[50px] mt-6 rounded-2xl flex items-center justify-center text-white text-[15px] font-semibold transition-all active:scale-[0.98] shadow-sm hover:opacity-95"
+            className="w-full h-[42px] mt-5 rounded-full flex items-center justify-center text-white text-[14.5px] font-bold transition-all active:scale-[0.98] shadow-xs hover:opacity-95 cursor-pointer"
             style={{ backgroundColor: "#0055ff" }}
           >
             Login
@@ -143,15 +144,26 @@ export function LoginScreen({ onLogin, onOtp }: LoginScreenProps) {
         </form>
       </div>
 
-      {/* Bottom Brand */}
-      <div className="text-center pb-2">
-        <span
-          className="text-[26px] font-black tracking-wider select-none"
-          style={{ color: "#cbd5e1", letterSpacing: "0.04em" }}
-        >
-          BIMBOX.AI
-        </span>
-      </div>
+      {/* Custom Alpha Mobile Keyboard (For look & interactive typing) */}
+      <CustomKeyboard
+        type="alpha"
+        actionLabel="Login"
+        onKeyPress={(char) => {
+          if (emailFocused) {
+            setEmail((prev) => prev + char);
+          } else if (passFocused) {
+            setPassword((prev) => prev + char);
+          }
+        }}
+        onBackspace={() => {
+          if (emailFocused) {
+            setEmail((prev) => prev.slice(0, -1));
+          } else if (passFocused) {
+            setPassword((prev) => prev.slice(0, -1));
+          }
+        }}
+        onSubmit={() => handleSubmit()}
+      />
     </div>
   );
 }

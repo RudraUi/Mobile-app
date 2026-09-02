@@ -329,7 +329,7 @@ export function AppHeader({
           <button
             type="button"
             onClick={onProfileClick}
-            className="h-[34px] w-[34px] overflow-hidden rounded-full bg-[#7fb5dc] border-2 border-white/50 shadow-xs cursor-pointer hover:opacity-90 active:scale-95 transition-all shrink-0"
+            className="h-[34px] w-[34px] overflow-hidden rounded-full bg-[#7fb5dc] shadow-xs cursor-pointer hover:opacity-90 active:scale-95 transition-all shrink-0"
             aria-label="Open profile"
           >
             <img

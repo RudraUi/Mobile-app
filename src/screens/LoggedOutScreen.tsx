@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 
-interface SuccessScreenProps {
+interface LoggedOutScreenProps {
   onDone: () => void;
 }
 
-export function SuccessScreen({ onDone }: SuccessScreenProps) {
+export function LoggedOutScreen({ onDone }: LoggedOutScreenProps) {
   useEffect(() => {
-    const t = setTimeout(onDone, 2000);
+    const t = setTimeout(onDone, 1800);
     return () => clearTimeout(t);
   }, [onDone]);
 
@@ -17,9 +17,9 @@ export function SuccessScreen({ onDone }: SuccessScreenProps) {
     >
       <div className="w-full" />
 
-      {/* Centered Simple Tick Animation and Text - No Box Shadow, No Border */}
+      {/* Centered Simple Animated Logout Icon and Text - No Box Shadow, No Border */}
       <div className="flex flex-col items-center justify-center">
-        {/* Simple Animated White Tick SVG */}
+        {/* Simple Animated White Logout Icon SVG */}
         <svg
           width="82"
           height="82"
@@ -31,19 +31,33 @@ export function SuccessScreen({ onDone }: SuccessScreenProps) {
           strokeLinejoin="round"
           className="select-none"
         >
-          <polyline
-            points="4 12 9 17 20 6"
+          {/* Door Frame */}
+          <path
+            d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
             className="animate-check-tick"
           />
+          {/* Arrow Sliding Out */}
+          <g className="animate-slide-out-arrow">
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </g>
         </svg>
 
-        {/* Success Message Text */}
+        {/* Logged Out Message Text */}
         <h2
           className="text-[24px] font-bold text-white mt-5 tracking-tight animate-slide-up text-center"
           style={{ fontFamily: "'Nunito Sans', sans-serif", animationDelay: "0.2s" }}
         >
-          Login Success !
+          Logged Out !
         </h2>
+
+        {/* Subtitle */}
+        <p
+          className="text-[13.5px] text-white/80 font-normal mt-1 animate-slide-up text-center"
+          style={{ animationDelay: "0.3s" }}
+        >
+          See you soon
+        </p>
       </div>
 
       {/* Bottom Brand */}
@@ -58,4 +72,3 @@ export function SuccessScreen({ onDone }: SuccessScreenProps) {
     </div>
   );
 }
-

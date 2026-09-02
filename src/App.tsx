@@ -2,6 +2,8 @@ import { useState, useCallback } from "react";
 import { LoginScreen } from "./screens/LoginScreen";
 import { OtpScreen } from "./screens/OtpScreen";
 import { SuccessScreen } from "./screens/SuccessScreen";
+import { LoggedOutScreen } from "./screens/LoggedOutScreen";
+import { SplashScreen } from "./screens/SplashScreen";
 import { HomeScreen } from "./screens/HomeScreen";
 import { MapScreen } from "./screens/MapScreen";
 import { DrawingScreen } from "./screens/DrawingScreen";
@@ -9,14 +11,14 @@ import { BimScreen } from "./screens/BimScreen";
 import { DroneScreen } from "./screens/DroneScreen";
 import { WalkthroughScreen } from "./screens/WalkthroughScreen";
 import { SplitViewScreen } from "./screens/SplitViewScreen";
-import { ListScreen } from "./screens/ListScreen";
+import { ListScreen, type ListFilterInitialParams } from "./screens/ListScreen";
 import { ItemDetailScreen } from "./screens/ItemDetailScreen";
 import { CreateItemScreen } from "./screens/CreateItemScreen";
 import { NavigateScreen } from "./screens/NavigateScreen";
 import { ProfileScreen, type UserProfileData } from "./screens/ProfileScreen";
 import { InviteModal } from "./components/InviteModal";
 import { projectsList, type Project } from "./data/projectsData";
-import type { Item, ItemType, Severity } from "./data/mockData";
+import type { Item, ItemType, Severity, Status } from "./data/mockData";
 import { mockItems } from "./data/mockData";
 import type { MainTab } from "./components/BottomNav";
 
@@ -24,6 +26,7 @@ type Screen =
   | "login"
   | "otp"
   | "success"
+  | "logged_out"
   | MainTab
   | "list"
   | "detail"
@@ -33,6 +36,7 @@ type Screen =
   | "walkthrough";
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
   const [screen, setScreen] = useState<Screen>("home");
   const [email, setEmail] = useState("alphainvent@gmail.com");
   const [activeTab, setActiveTab] = useState<MainTab>("home");
@@ -42,6 +46,8 @@ export default function App() {
   const [markupFilter, setMarkupFilter] = useState("all");
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project>(projectsList[0]);
+  const [listParams, setListParams] = useState<ListFilterInitialParams>({ viewMode: "list" });
+  const [prevScreen, setPrevScreen] = useState<Screen>("home");
 
   const [profile, setProfile] = useState<UserProfileData>({
     name: "Anil Kumar Patra",
@@ -70,8 +76,23 @@ export default function App() {
   }, []);
 
   const handleItemClick = useCallback((item: Item) => {
+    setPrevScreen(screen);
     setSelectedItem(item);
     setScreen("detail");
+  }, [screen]);
+
+  const handleViewAll = useCallback((params?: ListFilterInitialParams) => {
+    setListParams(params || { viewMode: "list" });
+    setScreen("list");
+  }, []);
+
+  const handleUpdateStatus = useCallback((id: string, newStatus: Status) => {
+    setItems((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, status: newStatus } : i))
+    );
+    setSelectedItem((prev) =>
+      prev?.id === id ? ({ ...prev, status: newStatus } as Item) : prev
+    );
   }, []);
 
   const handleCreateClick = useCallback(() => setScreen("create"), []);
@@ -117,6 +138,8 @@ export default function App() {
           },
         ],
         tags: [selectedProject.code],
+        phase: "Construction Execution",
+        category: "Structural",
       };
       setItems((prev) => [newItem, ...prev]);
       setActiveTab("home");
@@ -142,6 +165,7 @@ export default function App() {
     userAvatar: profile.avatar,
     selectedProject,
     onSelectProject: setSelectedProject,
+    onViewAll: handleViewAll,
   };
 
   return (
@@ -156,6 +180,17 @@ export default function App() {
           boxShadow: "0 0 50px rgba(0, 0, 0, 0.45)",
         }}
       >
+        {/* Modern Animated Splash Screen */}
+        {showSplash && (
+          <SplashScreen
+            onFinish={() => {
+              setShowSplash(false);
+              setScreen("home");
+              setActiveTab("home");
+            }}
+          />
+        )}
+
         <div key={screen} className="flex flex-col h-full animate-fade-in">
           {screen === "login" && (
             <LoginScreen onLogin={handleLogin} onOtp={() => setScreen("otp")} />
@@ -166,6 +201,7 @@ export default function App() {
           )}
 
           {screen === "success" && <SuccessScreen onDone={handleSuccessDone} />}
+          {screen === "logged_out" && <LoggedOutScreen onDone={() => setScreen("login")} />}
 
           {(screen === "home" || (screen === "create" && activeTab === "home")) && <HomeScreen {...mainTabProps} />}
           {(screen === "map" || (screen === "create" && activeTab === "map")) && <MapScreen {...mainTabProps} />}
@@ -178,17 +214,23 @@ export default function App() {
           {screen === "list" && (
             <ListScreen
               items={items}
-              activeTab={"home" as any}
-              onTabChange={handleTabChange as any}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
               onItemClick={handleItemClick}
               onCreateClick={handleCreateClick}
+              onBack={() => setScreen("home")}
+              selectedProject={selectedProject}
+              onSelectProject={setSelectedProject}
+              userAvatar={profile.avatar}
+              onUpdateStatus={handleUpdateStatus}
+              initialParams={listParams}
             />
           )}
 
           {screen === "detail" && currentSelectedItem && (
             <ItemDetailScreen
               item={currentSelectedItem}
-              onBack={() => setScreen(activeTab)}
+              onBack={() => setScreen(prevScreen || activeTab)}
               onNavigate={handleNavigate}
               onUpdate={handleUpdate}
             />
@@ -215,7 +257,7 @@ export default function App() {
               profile={profile}
               onUpdateProfile={(updated) => setProfile((prev) => ({ ...prev, ...updated }))}
               onBack={() => setScreen(activeTab)}
-              onSignOut={() => setScreen("login")}
+              onSignOut={() => setScreen("logged_out")}
             />
           )}
         </div>

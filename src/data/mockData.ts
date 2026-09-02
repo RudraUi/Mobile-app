@@ -29,7 +29,25 @@ export interface Item {
   activity: ActivityEntry[];
   progress?: number;
   tags?: string[];
+  phase?: string;
+  category?: string;
 }
+
+export const availablePhases = [
+  "Pre - construction Tasks",
+  "Construction Execution",
+  "Testing & Handover",
+  "Site Survey & Foundation",
+];
+
+export const availableCategories = [
+  "Structural",
+  "MEP & HVAC",
+  "Architectural",
+  "Safety & Fire",
+  "Finishing",
+  "Civil & Earthworks",
+];
 
 const assignees: Assignee[] = [
   { id: "a1", name: "Robert Miller", initials: "RM", color: "#6366f1" },
@@ -65,6 +83,8 @@ export const mockItems: Item[] = [
       { id: "ac3", text: "Uploaded 2 attachments", date: "14 Aug 2026" },
     ],
     tags: ["Structural", "Rebar & Formwork"],
+    phase: "Construction Execution",
+    category: "Structural",
   },
   {
     id: "ISSUE-017",
@@ -81,6 +101,8 @@ export const mockItems: Item[] = [
       { id: "ac4", text: "Issue flagged during site walk", date: "08 Aug 2026" },
     ],
     tags: ["Fire Safety"],
+    phase: "Testing & Handover",
+    category: "Safety & Fire",
   },
   {
     id: "ISSUE-016",
@@ -95,6 +117,8 @@ export const mockItems: Item[] = [
     photos: [],
     activity: [],
     tags: ["Electrical", "MEP"],
+    phase: "Pre - construction Tasks",
+    category: "MEP & HVAC",
   },
   {
     id: "ISSUE-015",
@@ -111,6 +135,8 @@ export const mockItems: Item[] = [
       { id: "ac5", text: "Reviewed by structural consultant", date: "05 Aug 2026" },
     ],
     tags: ["Architectural"],
+    phase: "Pre - construction Tasks",
+    category: "Architectural",
   },
   {
     id: "ISSUE-014",
@@ -125,13 +151,15 @@ export const mockItems: Item[] = [
     photos: [sitePhotos[0]],
     activity: [],
     tags: ["Facade"],
+    phase: "Construction Execution",
+    category: "Architectural",
   },
   {
     id: "ISSUE-013",
     type: "issue",
     title: "Elevator Pit Waterproofing Membrane Gap",
     description: "Sump pump discharge sleeve in Elevator Pit #2 penetrates waterproofing membrane without proper seal.",
-    status: "TO DO",
+    status: "BLOCKED",
     severity: "HIGH",
     assignees: [assignees[2]],
     dueDate: "2026-09-12",
@@ -139,6 +167,8 @@ export const mockItems: Item[] = [
     photos: [],
     activity: [],
     tags: ["Waterproofing"],
+    phase: "Site Survey & Foundation",
+    category: "Civil & Earthworks",
   },
   {
     id: "TASK-001",
@@ -157,6 +187,8 @@ export const mockItems: Item[] = [
     ],
     progress: 100,
     tags: ["Rebar & Formwork", "Milestone"],
+    phase: "Pre - construction Tasks",
+    category: "Structural",
   },
   {
     id: "TASK-002",
@@ -172,6 +204,8 @@ export const mockItems: Item[] = [
     activity: [],
     progress: 0,
     tags: ["HVAC"],
+    phase: "Construction Execution",
+    category: "MEP & HVAC",
   },
   {
     id: "TASK-003",
@@ -187,6 +221,8 @@ export const mockItems: Item[] = [
     activity: [],
     progress: 35,
     tags: ["Finishing"],
+    phase: "Testing & Handover",
+    category: "Finishing",
   },
   {
     id: "TASK-004",
@@ -204,6 +240,42 @@ export const mockItems: Item[] = [
     ],
     progress: 60,
     tags: ["Structure"],
+    phase: "Construction Execution",
+    category: "Structural",
+  },
+  {
+    id: "TASK-005",
+    type: "task",
+    title: "Calibrate fire alarm sensors and test panel",
+    description: "Verify addressable fire detection sensors across Level 02 and test central control annunciator.",
+    status: "REVIEW",
+    severity: "HIGH",
+    assignees: [assignees[1]],
+    dueDate: "2026-09-14",
+    location: { x: 190, y: 290, label: "Level 02 — Control Room" },
+    photos: [],
+    activity: [],
+    progress: 85,
+    tags: ["Safety"],
+    phase: "Testing & Handover",
+    category: "Safety & Fire",
+  },
+  {
+    id: "TASK-006",
+    type: "task",
+    title: "Excavation shoring inspection for West Wing",
+    description: "Verify soldier pile deflection limits and tie-back anchor tension load test reports.",
+    status: "BLOCKED",
+    severity: "HIGH",
+    assignees: [assignees[0], assignees[3]],
+    dueDate: "2026-09-07",
+    location: { x: 50, y: 150, label: "West Wing — Perimeter" },
+    photos: [sitePhotos[0]],
+    activity: [],
+    progress: 20,
+    tags: ["Civil"],
+    phase: "Site Survey & Foundation",
+    category: "Civil & Earthworks",
   },
   {
     id: "RFI-001",
@@ -220,6 +292,8 @@ export const mockItems: Item[] = [
       { id: "ac9", text: "RFI submitted to structural engineer", date: "11 Aug 2026" },
     ],
     tags: ["Structural"],
+    phase: "Pre - construction Tasks",
+    category: "Structural",
   },
   {
     id: "RFI-002",
@@ -234,6 +308,8 @@ export const mockItems: Item[] = [
     photos: [],
     activity: [],
     tags: ["Architectural"],
+    phase: "Construction Execution",
+    category: "Architectural",
   },
   {
     id: "RFI-003",
@@ -250,6 +326,24 @@ export const mockItems: Item[] = [
       { id: "ac10", text: "Approved by consultant · 29 Aug 2026", date: "29 Aug 2026" },
     ],
     tags: ["MEP", "Specification"],
+    phase: "Pre - construction Tasks",
+    category: "MEP & HVAC",
+  },
+  {
+    id: "RFI-004",
+    type: "rfi",
+    title: "Acoustic Ceiling Rating Verification for Tower B",
+    description: "Confirmation needed whether NRC rating of 0.85 applies to common corridors or only conference halls.",
+    status: "REVIEW",
+    severity: "LOW",
+    assignees: [assignees[3]],
+    dueDate: "2026-09-25",
+    location: { x: 210, y: 340, label: "Tower B — Level 03" },
+    photos: [],
+    activity: [],
+    tags: ["Finishing"],
+    phase: "Testing & Handover",
+    category: "Finishing",
   },
   {
     id: "FN-001",
@@ -264,6 +358,8 @@ export const mockItems: Item[] = [
     photos: [sitePhotos[3]],
     activity: [],
     tags: ["Site Observation"],
+    phase: "Construction Execution",
+    category: "Civil & Earthworks",
   },
   {
     id: "FN-002",
@@ -280,6 +376,8 @@ export const mockItems: Item[] = [
       { id: "ac11", text: "Notified site safety officer", date: "05 Sep 2026" },
     ],
     tags: ["Safety"],
+    phase: "Construction Execution",
+    category: "Safety & Fire",
   },
   {
     id: "FN-003",
@@ -296,6 +394,8 @@ export const mockItems: Item[] = [
       { id: "ac12", text: "Repaired and signed off · 03 Sep 2026", date: "03 Sep 2026" },
     ],
     tags: ["Site Logistics"],
+    phase: "Site Survey & Foundation",
+    category: "Safety & Fire",
   },
   {
     id: "FN-004",
@@ -310,6 +410,24 @@ export const mockItems: Item[] = [
     photos: [sitePhotos[0], sitePhotos[1]],
     activity: [],
     tags: ["Crane", "Safety"],
+    phase: "Pre - construction Tasks",
+    category: "Safety & Fire",
+  },
+  {
+    id: "FN-005",
+    type: "fieldnote",
+    title: "Water ponding observed on roof terrace slab",
+    description: "Slope toward rainwater outlet is insufficient near Grid A1, causing 20mm standing water after overnight rain.",
+    status: "BLOCKED",
+    severity: "MEDIUM",
+    assignees: [assignees[0], assignees[2]],
+    dueDate: "2026-09-17",
+    location: { x: 160, y: 190, label: "Roof Terrace — Grid A1" },
+    photos: [sitePhotos[2]],
+    activity: [],
+    tags: ["Waterproofing"],
+    phase: "Testing & Handover",
+    category: "Civil & Earthworks",
   },
 ];
 

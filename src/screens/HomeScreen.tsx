@@ -3,6 +3,7 @@ import { AppHeader } from "../components/AppHeader";
 import { BottomNav, type MainTab } from "../components/BottomNav";
 import { FilterModal } from "../components/FilterModal";
 import { SearchModal } from "../components/SearchModal";
+import { HomeSkeleton, PullIndicator } from "../components/SkeletonLoader";
 import type { Item, ItemType, Severity, Status } from "../data/mockData";
 import { type Project, projectsList } from "../data/projectsData";
 
@@ -19,6 +20,13 @@ interface HomeScreenProps {
   userAvatar?: string;
   selectedProject?: Project;
   onSelectProject?: (p: Project) => void;
+  onViewAll?: (params?: {
+    type?: ItemType | "all";
+    phase?: string;
+    category?: string;
+    status?: string;
+    viewMode?: "list" | "kanban";
+  }) => void;
 }
 
 function Chevron({ direction = "down" }: { direction?: "down" | "right" }) {
@@ -217,6 +225,7 @@ export function HomeScreen({
   userAvatar,
   selectedProject = projectsList[0],
   onSelectProject,
+  onViewAll,
 }: HomeScreenProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -225,7 +234,6 @@ export function HomeScreen({
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
 
-  const [isRecentsOpen, setIsRecentsOpen] = useState(true);
   const [isPhasesOpen, setIsPhasesOpen] = useState(true);
 
   // Active data based on selected project and top header tab
@@ -241,6 +249,44 @@ export function HomeScreen({
     setPriorityFilter("all");
     setTypeFilter("all");
     setSearchQuery("");
+  };
+
+  // Pull to Refresh & Skeleton Loader state
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isPulling, setIsPulling] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const touchStartY = useRef(0);
+  const mainRef = useRef<HTMLElement>(null);
+
+  const triggerRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 1100);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (mainRef.current && mainRef.current.scrollTop === 0) {
+      touchStartY.current = e.touches[0].clientY;
+      setIsPulling(true);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isPulling || isRefreshing) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - touchStartY.current;
+    if (diff > 0 && mainRef.current && mainRef.current.scrollTop === 0) {
+      setPullDistance(Math.min(diff * 0.4, 60));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (pullDistance > 35 && !isRefreshing) {
+      triggerRefresh();
+    }
+    setIsPulling(false);
+    setPullDistance(0);
   };
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -304,12 +350,32 @@ export function HomeScreen({
         isFilterActive={isFilterActive}
         userAvatar={userAvatar}
         selectedProject={selectedProject}
-        onSelectProject={onSelectProject}
+        onSelectProject={(p) => {
+          onSelectProject?.(p);
+          triggerRefresh();
+        }}
       />
 
-      <main className="min-h-0 flex-1 overflow-y-auto bg-[#0055ff] flex flex-col no-scrollbar">
-        {/* Dynamic Search & Active Filter Mode */}
-        {isSearchingOrFiltering ? (
+      <main
+        ref={mainRef}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className="min-h-0 flex-1 overflow-y-auto bg-[#0055ff] flex flex-col no-scrollbar"
+      >
+        {/* Pull To Refresh Indicator */}
+        <PullIndicator
+          isPulling={isPulling}
+          isRefreshing={isRefreshing}
+          pullDistance={pullDistance}
+        />
+
+        {/* Shimmer Skeleton Loader on Refresh */}
+        {isRefreshing ? (
+          <div className="p-4 space-y-3 flex-1 bg-[#F5F6F8] rounded-t-[26px] min-h-full">
+            <HomeSkeleton />
+          </div>
+        ) : isSearchingOrFiltering ? (
           <div className="p-4 space-y-3 flex-1 bg-[#F5F6F8] rounded-t-[26px] min-h-full">
             {/* Filter tags bar */}
             <div className="flex items-center justify-between">
@@ -445,6 +511,19 @@ export function HomeScreen({
                         e.preventDefault();
                         return;
                       }
+                      const statusMap: Record<string, string> = {
+                        "today": "all",
+                        "not-started": "TO DO",
+                        "in-progress": "IN PROGRESS",
+                        "in-review": "REVIEW",
+                        "blocked": "BLOCKED",
+                        "completed": "COMPLETED",
+                      };
+                      onViewAll?.({
+                        type: markupFilter === "all" ? "all" : (markupFilter as ItemType),
+                        status: statusMap[card.id] || "all",
+                        viewMode: "list",
+                      });
                     }}
                     className="flex flex-col justify-between rounded-[18px] p-3.5 text-left transition-all active:scale-[0.97] flex-shrink-0 cursor-pointer bg-white/[0.18] hover:bg-white/[0.26] backdrop-blur-md text-white"
                     style={{
@@ -476,16 +555,30 @@ export function HomeScreen({
             <div className="rounded-t-[30px] bg-white pt-5 pb-8 shadow-[0_-10px_35px_rgba(0,0,0,0.08)] flex-1 min-h-full flex flex-col -mt-3 z-10 relative">
               {/* Recents Section for Current Tab */}
               <section className="px-4" aria-labelledby="recents-heading">
-                <div id="recents-heading">
-                  <SectionHeader
-                    title="Recents"
-                    count={String(currentConfig.recentRows.length).padStart(2, "0")}
-                    isOpen={isRecentsOpen}
-                    onToggle={() => setIsRecentsOpen((v) => !v)}
-                  />
+                <div id="recents-heading" className="flex h-[32px] w-full items-center justify-between px-1 mb-1">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-[15px] font-bold text-[#0F172A] tracking-tight">
+                      Recents
+                    </h2>
+                    <span className="text-[11px] font-extrabold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                      {String(currentConfig.recentRows.length).padStart(2, "0")}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onViewAll?.({
+                        type: markupFilter === "all" ? "all" : (markupFilter as ItemType),
+                        viewMode: "list",
+                      })
+                    }
+                    className="text-[11px] font-bold text-[#0055ff] hover:underline flex items-center gap-0.5 cursor-pointer px-1 py-0.5"
+                  >
+                    <span>View all</span>
+                    <span className="text-[11.5px] font-semibold leading-none">›</span>
+                  </button>
                 </div>
-                {isRecentsOpen && (
-                  <div className="mt-2 space-y-1 animate-fade-in">
+                <div className="mt-2 space-y-1 animate-fade-in">
                     {currentConfig.recentRows.map((row) => {
                       const matchingItem = items.find((candidate) => candidate.id === row.id || candidate.title === row.title);
                       const itemToOpen = matchingItem || {
@@ -533,7 +626,6 @@ export function HomeScreen({
                       );
                     })}
                   </div>
-                )}
               </section>
 
               {/* Divider */}
@@ -555,6 +647,13 @@ export function HomeScreen({
                       <button
                         type="button"
                         key={phase.name}
+                        onClick={() =>
+                          onViewAll?.({
+                            phase: phase.name,
+                            type: markupFilter === "all" ? "all" : (markupFilter as ItemType),
+                            viewMode: "list",
+                          })
+                        }
                         className="flex min-h-[46px] w-full items-center gap-3 px-2 py-1.5 rounded-2xl text-left transition-all hover:bg-slate-50 active:bg-slate-100 cursor-pointer group"
                       >
                         <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
@@ -589,7 +688,13 @@ export function HomeScreen({
               <section className="px-4 space-y-1" aria-label="Browse task groups">
                 <button
                   type="button"
-                  onClick={onCreateClick}
+                  onClick={() =>
+                    onViewAll?.({
+                      type: markupFilter === "all" ? "all" : (markupFilter as ItemType),
+                      category: "all",
+                      viewMode: "list",
+                    })
+                  }
                   className="flex min-h-[46px] w-full items-center gap-3 px-2 py-1.5 rounded-2xl text-left transition-all hover:bg-slate-50 active:bg-slate-100 cursor-pointer group"
                 >
                   <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
@@ -616,7 +721,12 @@ export function HomeScreen({
 
                 <button
                   type="button"
-                  onClick={() => onTabChange("drawing")}
+                  onClick={() =>
+                    onViewAll?.({
+                      type: markupFilter === "all" ? "all" : (markupFilter as ItemType),
+                      viewMode: "list",
+                    })
+                  }
                   className="flex min-h-[46px] w-full items-center gap-3 px-2 py-1.5 rounded-2xl text-left transition-all hover:bg-slate-50 active:bg-slate-100 cursor-pointer group"
                 >
                   <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#0055ff] flex items-center justify-center shrink-0">

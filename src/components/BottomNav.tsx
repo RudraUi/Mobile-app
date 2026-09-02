@@ -176,7 +176,7 @@ export function BottomNav({ active, onChange, onFabClick }: BottomNavProps) {
       <button
         type="button"
         onClick={onFabClick}
-        className="absolute -top-[14px] left-1/2 -translate-x-1/2 flex items-center justify-center cursor-pointer z-40 active:scale-95 transition-transform shadow-md shadow-blue-500/25"
+        className="absolute -top-[14px] left-1/2 -translate-x-1/2 flex items-center justify-center cursor-pointer z-40 active:scale-95 transition-transform shadow-none"
         style={{
           width: "50px",
           height: "50px",
@@ -184,6 +184,7 @@ export function BottomNav({ active, onChange, onFabClick }: BottomNavProps) {
           backgroundColor: "#0055FF",
           border: "3.5px solid #ffffff",
           outline: "none",
+          boxShadow: "none",
         }}
       >
         <svg

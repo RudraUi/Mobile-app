@@ -20,14 +20,6 @@ interface ProfileScreenProps {
   onSignOut: () => void;
 }
 
-const AVATAR_PRESETS = [
-  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop",
-  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
-  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop",
-  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop",
-  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop",
-];
-
 export function ProfileScreen({
   profile,
   onUpdateProfile,
@@ -46,11 +38,6 @@ export function ProfileScreen({
     onUpdateProfile({ avatar: url });
   };
 
-  const selectPresetAvatar = (url: string) => {
-    setFormData((prev) => ({ ...prev, avatar: url }));
-    onUpdateProfile({ avatar: url });
-  };
-
   const handleSave = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     onUpdateProfile(formData);
@@ -65,12 +52,12 @@ export function ProfileScreen({
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-1 text-slate-600 font-semibold text-[13.5px] hover:text-[#0055ff] transition-colors cursor-pointer"
+          className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 flex items-center justify-center transition-all cursor-pointer shrink-0"
+          aria-label="Go back"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m15 18-6-6 6-6" />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
           </svg>
-          <span>Back</span>
         </button>
 
         <h1 className="text-[15px] font-bold text-slate-900">Profile</h1>
@@ -122,24 +109,6 @@ export function ProfileScreen({
           <p className="text-[12.5px] text-slate-500 font-medium mt-0.5">
             {formData.role} · <span className="text-slate-700">{formData.organization}</span>
           </p>
-
-          {/* Preset Avatars Row */}
-          <div className="flex items-center gap-2 mt-3.5">
-            {AVATAR_PRESETS.map((preset, idx) => (
-              <button
-                type="button"
-                key={idx}
-                onClick={() => selectPresetAvatar(preset)}
-                className={`w-7 h-7 rounded-full overflow-hidden transition-all cursor-pointer ${
-                  formData.avatar === preset
-                    ? "ring-2 ring-[#0055ff] ring-offset-2 scale-110"
-                    : "opacity-60 hover:opacity-100"
-                }`}
-              >
-                <img src={preset} alt="" className="w-full h-full object-cover" />
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Clean Integrated Stats Row (No Box-in-Box) */}
@@ -271,14 +240,19 @@ export function ProfileScreen({
           </div>
         </div>
 
-        {/* Sign Out Button - Clean and Minimal */}
+        {/* Sign Out Button - Clean and Left-Aligned */}
         <div className="pt-2 pb-6">
           <button
             type="button"
             onClick={onSignOut}
-            className="w-full py-2.5 text-center text-red-500 hover:text-red-600 text-[13px] font-semibold transition-colors cursor-pointer hover:bg-red-50/50 rounded-xl"
+            className="py-2.5 px-2 text-left text-red-500 hover:text-red-600 text-[13.5px] font-semibold transition-colors cursor-pointer hover:bg-red-50/50 rounded-xl flex items-center gap-2 active:scale-98"
           >
-            Sign Out
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            <span>Sign Out</span>
           </button>
         </div>
       </main>
