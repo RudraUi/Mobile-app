@@ -1,27 +1,27 @@
-import { useState } from "react";
-import { type Project, projectsList } from "../data/projectsData";
+import { useState } from "react"
+import { type Project, projectsList } from "../data/projectsData"
 
 export interface AppHeaderProps {
-  showSearch?: boolean;
-  searchQuery?: string;
-  onSearchChange?: (q: string) => void;
-  onSearchClick?: () => void;
-  onSplitViewClick?: () => void;
-  isSplitViewActive?: boolean;
-  markupFilter: string;
-  onFilterChange: (f: string) => void;
-  onInviteClick?: () => void;
-  onProfileClick?: () => void;
-  onFilterClick?: () => void;
-  isFilterActive?: boolean;
-  userAvatar?: string;
-  selectedProject?: Project;
-  onSelectProject?: (p: Project) => void;
-  projectName?: string;
-  projectBadge?: string;
-  projectBadgeBg?: string;
-  onProjectClick?: () => void;
-  isProjectOpen?: boolean;
+  showSearch?: boolean
+  searchQuery?: string
+  onSearchChange?: (q: string) => void
+  onSearchClick?: () => void
+  onSplitViewClick?: () => void
+  isSplitViewActive?: boolean
+  markupFilter: string
+  onFilterChange: (f: string) => void
+  onInviteClick?: () => void
+  onProfileClick?: () => void
+  onFilterClick?: () => void
+  isFilterActive?: boolean
+  userAvatar?: string
+  selectedProject?: Project
+  onSelectProject?: (p: Project) => void
+  projectName?: string
+  projectBadge?: string
+  projectBadgeBg?: string
+  onProjectClick?: () => void
+  isProjectOpen?: boolean
 }
 
 const filters = [
@@ -29,7 +29,19 @@ const filters = [
     id: "all",
     label: "All",
     icon: (
-      <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor" style={{ width: "13px", height: "13px", minWidth: "13px", minHeight: "13px" }}>
+      <svg
+        width="13"
+        height="13"
+        viewBox="0 0 16 16"
+        aria-hidden="true"
+        fill="currentColor"
+        style={{
+          width: "13px",
+          height: "13px",
+          minWidth: "13px",
+          minHeight: "13px",
+        }}
+      >
         <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1.5" />
         <rect x="9" y="1.5" width="5.5" height="5.5" rx="1.5" />
         <rect x="1.5" y="9" width="5.5" height="5.5" rx="1.5" />
@@ -41,7 +53,23 @@ const filters = [
     id: "task",
     label: "Task",
     icon: (
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ width: "13px", height: "13px", minWidth: "13px", minHeight: "13px" }}>
+      <svg
+        width="13"
+        height="13"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.85"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+        style={{
+          width: "13px",
+          height: "13px",
+          minWidth: "13px",
+          minHeight: "13px",
+        }}
+      >
         <rect x="1.5" y="1.5" width="13" height="13" rx="3" />
         <path d="m4.8 8 2.2 2.2 4.2-4.5" />
       </svg>
@@ -51,7 +79,22 @@ const filters = [
     id: "issue",
     label: "Issue",
     icon: (
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" aria-hidden="true" style={{ width: "13px", height: "13px", minWidth: "13px", minHeight: "13px" }}>
+      <svg
+        width="13"
+        height="13"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.85"
+        strokeLinecap="round"
+        aria-hidden="true"
+        style={{
+          width: "13px",
+          height: "13px",
+          minWidth: "13px",
+          minHeight: "13px",
+        }}
+      >
         <circle cx="8" cy="8" r="6.5" />
         <path d="M8 4.8v3.6" />
         <circle cx="8" cy="11.2" r=".9" fill="currentColor" stroke="none" />
@@ -62,7 +105,23 @@ const filters = [
     id: "rfi",
     label: "RFI",
     icon: (
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true" style={{ width: "13px", height: "13px", minWidth: "13px", minHeight: "13px" }}>
+      <svg
+        width="13"
+        height="13"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        aria-hidden="true"
+        style={{
+          width: "13px",
+          height: "13px",
+          minWidth: "13px",
+          minHeight: "13px",
+        }}
+      >
         <path d="M3.5 1.5h6l4 4v9h-10z" />
         <path d="M9.5 1.5v4h4" />
         <path d="M5.5 7.5h4M5.5 10.5h3.2" />
@@ -73,18 +132,40 @@ const filters = [
     id: "fieldnote",
     label: "Field Note",
     icon: (
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true" style={{ width: "13px", height: "13px", minWidth: "13px", minHeight: "13px" }}>
+      <svg
+        width="13"
+        height="13"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        aria-hidden="true"
+        style={{
+          width: "13px",
+          height: "13px",
+          minWidth: "13px",
+          minHeight: "13px",
+        }}
+      >
         <path d="M2.8 2.2h7.8a1.5 1.5 0 0 1 1.5 1.5v9H4.2a1.5 1.5 0 0 1-1.4-1.5z" />
-        <path d="m6.2 9.5 1-2.2 3.2-3.2.8.8-3.2 3.2z" fill="currentColor" stroke="none" />
+        <path
+          d="m6.2 9.5 1-2.2 3.2-3.2.8.8-3.2 3.2z"
+          fill="currentColor"
+          stroke="none"
+        />
       </svg>
     ),
   },
-];
+]
 
 function StatusBar() {
   return (
     <div className="relative h-[50px] shrink-0 text-white" aria-hidden="true">
-      <span className="absolute left-[48px] top-[14px] text-[16.5px] font-semibold tracking-[-0.35px]">9:41</span>
+      <span className="absolute left-[48px] top-[14px] text-[16.5px] font-semibold tracking-[-0.35px]">
+        9:41
+      </span>
 
       <div className="absolute left-1/2 top-[10px] h-[30px] w-[116px] -translate-x-1/2 rounded-full bg-black">
         <span className="absolute right-[15px] top-[10px] h-[10px] w-[10px] rounded-full bg-[#071426] shadow-[inset_0_0_0_2.5px_#101a2b]" />
@@ -99,17 +180,43 @@ function StatusBar() {
           <rect x="16" y="1" width="3" height="12" rx="1" fill="white" />
         </svg>
         <svg width="16" height="12" viewBox="0 0 18 14" fill="none">
-          <path d="M1.2 4.7a11.9 11.9 0 0 1 15.6 0M4 7.7a7.7 7.7 0 0 1 10 0M6.9 10.5a3.3 3.3 0 0 1 4.2 0" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
+          <path
+            d="M1.2 4.7a11.9 11.9 0 0 1 15.6 0M4 7.7a7.7 7.7 0 0 1 10 0M6.9 10.5a3.3 3.3 0 0 1 4.2 0"
+            stroke="white"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
           <circle cx="9" cy="12.5" r="1.1" fill="white" />
         </svg>
         <svg width="24" height="12" viewBox="0 0 26 13" fill="none">
-          <rect x=".75" y=".75" width="21.5" height="11.5" rx="3.2" stroke="white" strokeOpacity=".75" strokeWidth="1.5" />
-          <rect x="2.8" y="2.8" width="16.7" height="7.4" rx="1.6" fill="white" />
-          <path d="M24 4.3v4.4" stroke="white" strokeWidth="1.7" strokeLinecap="round" />
+          <rect
+            x=".75"
+            y=".75"
+            width="21.5"
+            height="11.5"
+            rx="3.2"
+            stroke="white"
+            strokeOpacity=".75"
+            strokeWidth="1.5"
+          />
+          <rect
+            x="2.8"
+            y="2.8"
+            width="16.7"
+            height="7.4"
+            rx="1.6"
+            fill="white"
+          />
+          <path
+            d="M24 4.3v4.4"
+            stroke="white"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+          />
         </svg>
       </div>
     </div>
-  );
+  )
 }
 
 export function AppHeader({
@@ -134,34 +241,34 @@ export function AppHeader({
   onProjectClick,
   isProjectOpen,
 }: AppHeaderProps) {
-  const [internalProjectOpen, setInternalProjectOpen] = useState(false);
+  const [internalProjectOpen, setInternalProjectOpen] = useState(false)
 
   const currentProject =
     selectedProject ||
     projectsList.find((p) => p.name === projectName) ||
-    projectsList[0];
+    projectsList[0]
 
-  const effectiveBadge = projectBadge || currentProject.badge;
-  const effectiveBadgeBg = projectBadgeBg || currentProject.badgeBg;
-  const effectiveName = projectName || currentProject.name;
+  const effectiveBadge = projectBadge || currentProject.badge
+  const effectiveBadgeBg = projectBadgeBg || currentProject.badgeBg
+  const effectiveName = projectName || currentProject.name
 
   const isDropdownVisible =
-    typeof isProjectOpen === "boolean" ? isProjectOpen : internalProjectOpen;
+    typeof isProjectOpen === "boolean" ? isProjectOpen : internalProjectOpen
 
   const handleToggleProject = () => {
     if (onProjectClick) {
-      onProjectClick();
+      onProjectClick()
     } else {
-      setInternalProjectOpen((v) => !v);
+      setInternalProjectOpen((v) => !v)
     }
-  };
+  }
 
   const handleCloseProject = () => {
-    setInternalProjectOpen(false);
+    setInternalProjectOpen(false)
     if (onProjectClick && isProjectOpen) {
-      onProjectClick();
+      onProjectClick()
     }
-  };
+  }
 
   return (
     <header className="home-header shrink-0 text-white relative z-40">
@@ -182,13 +289,31 @@ export function AppHeader({
             >
               {effectiveBadge}
             </span>
-            <span className="text-[18px] font-bold tracking-[-0.3px]">{effectiveName}</span>
+            <span className="text-[18px] font-bold tracking-[-0.3px]">
+              {effectiveName}
+            </span>
             <div
               className="transition-transform duration-200"
-              style={{ transform: isDropdownVisible ? "rotate(180deg)" : "rotate(0deg)" }}
+              style={{
+                transform: isDropdownVisible
+                  ? "rotate(180deg)"
+                  : "rotate(0deg)",
+              }}
             >
-              <svg width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true">
-                <path d="m2 2 4 4 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <svg
+                width="12"
+                height="8"
+                viewBox="0 0 12 8"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="m2 2 4 4 4-4"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
           </button>
@@ -220,14 +345,14 @@ export function AppHeader({
                 {/* Projects List */}
                 <div className="space-y-0.5 max-h-[240px] overflow-y-auto">
                   {projectsList.map((project) => {
-                    const isSelected = currentProject.id === project.id;
+                    const isSelected = currentProject.id === project.id
                     return (
                       <button
                         type="button"
                         key={project.id}
                         onClick={() => {
-                          onSelectProject?.(project);
-                          handleCloseProject();
+                          onSelectProject?.(project)
+                          handleCloseProject()
                         }}
                         className={`w-full p-2 rounded-xl flex items-center justify-between text-left transition-all cursor-pointer ${
                           isSelected
@@ -244,7 +369,13 @@ export function AppHeader({
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className={`text-[12px] truncate ${isSelected ? "font-bold text-[#0055ff]" : "font-semibold text-slate-800"}`}>
+                              <span
+                                className={`text-[12px] truncate ${
+                                  isSelected
+                                    ? "font-bold text-[#0055ff]"
+                                    : "font-semibold text-slate-800"
+                                }`}
+                              >
                                 {project.name}
                               </span>
                               <span className="text-[8.5px] font-bold px-1 py-0.2 rounded bg-black/5 text-slate-500 font-mono shrink-0">
@@ -259,13 +390,21 @@ export function AppHeader({
 
                         {isSelected && (
                           <div className="w-4 h-4 rounded-full bg-[#0055ff] text-white flex items-center justify-center shrink-0 ml-1.5">
-                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round">
+                            <svg
+                              width="9"
+                              height="9"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3.2"
+                              strokeLinecap="round"
+                            >
                               <polyline points="20 6 9 17 4 12" />
                             </svg>
                           </div>
                         )}
                       </button>
-                    );
+                    )
                   })}
                 </div>
               </div>
@@ -282,7 +421,15 @@ export function AppHeader({
             className="w-[32px] h-[32px] rounded-full bg-white/[0.14] hover:bg-white/25 active:scale-95 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xs"
             aria-label="Search items"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+            >
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
@@ -299,11 +446,41 @@ export function AppHeader({
             }`}
             aria-label="Filter items"
           >
-            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-              <path d="M2.5 6.5h4.5M11.5 6.5h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              <circle cx="9" cy="6.5" r="2.2" fill={isFilterActive ? "#0055ff" : "white"} stroke="currentColor" strokeWidth="1.6" />
-              <path d="M2.5 13.5h7.5M14.5 13.5h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              <circle cx="12.5" cy="13.5" r="2.2" fill={isFilterActive ? "#0055ff" : "white"} stroke="currentColor" strokeWidth="1.6" />
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 20 20"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M2.5 6.5h4.5M11.5 6.5h6"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+              <circle
+                cx="9"
+                cy="6.5"
+                r="2.2"
+                fill={isFilterActive ? "#0055ff" : "white"}
+                stroke="currentColor"
+                strokeWidth="1.6"
+              />
+              <path
+                d="M2.5 13.5h7.5M14.5 13.5h3"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+              <circle
+                cx="12.5"
+                cy="13.5"
+                r="2.2"
+                fill={isFilterActive ? "#0055ff" : "white"}
+                stroke="currentColor"
+                strokeWidth="1.6"
+              />
             </svg>
             {isFilterActive && (
               <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-[#FF2D55] rounded-full border-2 border-white" />
@@ -317,7 +494,15 @@ export function AppHeader({
             className="relative w-[32px] h-[32px] rounded-full bg-white/[0.14] hover:bg-white/25 active:scale-95 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xs"
             aria-label="Add team member"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+            >
               <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
               <circle cx="8.5" cy="7" r="4" />
               <line x1="20" y1="8" x2="20" y2="14" />
@@ -333,7 +518,10 @@ export function AppHeader({
             aria-label="Open profile"
           >
             <img
-              src={userAvatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop"}
+              src={
+                userAvatar ||
+                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop"
+              }
               alt="User profile"
               className="h-full w-full object-cover"
             />
@@ -342,9 +530,12 @@ export function AppHeader({
       </div>
 
       {/* Modern Capsule Navigation Tabs with Balanced 12px Font and 13px Icon Size */}
-      <nav className="flex items-center gap-[6px] overflow-x-auto px-[16px] pb-[12px] no-scrollbar" aria-label="Work item filters">
+      <nav
+        className="flex items-center gap-[6px] overflow-x-auto px-[16px] pb-[12px] no-scrollbar"
+        aria-label="Work item filters"
+      >
         {filters.map((filter) => {
-          const isActive = markupFilter === filter.id;
+          const isActive = markupFilter === filter.id
           return (
             <button
               type="button"
@@ -358,14 +549,23 @@ export function AppHeader({
               style={{ fontSize: "12px" }}
               aria-current={isActive ? "page" : undefined}
             >
-              <span className={`shrink-0 flex items-center justify-center ${isActive ? "text-[#0055ff]" : "text-white"}`} style={{ width: "13px", height: "13px" }}>
+              <span
+                className={`shrink-0 flex items-center justify-center ${
+                  isActive ? "text-[#0055ff]" : "text-white"
+                }`}
+                style={{ width: "13px", height: "13px" }}
+              >
                 {filter.icon}
               </span>
-              <span style={{ fontSize: "12px", lineHeight: "1", fontWeight: 700 }}>{filter.label}</span>
+              <span
+                style={{ fontSize: "12px", lineHeight: "1", fontWeight: 700 }}
+              >
+                {filter.label}
+              </span>
             </button>
-          );
+          )
         })}
       </nav>
     </header>
-  );
+  )
 }

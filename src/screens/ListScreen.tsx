@@ -1,54 +1,49 @@
-import { useState, useMemo, useRef } from "react";
-import type { MainTab } from "../components/BottomNav";
-import type { Item, ItemType, Severity, Status } from "../data/mockData";
+import { useState, useMemo, useRef } from "react"
+import type { MainTab } from "../components/BottomNav"
+import type { Item, ItemType, Severity, Status } from "../data/mockData"
 import {
   typeColors,
   availablePhases,
   availableCategories,
-} from "../data/mockData";
-import { type Project, projectsList } from "../data/projectsData";
-import { SearchModal } from "../components/SearchModal";
-import { ListSkeleton, PullIndicator } from "../components/SkeletonLoader";
+} from "../data/mockData"
+import { type Project, projectsList } from "../data/projectsData"
+import { SearchModal } from "../components/SearchModal"
+import { ListSkeleton, PullIndicator } from "../components/SkeletonLoader"
+import { BackButton } from "../components/BackButton"
 
-export type ViewMode = "list" | "kanban";
+export type ViewMode = "list" | "kanban"
 
-export type SortOption =
-  | "dueDate-asc"
-  | "dueDate-desc"
-  | "severity-desc"
-  | "title-asc"
-  | "id-asc"
-  | "status";
+export type SortOption = "dueDate-asc" | "dueDate-desc" | "severity-desc" | "title-asc" | "id-asc" | "status"
 
 export interface ListFilterInitialParams {
-  type?: ItemType | "all";
-  phase?: string;
-  category?: string;
-  status?: string;
-  viewMode?: ViewMode;
+  type?: ItemType | "all"
+  phase?: string
+  category?: string
+  status?: string
+  viewMode?: ViewMode
 }
 
 interface ListScreenProps {
-  items: Item[];
-  onItemClick: (item: Item) => void;
-  onCreateClick: () => void;
-  onBack: () => void;
-  activeTab: MainTab;
-  onTabChange: (tab: MainTab) => void;
-  selectedProject?: Project;
-  onSelectProject?: (p: Project) => void;
-  userAvatar?: string;
-  onUpdateStatus?: (id: string, newStatus: Status) => void;
-  initialParams?: ListFilterInitialParams;
+  items: Item[]
+  onItemClick: (item: Item) => void
+  onCreateClick: () => void
+  onBack: () => void
+  activeTab: MainTab
+  onTabChange: (tab: MainTab) => void
+  selectedProject?: Project
+  onSelectProject?: (p: Project) => void
+  userAvatar?: string
+  onUpdateStatus?: (id: string, newStatus: Status) => void
+  initialParams?: ListFilterInitialParams
 }
 
 const KANBAN_COLUMNS: {
-  id: Status;
-  title: string;
-  color: string;
-  columnBg: string;
-  headerTextColor: string;
-  countBg: string;
+  id: Status
+  title: string
+  color: string
+  columnBg: string
+  headerTextColor: string
+  countBg: string
 }[] = [
   {
     id: "TO DO",
@@ -90,22 +85,23 @@ const KANBAN_COLUMNS: {
     headerTextColor: "text-[#047857]",
     countBg: "bg-white text-[#047857] font-bold shadow-2xs",
   },
-];
+]
 
 const SEVERITY_WEIGHT: Record<Severity, number> = {
   HIGH: 3,
   MEDIUM: 2,
   LOW: 1,
-};
+}
 
-const CANONICAL_STATUSES: { id: Status | "all"; label: string; dot?: string }[] = [
-  { id: "all", label: "All" },
-  { id: "TO DO", label: "To Do", dot: "#2563EB" },
-  { id: "IN PROGRESS", label: "In Progress", dot: "#8B5CF6" },
-  { id: "REVIEW", label: "In Review", dot: "#D97706" },
-  { id: "BLOCKED", label: "Blocked", dot: "#EF4444" },
-  { id: "COMPLETED", label: "Completed", dot: "#10B981" },
-];
+const CANONICAL_STATUSES: { id: Status | "all" label: string dot?: string }[] =
+  [
+    { id: "all", label: "All" },
+    { id: "TO DO", label: "To Do", dot: "#2563EB" },
+    { id: "IN PROGRESS", label: "In Progress", dot: "#8B5CF6" },
+    { id: "REVIEW", label: "In Review", dot: "#D97706" },
+    { id: "BLOCKED", label: "Blocked", dot: "#EF4444" },
+    { id: "COMPLETED", label: "Completed", dot: "#10B981" },
+  ]
 
 const CANONICAL_PHASES = [
   { id: "all", label: "All" },
@@ -113,7 +109,7 @@ const CANONICAL_PHASES = [
   { id: "Construction Execution", label: "Construction" },
   { id: "Testing & Handover", label: "Testing & Handover" },
   { id: "Site Survey & Foundation", label: "Site Survey" },
-];
+]
 
 const CANONICAL_CATEGORIES = [
   { id: "all", label: "All" },
@@ -123,129 +119,265 @@ const CANONICAL_CATEGORIES = [
   { id: "Safety & Fire", label: "Safety & Fire" },
   { id: "Finishing", label: "Finishing" },
   { id: "Civil & Earthworks", label: "Civil" },
-];
+]
 
-const CANONICAL_SORTS: { id: SortOption; label: string }[] = [
+const CANONICAL_SORTS: { id: SortOption label: string }[] = [
   { id: "dueDate-asc", label: "Due Date (Earliest)" },
   { id: "dueDate-desc", label: "Due Date (Latest)" },
   { id: "severity-desc", label: "Severity (High)" },
   { id: "title-asc", label: "Title (A-Z)" },
   { id: "id-asc", label: "Item ID" },
-];
+]
 
 function getItemTypeIcon(type: ItemType) {
   switch (type) {
     case "task":
       return (
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <rect x="1.5" y="1.5" width="13" height="13" rx="3" />
           <path d="m4.8 8 2.2 2.2 4.2-4.5" />
         </svg>
-      );
+      )
     case "issue":
       return (
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        >
           <circle cx="8" cy="8" r="6.5" />
           <path d="M8 4.8v3.6" />
           <circle cx="8" cy="11.2" r=".9" fill="currentColor" stroke="none" />
         </svg>
-      );
+      )
     case "rfi":
       return (
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        >
           <path d="M3.5 1.5h6l4 4v9h-10z" />
           <path d="M9.5 1.5v4h4" />
           <path d="M5.5 7.5h4M5.5 10.5h3.2" />
         </svg>
-      );
+      )
     case "fieldnote":
       return (
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        >
           <path d="M2.8 2.2h7.8a1.5 1.5 0 0 1 1.5 1.5v9H4.2a1.5 1.5 0 0 1-1.4-1.5z" />
-          <path d="m6.2 9.5 1-2.2 3.2-3.2.8.8-3.2 3.2z" fill="currentColor" stroke="none" />
+          <path
+            d="m6.2 9.5 1-2.2 3.2-3.2.8.8-3.2 3.2z"
+            fill="currentColor"
+            stroke="none"
+          />
         </svg>
-      );
+      )
   }
 }
 
 function getItemTypeColors(type: ItemType) {
   switch (type) {
     case "task":
-      return "bg-blue-50 text-[#0055ff]";
+      return "bg-blue-50 text-[#0055ff]"
     case "issue":
-      return "bg-red-50 text-red-600";
+      return "bg-red-50 text-red-600"
     case "rfi":
-      return "bg-amber-50 text-amber-600";
+      return "bg-amber-50 text-amber-600"
     case "fieldnote":
-      return "bg-emerald-50 text-emerald-600";
+      return "bg-emerald-50 text-emerald-600"
   }
 }
 
 function FlagIcon({ color }: { color: string }) {
   return (
-    <svg width="13" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M4 15s1-0.8 4-0.8 5 1.6 8 1.6 4-0.8 4-0.8V3s-1 0.8-4 0.8-5-1.6-8-1.6-4 0.8-4 0.8z" fill={color} />
-      <line x1="4" y1="22" x2="4" y2="2" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+    <svg
+      width="13"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M4 15s1-0.8 4-0.8 5 1.6 8 1.6 4-0.8 4-0.8V3s-1 0.8-4 0.8-5-1.6-8-1.6-4 0.8-4 0.8z"
+        fill={color}
+      />
+      <line
+        x1="4"
+        y1="22"
+        x2="4"
+        y2="2"
+        stroke={color}
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
     </svg>
-  );
+  )
 }
 
-const filters: { id: ItemType | "all"; label: string; icon: React.ReactNode }[] = [
-  {
-    id: "all",
-    label: "All",
-    icon: (
-      <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor" style={{ width: "13px", height: "13px", minWidth: "13px", minHeight: "13px" }}>
-        <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1.5" />
-        <rect x="9" y="1.5" width="5.5" height="5.5" rx="1.5" />
-        <rect x="1.5" y="9" width="5.5" height="5.5" rx="1.5" />
-        <rect x="9" y="9" width="5.5" height="5.5" rx="1.5" />
-      </svg>
-    ),
-  },
-  {
-    id: "task",
-    label: "Task",
-    icon: (
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ width: "13px", height: "13px", minWidth: "13px", minHeight: "13px" }}>
-        <rect x="1.5" y="1.5" width="13" height="13" rx="3" />
-        <path d="m4.8 8 2.2 2.2 4.2-4.5" />
-      </svg>
-    ),
-  },
-  {
-    id: "issue",
-    label: "Issue",
-    icon: (
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" aria-hidden="true" style={{ width: "13px", height: "13px", minWidth: "13px", minHeight: "13px" }}>
-        <circle cx="8" cy="8" r="6.5" />
-        <path d="M8 4.8v3.6" />
-        <circle cx="8" cy="11.2" r=".9" fill="currentColor" stroke="none" />
-      </svg>
-    ),
-  },
-  {
-    id: "rfi",
-    label: "RFI",
-    icon: (
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true" style={{ width: "13px", height: "13px", minWidth: "13px", minHeight: "13px" }}>
-        <path d="M3.5 1.5h6l4 4v9h-10z" />
-        <path d="M9.5 1.5v4h4" />
-        <path d="M5.5 7.5h4M5.5 10.5h3.2" />
-      </svg>
-    ),
-  },
-  {
-    id: "fieldnote",
-    label: "Field Note",
-    icon: (
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true" style={{ width: "13px", height: "13px", minWidth: "13px", minHeight: "13px" }}>
-        <path d="M2.8 2.2h7.8a1.5 1.5 0 0 1 1.5 1.5v9H4.2a1.5 1.5 0 0 1-1.4-1.5z" />
-        <path d="m6.2 9.5 1-2.2 3.2-3.2.8.8-3.2 3.2z" fill="currentColor" stroke="none" />
-      </svg>
-    ),
-  },
-];
+const filters: { id: ItemType | "all" label: string icon: React.ReactNode }[] =
+  [
+    {
+      id: "all",
+      label: "All",
+      icon: (
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 16 16"
+          aria-hidden="true"
+          fill="currentColor"
+          style={{
+            width: "13px",
+            height: "13px",
+            minWidth: "13px",
+            minHeight: "13px",
+          }}
+        >
+          <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1.5" />
+          <rect x="9" y="1.5" width="5.5" height="5.5" rx="1.5" />
+          <rect x="1.5" y="9" width="5.5" height="5.5" rx="1.5" />
+          <rect x="9" y="9" width="5.5" height="5.5" rx="1.5" />
+        </svg>
+      ),
+    },
+    {
+      id: "task",
+      label: "Task",
+      icon: (
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.85"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          style={{
+            width: "13px",
+            height: "13px",
+            minWidth: "13px",
+            minHeight: "13px",
+          }}
+        >
+          <rect x="1.5" y="1.5" width="13" height="13" rx="3" />
+          <path d="m4.8 8 2.2 2.2 4.2-4.5" />
+        </svg>
+      ),
+    },
+    {
+      id: "issue",
+      label: "Issue",
+      icon: (
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.85"
+          strokeLinecap="round"
+          aria-hidden="true"
+          style={{
+            width: "13px",
+            height: "13px",
+            minWidth: "13px",
+            minHeight: "13px",
+          }}
+        >
+          <circle cx="8" cy="8" r="6.5" />
+          <path d="M8 4.8v3.6" />
+          <circle cx="8" cy="11.2" r=".9" fill="currentColor" stroke="none" />
+        </svg>
+      ),
+    },
+    {
+      id: "rfi",
+      label: "RFI",
+      icon: (
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          aria-hidden="true"
+          style={{
+            width: "13px",
+            height: "13px",
+            minWidth: "13px",
+            minHeight: "13px",
+          }}
+        >
+          <path d="M3.5 1.5h6l4 4v9h-10z" />
+          <path d="M9.5 1.5v4h4" />
+          <path d="M5.5 7.5h4M5.5 10.5h3.2" />
+        </svg>
+      ),
+    },
+    {
+      id: "fieldnote",
+      label: "Field Note",
+      icon: (
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          aria-hidden="true"
+          style={{
+            width: "13px",
+            height: "13px",
+            minWidth: "13px",
+            minHeight: "13px",
+          }}
+        >
+          <path d="M2.8 2.2h7.8a1.5 1.5 0 0 1 1.5 1.5v9H4.2a1.5 1.5 0 0 1-1.4-1.5z" />
+          <path
+            d="m6.2 9.5 1-2.2 3.2-3.2.8.8-3.2 3.2z"
+            fill="currentColor"
+            stroke="none"
+          />
+        </svg>
+      ),
+    },
+  ]
 
 export function ListScreen({
   items,
@@ -258,169 +390,196 @@ export function ListScreen({
   onUpdateStatus,
   initialParams,
 }: ListScreenProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>(initialParams?.viewMode || "list");
-  const [typeFilter, setTypeFilter] = useState<ItemType | "all">(initialParams?.type || "all");
-  const [phaseFilter, setPhaseFilter] = useState<string>(initialParams?.phase || "all");
-  const [categoryFilter, setCategoryFilter] = useState<string>(initialParams?.category || "all");
-  const [statusFilter, setStatusFilter] = useState<string>(initialParams?.status || "all");
-  const [sortBy, setSortBy] = useState<SortOption>("dueDate-asc");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    initialParams?.viewMode || "list",
+  )
+  const [typeFilter, setTypeFilter] = useState<ItemType | "all">(
+    initialParams?.type || "all",
+  )
+  const [phaseFilter, setPhaseFilter] = useState<string>(
+    initialParams?.phase || "all",
+  )
+  const [categoryFilter, setCategoryFilter] = useState<string>(
+    initialParams?.category || "all",
+  )
+  const [statusFilter, setStatusFilter] = useState<string>(
+    initialParams?.status || "all",
+  )
+  const [sortBy, setSortBy] = useState<SortOption>("dueDate-asc")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   // Modal state for single unified Filter & Sort
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
 
   // Scroll detection state to smoothly flatten curve on scroll
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false)
 
   const handleMainScroll = (e: React.UIEvent<HTMLElement>) => {
-    const top = e.currentTarget.scrollTop;
+    const top = e.currentTarget.scrollTop
     if (top > 8 && !isScrolled) {
-      setIsScrolled(true);
+      setIsScrolled(true)
     } else if (top <= 8 && isScrolled) {
-      setIsScrolled(false);
+      setIsScrolled(false)
     }
-  };
+  }
 
   // Drag and drop state for Kanban
-  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
-  const [dragOverColumn, setDragOverColumn] = useState<Status | null>(null);
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null)
+  const [dragOverColumn, setDragOverColumn] = useState<Status | null>(null)
 
   // Status moving popover state
-  const [statusMenuTargetId, setStatusMenuTargetId] = useState<string | null>(null);
+  const [statusMenuTargetId, setStatusMenuTargetId] = useState<string | null>(
+    null,
+  )
 
   // Filter and sort items
   const filteredAndSortedItems = useMemo(() => {
     let result = items.filter((item) => {
-      if (typeFilter !== "all" && item.type !== typeFilter) return false;
-      if (phaseFilter !== "all" && item.phase !== phaseFilter) return false;
-      if (categoryFilter !== "all" && item.category !== categoryFilter) return false;
-      if (statusFilter !== "all" && item.status !== statusFilter) return false;
+      if (typeFilter !== "all" && item.type !== typeFilter) return false
+      if (phaseFilter !== "all" && item.phase !== phaseFilter) return false
+      if (categoryFilter !== "all" && item.category !== categoryFilter)
+        return false
+      if (statusFilter !== "all" && item.status !== statusFilter) return false
       if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchesTitle = item.title.toLowerCase().includes(q);
-        const matchesId = item.id.toLowerCase().includes(q);
-        const matchesDesc = item.description?.toLowerCase().includes(q);
-        const matchesPhase = item.phase?.toLowerCase().includes(q);
-        const matchesCategory = item.category?.toLowerCase().includes(q);
-        return matchesTitle || matchesId || matchesDesc || matchesPhase || matchesCategory;
+        const q = searchQuery.toLowerCase()
+        const matchesTitle = item.title.toLowerCase().includes(q)
+        const matchesId = item.id.toLowerCase().includes(q)
+        const matchesDesc = item.description?.toLowerCase().includes(q)
+        const matchesPhase = item.phase?.toLowerCase().includes(q)
+        const matchesCategory = item.category?.toLowerCase().includes(q)
+        return (
+          matchesTitle ||
+          matchesId ||
+          matchesDesc ||
+          matchesPhase ||
+          matchesCategory
+        )
       }
-      return true;
-    });
+      return true
+    })
 
     // Sorting
     result.sort((a, b) => {
       switch (sortBy) {
         case "dueDate-asc":
-          return (a.dueDate || "9999").localeCompare(b.dueDate || "9999");
+          return (a.dueDate || "9999").localeCompare(b.dueDate || "9999")
         case "dueDate-desc":
-          return (b.dueDate || "0000").localeCompare(a.dueDate || "0000");
+          return (b.dueDate || "0000").localeCompare(a.dueDate || "0000")
         case "severity-desc":
-          return SEVERITY_WEIGHT[b.severity] - SEVERITY_WEIGHT[a.severity];
+          return SEVERITY_WEIGHT[b.severity] - SEVERITY_WEIGHT[a.severity]
         case "title-asc":
-          return a.title.localeCompare(b.title);
+          return a.title.localeCompare(b.title)
         case "id-asc":
-          return a.id.localeCompare(b.id);
+          return a.id.localeCompare(b.id)
         case "status":
-          return a.status.localeCompare(b.status);
+          return a.status.localeCompare(b.status)
         default:
-          return 0;
+          return 0
       }
-    });
+    })
 
-    return result;
-  }, [items, typeFilter, phaseFilter, categoryFilter, statusFilter, searchQuery, sortBy]);
+    return result
+  }, [
+    items,
+    typeFilter,
+    phaseFilter,
+    categoryFilter,
+    statusFilter,
+    searchQuery,
+    sortBy,
+  ])
 
   const activeFiltersCount =
     (typeFilter !== "all" ? 1 : 0) +
     (phaseFilter !== "all" ? 1 : 0) +
     (categoryFilter !== "all" ? 1 : 0) +
     (statusFilter !== "all" ? 1 : 0) +
-    (searchQuery.trim() ? 1 : 0);
+    (searchQuery.trim() ? 1 : 0)
 
   const handleResetFilters = () => {
-    setTypeFilter("all");
-    setPhaseFilter("all");
-    setCategoryFilter("all");
-    setStatusFilter("all");
-    setSearchQuery("");
-    setSortBy("dueDate-asc");
-    setOpenDropdown(null);
-  };
+    setTypeFilter("all")
+    setPhaseFilter("all")
+    setCategoryFilter("all")
+    setStatusFilter("all")
+    setSearchQuery("")
+    setSortBy("dueDate-asc")
+    setOpenDropdown(null)
+  }
 
   // Kanban status move handler
   const handleMoveStatus = (itemId: string, newStatus: Status) => {
-    onUpdateStatus?.(itemId, newStatus);
-    setStatusMenuTargetId(null);
-  };
+    onUpdateStatus?.(itemId, newStatus)
+    setStatusMenuTargetId(null)
+  }
 
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, id: string) => {
-    e.dataTransfer.setData("text/plain", id);
-    setDraggedItemId(id);
-  };
+    e.dataTransfer.setData("text/plain", id)
+    setDraggedItemId(id)
+  }
 
   const handleDragOver = (e: React.DragEvent, colId: Status) => {
-    e.preventDefault();
-    setDragOverColumn(colId);
-  };
+    e.preventDefault()
+    setDragOverColumn(colId)
+  }
 
   const handleDragLeave = () => {
-    setDragOverColumn(null);
-  };
+    setDragOverColumn(null)
+  }
 
   const handleDrop = (e: React.DragEvent, colId: Status) => {
-    e.preventDefault();
-    const id = e.dataTransfer.getData("text/plain") || draggedItemId;
+    e.preventDefault()
+    const id = e.dataTransfer.getData("text/plain") || draggedItemId
     if (id && onUpdateStatus) {
-      onUpdateStatus(id, colId);
+      onUpdateStatus(id, colId)
     }
-    setDraggedItemId(null);
-    setDragOverColumn(null);
-  };
+    setDraggedItemId(null)
+    setDragOverColumn(null)
+  }
 
   // Pull to Refresh & Skeleton Loader state
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isPulling, setIsPulling] = useState(false);
-  const [pullDistance, setPullDistance] = useState(0);
-  const touchStartY = useRef(0);
-  const mainRef = useRef<HTMLElement>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isPulling, setIsPulling] = useState(false)
+  const [pullDistance, setPullDistance] = useState(0)
+  const touchStartY = useRef(0)
+  const mainRef = useRef<HTMLElement>(null)
 
   const triggerRefresh = () => {
-    setIsRefreshing(true);
+    setIsRefreshing(true)
     setTimeout(() => {
-      setIsRefreshing(false);
-    }, 1100);
-  };
+      setIsRefreshing(false)
+    }, 1100)
+  }
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (mainRef.current && mainRef.current.scrollTop === 0) {
-      touchStartY.current = e.touches[0].clientY;
-      setIsPulling(true);
+      touchStartY.current = e.touches[0].clientY
+      setIsPulling(true)
     }
-  };
+  }
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isPulling || isRefreshing) return;
-    const currentY = e.touches[0].clientY;
-    const diff = currentY - touchStartY.current;
+    if (!isPulling || isRefreshing) return
+    const currentY = e.touches[0].clientY
+    const diff = currentY - touchStartY.current
     if (diff > 0 && mainRef.current && mainRef.current.scrollTop === 0) {
-      setPullDistance(Math.min(diff * 0.4, 60));
+      setPullDistance(Math.min(diff * 0.4, 60))
     }
-  };
+  }
 
   const handleTouchEnd = () => {
     if (pullDistance > 35 && !isRefreshing) {
-      triggerRefresh();
+      triggerRefresh()
     }
-    setIsPulling(false);
-    setPullDistance(0);
-  };
+    setIsPulling(false)
+    setPullDistance(0)
+  }
 
   return (
     <div
       onClick={() => {
-        if (statusMenuTargetId) setStatusMenuTargetId(null);
+        if (statusMenuTargetId) setStatusMenuTargetId(null)
       }}
       className="flex h-full min-h-0 flex-col bg-[#0055FF] text-[#18243D] select-none"
     >
@@ -431,16 +590,7 @@ export function ListScreen({
 
         <div className="flex items-center justify-between gap-2 px-3.5 h-[38px]">
           {/* Simple Back Arrow */}
-          <button
-            type="button"
-            onClick={onBack}
-            className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 text-white flex items-center justify-center transition-all cursor-pointer shrink-0"
-            aria-label="Go back"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
+          <BackButton onClick={onBack} />
 
           {/* Simple Title + Count */}
           <div className="min-w-0 flex-1 pl-1 text-left">
@@ -462,7 +612,16 @@ export function ListScreen({
               title="Search items"
               aria-label="Search items"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
@@ -480,7 +639,16 @@ export function ListScreen({
               title="Filter and Sort"
               aria-label="Open filter and sort"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <line x1="4" y1="21" x2="4" y2="14" />
                 <line x1="4" y1="10" x2="4" y2="3" />
                 <line x1="12" y1="21" x2="12" y2="12" />
@@ -501,21 +669,45 @@ export function ListScreen({
             {/* Single Small Icon to Switch View */}
             <button
               type="button"
-              onClick={() => setViewMode(viewMode === "list" ? "kanban" : "list")}
+              onClick={() =>
+                setViewMode(viewMode === "list" ? "kanban" : "list")
+              }
               className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 text-white flex items-center justify-center transition-all cursor-pointer"
-              title={viewMode === "list" ? "Switch to Kanban Board" : "Switch to List View"}
+              title={
+                viewMode === "list"
+                  ? "Switch to Kanban Board"
+                  : "Switch to List View"
+              }
               aria-label="Switch view"
             >
               {viewMode === "list" ? (
                 /* Shows Kanban board icon when in list view */
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <rect x="3" y="3" width="5" height="18" rx="1.5" />
                   <rect x="10.5" y="3" width="5" height="12" rx="1.5" />
                   <rect x="18" y="3" width="5" height="15" rx="1.5" />
                 </svg>
               ) : (
                 /* Shows List icon when in kanban view */
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <line x1="8" y1="6" x2="21" y2="6" />
                   <line x1="8" y1="12" x2="21" y2="12" />
                   <line x1="8" y1="18" x2="21" y2="18" />
@@ -529,9 +721,12 @@ export function ListScreen({
         </div>
 
         {/* Modern Capsule Navigation Tabs with Balanced 12px Font and 13px Icon Size */}
-        <nav className="mt-3 flex items-center gap-[6px] overflow-x-auto px-[16px] pb-[16px] no-scrollbar" aria-label="Work item filters">
+        <nav
+          className="mt-3 flex items-center gap-[6px] overflow-x-auto px-[16px] pb-[16px] no-scrollbar"
+          aria-label="Work item filters"
+        >
           {filters.map((filter) => {
-            const isActive = typeFilter === filter.id;
+            const isActive = typeFilter === filter.id
             return (
               <button
                 type="button"
@@ -545,12 +740,21 @@ export function ListScreen({
                 style={{ fontSize: "12px" }}
                 aria-current={isActive ? "page" : undefined}
               >
-                <span className={`shrink-0 flex items-center justify-center ${isActive ? "text-[#0055ff]" : "text-white"}`} style={{ width: "13px", height: "13px" }}>
+                <span
+                  className={`shrink-0 flex items-center justify-center ${
+                    isActive ? "text-[#0055ff]" : "text-white"
+                  }`}
+                  style={{ width: "13px", height: "13px" }}
+                >
                   {filter.icon}
                 </span>
-                <span style={{ fontSize: "12px", lineHeight: "1", fontWeight: 700 }}>{filter.label}</span>
+                <span
+                  style={{ fontSize: "12px", lineHeight: "1", fontWeight: 700 }}
+                >
+                  {filter.label}
+                </span>
               </button>
-            );
+            )
           })}
         </nav>
       </header>
@@ -568,7 +772,9 @@ export function ListScreen({
             {/* Header */}
             <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-[14px] font-bold text-slate-900 tracking-tight">Filters</span>
+                <span className="text-[14px] font-bold text-slate-900 tracking-tight">
+                  Filters
+                </span>
                 {activeFiltersCount > 0 && (
                   <span className="px-2 py-0.5 rounded-full bg-blue-50 text-[#0055ff] text-[10px] font-bold">
                     {activeFiltersCount} active
@@ -594,7 +800,7 @@ export function ListScreen({
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {CANONICAL_STATUSES.map((s) => {
-                    const isSelected = statusFilter === s.id;
+                    const isSelected = statusFilter === s.id
                     return (
                       <button
                         type="button"
@@ -608,13 +814,19 @@ export function ListScreen({
                       >
                         {s.dot && (
                           <span
-                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSelected ? "bg-white" : ""}`}
-                            style={isSelected ? undefined : { backgroundColor: s.dot }}
+                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                              isSelected ? "bg-white" : ""
+                            }`}
+                            style={
+                              isSelected
+                                ? undefined
+                                : { backgroundColor: s.dot }
+                            }
                           />
                         )}
                         <span>{s.label}</span>
                       </button>
-                    );
+                    )
                   })}
                 </div>
               </div>
@@ -626,7 +838,7 @@ export function ListScreen({
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {CANONICAL_PHASES.map((p) => {
-                    const isSelected = phaseFilter === p.id;
+                    const isSelected = phaseFilter === p.id
                     return (
                       <button
                         type="button"
@@ -640,7 +852,7 @@ export function ListScreen({
                       >
                         {p.label}
                       </button>
-                    );
+                    )
                   })}
                 </div>
               </div>
@@ -652,7 +864,7 @@ export function ListScreen({
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {CANONICAL_CATEGORIES.map((c) => {
-                    const isSelected = categoryFilter === c.id;
+                    const isSelected = categoryFilter === c.id
                     return (
                       <button
                         type="button"
@@ -666,7 +878,7 @@ export function ListScreen({
                       >
                         {c.label}
                       </button>
-                    );
+                    )
                   })}
                 </div>
               </div>
@@ -678,7 +890,7 @@ export function ListScreen({
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {CANONICAL_SORTS.map((s) => {
-                    const isSelected = sortBy === s.id;
+                    const isSelected = sortBy === s.id
                     return (
                       <button
                         type="button"
@@ -692,7 +904,7 @@ export function ListScreen({
                       >
                         {s.label}
                       </button>
-                    );
+                    )
                   })}
                 </div>
               </div>
@@ -754,8 +966,8 @@ export function ListScreen({
                   item.severity === "HIGH"
                     ? "#FF001F"
                     : item.severity === "MEDIUM"
-                    ? "#FF6D00"
-                    : "#1558F5";
+                      ? "#FF6D00"
+                      : "#1558F5"
 
                 return (
                   <button
@@ -767,7 +979,7 @@ export function ListScreen({
                     {/* Item Type Icon */}
                     <div
                       className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${getItemTypeColors(
-                        item.type
+                        item.type,
                       )}`}
                     >
                       {getItemTypeIcon(item.type)}
@@ -782,19 +994,21 @@ export function ListScreen({
 
                       {/* Line 2: ID · Status · Category · Due Date */}
                       <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400 mt-1 truncate">
-                        <span className="font-bold text-slate-500 font-mono">{item.id}</span>
+                        <span className="font-bold text-slate-500 font-mono">
+                          {item.id}
+                        </span>
                         <span>·</span>
                         <span
                           className={`capitalize font-semibold ${
                             item.status === "COMPLETED"
                               ? "text-emerald-600"
                               : item.status === "IN PROGRESS"
-                              ? "text-purple-600"
-                              : item.status === "REVIEW"
-                              ? "text-amber-600"
-                              : item.status === "BLOCKED"
-                              ? "text-rose-600"
-                              : "text-blue-600"
+                                ? "text-purple-600"
+                                : item.status === "REVIEW"
+                                  ? "text-amber-600"
+                                  : item.status === "BLOCKED"
+                                    ? "text-rose-600"
+                                    : "text-blue-600"
                           }`}
                         >
                           {item.status.toLowerCase()}
@@ -802,7 +1016,9 @@ export function ListScreen({
                         {item.category && (
                           <>
                             <span>·</span>
-                            <span className="truncate max-w-[120px]">{item.category}</span>
+                            <span className="truncate max-w-[120px]">
+                              {item.category}
+                            </span>
                           </>
                         )}
                         {item.dueDate && (
@@ -822,17 +1038,26 @@ export function ListScreen({
                       </span>
                     </div>
                   </button>
-                );
+                )
               })
             ) : (
               <div className="p-8 text-center bg-white mt-4">
                 <div className="w-12 h-12 rounded-full bg-blue-50 text-[#0055FF] flex items-center justify-center mx-auto mb-3">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <circle cx="11" cy="11" r="8" />
                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
                   </svg>
                 </div>
-                <h4 className="text-[14.5px] font-bold text-slate-800">No matching items found</h4>
+                <h4 className="text-[14.5px] font-bold text-slate-800">
+                  No matching items found
+                </h4>
                 <p className="text-[11.5px] text-slate-400 mt-1 max-w-[240px] mx-auto">
                   Try adjusting your phase, category, or type filters.
                 </p>
@@ -850,10 +1075,15 @@ export function ListScreen({
           /* ========================================================= */
           /* VIEW 2: KANBAN BOARD VIEW (Horizontal Scrolling Columns)   */
           /* ========================================================= */
-          <div className="flex-1 overflow-x-auto p-3.5 pt-4 flex gap-3 no-scrollbar select-none bg-slate-50/60 rounded-t-[28px]" style={{ minHeight: "100%" }}>
+          <div
+            className="flex-1 overflow-x-auto p-3.5 pt-4 flex gap-3 no-scrollbar select-none bg-slate-50/60 rounded-t-[28px]"
+            style={{ minHeight: "100%" }}
+          >
             {KANBAN_COLUMNS.map((column) => {
-              const columnItems = filteredAndSortedItems.filter((i) => i.status === column.id);
-              const isDragOver = dragOverColumn === column.id;
+              const columnItems = filteredAndSortedItems.filter(
+                (i) => i.status === column.id,
+              )
+              const isDragOver = dragOverColumn === column.id
 
               return (
                 <div
@@ -869,11 +1099,18 @@ export function ListScreen({
                   {/* Column Header (Simple, soothing, seamless background) */}
                   <div className="px-3.5 py-3 flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: column.color }} />
-                      <h3 className={`text-[13.5px] font-bold ${column.headerTextColor} tracking-tight`}>
+                      <span
+                        className="w-2.5 h-2.5 rounded-full"
+                        style={{ backgroundColor: column.color }}
+                      />
+                      <h3
+                        className={`text-[13.5px] font-bold ${column.headerTextColor} tracking-tight`}
+                      >
                         {column.title}
                       </h3>
-                      <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${column.countBg}`}>
+                      <span
+                        className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${column.countBg}`}
+                      >
                         {columnItems.length}
                       </span>
                     </div>
@@ -884,7 +1121,15 @@ export function ListScreen({
                       className="w-5 h-5 rounded-md hover:bg-black/5 text-slate-500 flex items-center justify-center transition-colors cursor-pointer"
                       title={`Add new ${column.title} item`}
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                      >
                         <line x1="12" y1="5" x2="12" y2="19" />
                         <line x1="5" y1="12" x2="19" y2="12" />
                       </svg>
@@ -899,8 +1144,8 @@ export function ListScreen({
                           item.severity === "HIGH"
                             ? "#FF001F"
                             : item.severity === "MEDIUM"
-                            ? "#FF6D00"
-                            : "#1558F5";
+                              ? "#FF6D00"
+                              : "#1558F5"
 
                         return (
                           <div
@@ -915,7 +1160,7 @@ export function ListScreen({
                               <div className="flex items-center gap-1.5 min-w-0">
                                 <span
                                   className={`flex h-4.5 w-4.5 items-center justify-center rounded font-bold text-[8.5px] ${getItemTypeColors(
-                                    item.type
+                                    item.type,
                                   )}`}
                                 >
                                   {getItemTypeIcon(item.type)}
@@ -930,13 +1175,22 @@ export function ListScreen({
                                 <button
                                   type="button"
                                   onClick={(e) => {
-                                    e.stopPropagation();
-                                    setStatusMenuTargetId(statusMenuTargetId === item.id ? null : item.id);
+                                    e.stopPropagation()
+                                    setStatusMenuTargetId(
+                                      statusMenuTargetId === item.id
+                                        ? null
+                                        : item.id,
+                                    )
                                   }}
                                   className="w-4.5 h-4.5 rounded text-slate-300 hover:text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
                                   title="Move status"
                                 >
-                                  <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+                                  <svg
+                                    width="10"
+                                    height="10"
+                                    viewBox="0 0 16 16"
+                                    fill="currentColor"
+                                  >
                                     <circle cx="8" cy="3" r="1.5" />
                                     <circle cx="8" cy="8" r="1.5" />
                                     <circle cx="8" cy="13" r="1.5" />
@@ -958,12 +1212,19 @@ export function ListScreen({
                                   <button
                                     type="button"
                                     key={c.id}
-                                    onClick={() => handleMoveStatus(item.id, c.id)}
+                                    onClick={() =>
+                                      handleMoveStatus(item.id, c.id)
+                                    }
                                     className={`w-full flex items-center gap-2 px-2 py-1 rounded-lg text-[11px] font-bold transition-colors ${
-                                      item.status === c.id ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50"
+                                      item.status === c.id
+                                        ? "bg-slate-100 text-slate-900"
+                                        : "text-slate-600 hover:bg-slate-50"
                                     }`}
                                   >
-                                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: c.color }} />
+                                    <span
+                                      className="w-2 h-2 rounded-full"
+                                      style={{ backgroundColor: c.color }}
+                                    />
                                     <span>{c.title}</span>
                                   </button>
                                 ))}
@@ -980,8 +1241,21 @@ export function ListScreen({
                               <div className="flex items-center gap-1.5 min-w-0">
                                 {item.dueDate && (
                                   <span className="flex items-center gap-0.5 text-[10px] font-medium text-slate-400 shrink-0">
-                                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                      <rect x="3" y="4" width="18" height="18" rx="2" />
+                                    <svg
+                                      width="9"
+                                      height="9"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                    >
+                                      <rect
+                                        x="3"
+                                        y="4"
+                                        width="18"
+                                        height="18"
+                                        rx="2"
+                                      />
                                       <line x1="16" y1="2" x2="16" y2="6" />
                                       <line x1="8" y1="2" x2="8" y2="6" />
                                       <line x1="3" y1="10" x2="21" y2="10" />
@@ -1013,12 +1287,14 @@ export function ListScreen({
                               )}
                             </div>
                           </div>
-                        );
+                        )
                       })
                     ) : (
                       /* Empty Column Placeholder */
                       <div className="py-4 px-3 rounded-xl text-center bg-white/40">
-                        <p className="text-[11px] font-semibold text-slate-400">No items in {column.title}</p>
+                        <p className="text-[11px] font-semibold text-slate-400">
+                          No items in {column.title}
+                        </p>
                         <button
                           type="button"
                           onClick={onCreateClick}
@@ -1030,7 +1306,7 @@ export function ListScreen({
                     )}
                   </div>
                 </div>
-              );
+              )
             })}
           </div>
         )}
@@ -1042,11 +1318,10 @@ export function ListScreen({
         onClose={() => setIsSearchOpen(false)}
         items={items}
         onItemClick={(item) => {
-          setIsSearchOpen(false);
-          onItemClick(item);
+          setIsSearchOpen(false)
+          onItemClick(item)
         }}
       />
     </div>
-  );
+  )
 }
-

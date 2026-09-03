@@ -1,35 +1,35 @@
-import { useState, useEffect, useRef, ReactNode } from "react";
+import { useState, useEffect, useRef, ReactNode } from "react"
 
 const scaleInKeyframes = `
 @keyframes scaleIn {
   from { opacity: 0; transform: scale(0.97) translateY(-4px); }
   to   { opacity: 1; transform: scale(1)    translateY(0px); }
 }
-`;
+`
 
 if (typeof document !== "undefined") {
-  const styleId = "select-dropdown-keyframes";
+  const styleId = "select-dropdown-keyframes"
   if (!document.getElementById(styleId)) {
-    const style = document.createElement("style");
-    style.id = styleId;
-    style.textContent = scaleInKeyframes;
-    document.head.appendChild(style);
+    const style = document.createElement("style")
+    style.id = styleId
+    style.textContent = scaleInKeyframes
+    document.head.appendChild(style)
   }
 }
 
 export interface SelectOption {
-  value: string;
-  label: string;
-  dot?: string;
-  badge?: ReactNode;
+  value: string
+  label: string
+  dot?: string
+  badge?: ReactNode
 }
 
 export interface SelectDropdownProps {
-  options: SelectOption[];
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  renderTrigger?: (selected: SelectOption | undefined) => ReactNode;
+  options: SelectOption[]
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  renderTrigger?: (selected: SelectOption | undefined) => ReactNode
 }
 
 export function SelectDropdown({
@@ -39,20 +39,23 @@ export function SelectDropdown({
   placeholder = "Select an option",
   renderTrigger,
 }: SelectDropdownProps) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const selected = options.find((o) => o.value === value);
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const selected = options.find((o) => o.value === value)
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) return
     function handleClick(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false)
       }
     }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [open])
 
   return (
     <div ref={containerRef} style={{ position: "relative", width: "100%" }}>
@@ -121,19 +124,20 @@ export function SelectDropdown({
             borderRadius: "1rem",
             zIndex: 30,
             overflow: "hidden",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05)",
+            boxShadow:
+              "0 8px 32px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.05)",
             animation: "scaleIn 180ms cubic-bezier(0.4,0,0.2,1) forwards",
           }}
         >
           {options.map((opt, i) => {
-            const isSelected = opt.value === value;
-            const isLast = i === options.length - 1;
+            const isSelected = opt.value === value
+            const isLast = i === options.length - 1
             return (
               <div
                 key={opt.value}
                 onClick={() => {
-                  onChange(opt.value);
-                  setOpen(false);
+                  onChange(opt.value)
+                  setOpen(false)
                 }}
                 style={{
                   display: "flex",
@@ -146,13 +150,16 @@ export function SelectDropdown({
                   transition: "background 100ms",
                 }}
                 onMouseDown={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.background = "#f8f9ff";
+                  ;(e.currentTarget as HTMLDivElement).style.background =
+                    "#f8f9ff"
                 }}
                 onMouseUp={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.background = "white";
+                  ;(e.currentTarget as HTMLDivElement).style.background =
+                    "white"
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.background = "white";
+                  ;(e.currentTarget as HTMLDivElement).style.background =
+                    "white"
                 }}
               >
                 {/* Left indicator */}
@@ -200,12 +207,12 @@ export function SelectDropdown({
                   </svg>
                 )}
               </div>
-            );
+            )
           })}
         </div>
       )}
     </div>
-  );
+  )
 }
 
-export default SelectDropdown;
+export default SelectDropdown

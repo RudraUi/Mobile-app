@@ -1,24 +1,24 @@
-import { useState } from "react";
-import { AppHeader } from "../components/AppHeader";
-import { BottomNav, type MainTab } from "../components/BottomNav";
-import { FilterModal } from "../components/FilterModal";
-import { SearchModal } from "../components/SearchModal";
-import type { Item, ItemType, Severity, Status } from "../data/mockData";
-import { type Project, projectsList } from "../data/projectsData";
+import { useState } from "react"
+import { AppHeader } from "../components/AppHeader"
+import { BottomNav, type MainTab } from "../components/BottomNav"
+import { FilterModal } from "../components/FilterModal"
+import { SearchModal } from "../components/SearchModal"
+import type { Item, ItemType, Severity, Status } from "../data/mockData"
+import { type Project, projectsList } from "../data/projectsData"
 
 interface WalkthroughScreenProps {
-  items: Item[];
-  onItemClick: (item: Item) => void;
-  onCreateClick: () => void;
-  activeTab: MainTab;
-  onTabChange: (tab: MainTab) => void;
-  markupFilter: string;
-  onFilterChange: (f: string) => void;
-  onInviteClick?: () => void;
-  onProfileClick?: () => void;
-  userAvatar?: string;
-  selectedProject?: Project;
-  onSelectProject?: (p: Project) => void;
+  items: Item[]
+  onItemClick: (item: Item) => void
+  onCreateClick: () => void
+  activeTab: MainTab
+  onTabChange: (tab: MainTab) => void
+  markupFilter: string
+  onFilterChange: (f: string) => void
+  onInviteClick?: () => void
+  onProfileClick?: () => void
+  userAvatar?: string
+  selectedProject?: Project
+  onSelectProject?: (p: Project) => void
 }
 
 export function WalkthroughScreen({
@@ -35,55 +35,58 @@ export function WalkthroughScreen({
   selectedProject = projectsList[0],
   onSelectProject,
 }: WalkthroughScreenProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [filterType, setFilterType] = useState<ItemType | "all">("all");
-  const [filterStatus, setFilterStatus] = useState<Status | "all">("all");
-  const [filterPriority, setFilterPriority] = useState<Severity | "all">("all");
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
+  const [filterType, setFilterType] = useState<ItemType | "all">("all")
+  const [filterStatus, setFilterStatus] = useState<Status | "all">("all")
+  const [filterPriority, setFilterPriority] = useState<Severity | "all">("all")
 
-  const [captureDate, setCaptureDate] = useState("Sep 01 · 10:45 AM");
-  const [compareMode, setCompareMode] = useState<"photo" | "split" | "cad">("photo");
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [selectedPinItem, setSelectedPinItem] = useState<Item | null>(null);
+  const [captureDate, setCaptureDate] = useState("Sep 01 · 10:45 AM")
+  const [compareMode, setCompareMode] = useState<"photo" | "split" | "cad">(
+    "photo",
+  )
+  const [zoomLevel, setZoomLevel] = useState(1)
+  const [selectedPinItem, setSelectedPinItem] = useState<Item | null>(null)
 
   const filteredItems = items.filter((item) => {
-    if (markupFilter !== "all" && item.type !== markupFilter) return false;
-    if (filterType !== "all" && item.type !== filterType) return false;
-    if (filterStatus !== "all" && item.status !== filterStatus) return false;
-    if (filterPriority !== "all" && item.severity !== filterPriority) return false;
+    if (markupFilter !== "all" && item.type !== markupFilter) return false
+    if (filterType !== "all" && item.type !== filterType) return false
+    if (filterStatus !== "all" && item.status !== filterStatus) return false
+    if (filterPriority !== "all" && item.severity !== filterPriority)
+      return false
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchesTitle = item.title.toLowerCase().includes(q);
-      const matchesId = item.id.toLowerCase().includes(q);
-      const matchesDesc = item.description?.toLowerCase().includes(q);
-      return matchesTitle || matchesId || matchesDesc;
+      const q = searchQuery.toLowerCase()
+      const matchesTitle = item.title.toLowerCase().includes(q)
+      const matchesId = item.id.toLowerCase().includes(q)
+      const matchesDesc = item.description?.toLowerCase().includes(q)
+      return matchesTitle || matchesId || matchesDesc
     }
-    return true;
-  });
+    return true
+  })
 
   const getPinColor = (type: string) => {
-    if (type === "issue") return "#EF4444";
-    if (type === "rfi") return "#F59E0B";
-    if (type === "task") return "#0055ff";
-    return "#10B981";
-  };
+    if (type === "issue") return "#EF4444"
+    if (type === "rfi") return "#F59E0B"
+    if (type === "task") return "#0055ff"
+    return "#10B981"
+  }
 
   const getPinIcon = (type: string) => {
-    if (type === "issue") return "!";
-    if (type === "rfi") return "?";
-    if (type === "task") return "T";
-    return "N";
-  };
+    if (type === "issue") return "!"
+    if (type === "rfi") return "?"
+    if (type === "task") return "T"
+    return "N"
+  }
 
   const captureTimestamps = [
     "Sep 01 · 10:45 AM (Today)",
     "Aug 28 · 03:20 PM",
     "Aug 21 · 09:15 AM",
     "Aug 14 · 11:00 AM",
-  ];
+  ]
 
-  const [isDateOpen, setIsDateOpen] = useState(false);
+  const [isDateOpen, setIsDateOpen] = useState(false)
 
   return (
     <div className="flex flex-col h-full bg-[#0F172A] select-none overflow-hidden text-white">
@@ -95,7 +98,11 @@ export function WalkthroughScreen({
         onSplitViewClick={() => onTabChange("splitview")}
         isSplitViewActive={activeTab === "splitview"}
         onFilterClick={() => setIsFilterModalOpen(true)}
-        isFilterActive={filterType !== "all" || filterStatus !== "all" || filterPriority !== "all"}
+        isFilterActive={
+          filterType !== "all" ||
+          filterStatus !== "all" ||
+          filterPriority !== "all"
+        }
         onInviteClick={onInviteClick}
         onProfileClick={onProfileClick}
         userAvatar={userAvatar}
@@ -108,15 +115,22 @@ export function WalkthroughScreen({
         {/* 360° Panoramic Background */}
         <div
           className="w-full h-full relative transition-transform duration-200"
-          style={{ transform: `scale(${zoomLevel})`, transformOrigin: "center center" }}
+          style={{
+            transform: `scale(${zoomLevel})`,
+            transformOrigin: "center center",
+          }}
         >
           <div
             className="w-full h-full relative"
             style={{
-              backgroundImage: "url(https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1200&h=1000&fit=crop)",
+              backgroundImage:
+                "url(https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1200&h=1000&fit=crop)",
               backgroundSize: "cover",
               backgroundPosition: "center",
-              filter: compareMode === "cad" ? "grayscale(100%) invert(90%)" : "contrast(1.05)",
+              filter:
+                compareMode === "cad"
+                  ? "grayscale(100%) invert(90%)"
+                  : "contrast(1.05)",
             }}
           >
             {/* 360 Ambient Vignette */}
@@ -134,7 +148,11 @@ export function WalkthroughScreen({
                   type="button"
                   onClick={() => setCaptureDate("Aug 28 · 03:20 PM")}
                   className="absolute pointer-events-auto cursor-pointer group flex flex-col items-center"
-                  style={{ left: `${wp.x}%`, top: `${wp.y}%`, transform: "translate(-50%, -50%)" }}
+                  style={{
+                    left: `${wp.x}%`,
+                    top: `${wp.y}%`,
+                    transform: "translate(-50%, -50%)",
+                  }}
                 >
                   <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md border border-white/60 flex items-center justify-center text-white text-[12px] group-hover:scale-115 group-active:scale-95 transition-all shadow-lg animate-pulse">
                     <span className="w-3.5 h-3.5 rounded-full bg-[#0055ff] border-2 border-white" />
@@ -155,18 +173,22 @@ export function WalkthroughScreen({
                 { x: 65, y: 35, elev: "HVAC Duct" },
                 { x: 48, y: 55, elev: "Conduit Box" },
                 { x: 82, y: 48, elev: "Door Frame" },
-              ];
-              const pos = defaultPositions[idx] || { x: 50, y: 50, elev: "Inspection" };
-              const color = getPinColor(item.type);
-              const label = getPinIcon(item.type);
+              ]
+              const pos = defaultPositions[idx] || {
+                x: 50,
+                y: 50,
+                elev: "Inspection",
+              }
+              const color = getPinColor(item.type)
+              const label = getPinIcon(item.type)
 
               return (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => {
-                    setSelectedPinItem(item);
-                    onItemClick(item);
+                    setSelectedPinItem(item)
+                    onItemClick(item)
                   }}
                   className="absolute pointer-events-auto cursor-pointer group active:scale-110 transition-transform"
                   style={{
@@ -189,7 +211,7 @@ export function WalkthroughScreen({
                     </span>
                   </div>
                 </button>
-              );
+              )
             })}
           </div>
         </div>
@@ -207,14 +229,31 @@ export function WalkthroughScreen({
                 🎥
               </div>
               <span>{captureDate}</span>
-              <svg width="8" height="5" viewBox="0 0 10 6" fill="none" className={`transition-transform duration-200 ${isDateOpen ? "rotate-180" : ""}`}>
-                <path d="M1 1L5 5L9 1" stroke="#94a3b8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              <svg
+                width="8"
+                height="5"
+                viewBox="0 0 10 6"
+                fill="none"
+                className={`transition-transform duration-200 ${
+                  isDateOpen ? "rotate-180" : ""
+                }`}
+              >
+                <path
+                  d="M1 1L5 5L9 1"
+                  stroke="#94a3b8"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </button>
 
             {isDateOpen && (
               <>
-                <div className="fixed inset-0 z-30" onClick={() => setIsDateOpen(false)} />
+                <div
+                  className="fixed inset-0 z-30"
+                  onClick={() => setIsDateOpen(false)}
+                />
                 <div className="absolute top-full left-0 mt-1.5 w-48 bg-slate-900/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-700 p-1.5 z-40 animate-slide-up text-white">
                   <div className="px-2 py-0.5 text-[9px] font-bold text-slate-400 uppercase tracking-wider">
                     Capture History
@@ -224,11 +263,13 @@ export function WalkthroughScreen({
                       key={t}
                       type="button"
                       onClick={() => {
-                        setCaptureDate(t);
-                        setIsDateOpen(false);
+                        setCaptureDate(t)
+                        setIsDateOpen(false)
                       }}
                       className={`w-full text-left px-2.5 py-1.5 rounded-xl text-[11px] font-medium transition-colors cursor-pointer ${
-                        captureDate === t ? "bg-blue-600 text-white font-bold" : "text-slate-300 hover:bg-slate-800"
+                        captureDate === t
+                          ? "bg-blue-600 text-white font-bold"
+                          : "text-slate-300 hover:bg-slate-800"
                       }`}
                     >
                       {t}
@@ -251,7 +292,9 @@ export function WalkthroughScreen({
                 type="button"
                 onClick={() => setCompareMode(m.id as any)}
                 className={`px-2 py-0.5 rounded-lg text-[9.5px] font-bold transition-all cursor-pointer ${
-                  compareMode === m.id ? "bg-[#0055ff] text-white shadow-2xs" : "text-slate-300 hover:text-white"
+                  compareMode === m.id
+                    ? "bg-[#0055ff] text-white shadow-2xs"
+                    : "text-slate-300 hover:text-white"
                 }`}
               >
                 {m.label}
@@ -271,13 +314,31 @@ export function WalkthroughScreen({
             title="Split Screen View"
           >
             <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
-              <rect x="2.5" y="3" width="6.5" height="14" rx="2" stroke="currentColor" strokeWidth="1.8" />
-              <rect x="11" y="3" width="6.5" height="14" rx="2" stroke="currentColor" strokeWidth="1.8" />
+              <rect
+                x="2.5"
+                y="3"
+                width="6.5"
+                height="14"
+                rx="2"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              />
+              <rect
+                x="11"
+                y="3"
+                width="6.5"
+                height="14"
+                rx="2"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              />
             </svg>
           </button>
           {/* Compass 360 Orientation */}
           <div className="w-8 h-8 rounded-xl bg-slate-900/90 backdrop-blur-md text-blue-400 flex items-center justify-center shadow-lg border border-slate-700/80">
-            <span className="text-[9px] font-extrabold tracking-tight">360°</span>
+            <span className="text-[9px] font-extrabold tracking-tight">
+              360°
+            </span>
           </div>
           {/* Zoom In */}
           <button
@@ -318,12 +379,16 @@ export function WalkthroughScreen({
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-bold text-slate-400">{selectedPinItem.id}</span>
+                    <span className="text-[10px] font-bold text-slate-400">
+                      {selectedPinItem.id}
+                    </span>
                     <span className="text-[9.5px] font-bold px-1.5 py-0.2 bg-slate-800 text-slate-300 rounded border border-slate-700">
                       {selectedPinItem.status}
                     </span>
                   </div>
-                  <h4 className="text-[12px] font-bold text-white truncate">{selectedPinItem.title}</h4>
+                  <h4 className="text-[12px] font-bold text-white truncate">
+                    {selectedPinItem.title}
+                  </h4>
                 </div>
               </div>
               <button
@@ -349,9 +414,9 @@ export function WalkthroughScreen({
         typeFilter={filterType}
         onTypeChange={(t) => setFilterType(t as ItemType | "all")}
         onReset={() => {
-          setFilterType("all");
-          setFilterStatus("all");
-          setFilterPriority("all");
+          setFilterType("all")
+          setFilterStatus("all")
+          setFilterPriority("all")
         }}
       />
 
@@ -364,7 +429,11 @@ export function WalkthroughScreen({
       />
 
       {/* Bottom Nav */}
-      <BottomNav active={activeTab} onChange={onTabChange} onFabClick={onCreateClick} />
+      <BottomNav
+        active={activeTab}
+        onChange={onTabChange}
+        onFabClick={onCreateClick}
+      />
     </div>
-  );
+  )
 }

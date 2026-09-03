@@ -1,71 +1,72 @@
-import { useState, useRef } from "react";
-import type { KeyboardEvent, ChangeEvent } from "react";
+import { useState, useRef } from "react"
+import type { KeyboardEvent, ChangeEvent } from "react"
 
 interface InviteModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen: boolean
+  onClose: () => void
 }
 
 export function InviteModal({ isOpen, onClose }: InviteModalProps) {
-  const [emailInput, setEmailInput] = useState("");
-  const [emailsList, setEmailsList] = useState<string[]>([]);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [emailInput, setEmailInput] = useState("")
+  const [emailsList, setEmailsList] = useState<string[]>([])
+  const [isSuccess, setIsSuccess] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   // Process text input into email tags on space, comma, or enter
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
+    const val = e.target.value
     if (val.includes(" ") || val.includes(",")) {
-      const parts = val.split(/[\s,]+/).filter(Boolean);
-      const valid = parts.filter((p) => p.includes("@"));
-      const remaining = parts.filter((p) => !p.includes("@")).join(" ");
+      const parts = val.split(/[\s,]+/).filter(Boolean)
+      const valid = parts.filter((p) => p.includes("@"))
+      const remaining = parts.filter((p) => !p.includes("@")).join(" ")
 
       if (valid.length > 0) {
-        setEmailsList((prev) => Array.from(new Set([...prev, ...valid])));
+        setEmailsList((prev) => Array.from(new Set([...prev, ...valid])))
       }
-      setEmailInput(remaining);
+      setEmailInput(remaining)
     } else {
-      setEmailInput(val);
+      setEmailInput(val)
     }
-  };
+  }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      const val = emailInput.trim();
+      e.preventDefault()
+      const val = emailInput.trim()
       if (val && val.includes("@")) {
-        setEmailsList((prev) => Array.from(new Set([...prev, val])));
-        setEmailInput("");
+        setEmailsList((prev) => Array.from(new Set([...prev, val])))
+        setEmailInput("")
       }
     } else if (e.key === "Backspace" && !emailInput && emailsList.length > 0) {
-      setEmailsList((prev) => prev.slice(0, -1));
+      setEmailsList((prev) => prev.slice(0, -1))
     }
-  };
+  }
 
   const removeEmail = (emailToRemove: string) => {
-    setEmailsList((prev) => prev.filter((em) => em !== emailToRemove));
-  };
+    setEmailsList((prev) => prev.filter((em) => em !== emailToRemove))
+  }
 
   const handleSend = () => {
-    let finalEmails = [...emailsList];
+    let finalEmails = [...emailsList]
     if (emailInput.trim() && emailInput.includes("@")) {
-      finalEmails = Array.from(new Set([...finalEmails, emailInput.trim()]));
+      finalEmails = Array.from(new Set([...finalEmails, emailInput.trim()]))
     }
 
-    if (finalEmails.length === 0) return;
+    if (finalEmails.length === 0) return
 
-    setIsSuccess(true);
+    setIsSuccess(true)
     setTimeout(() => {
-      setIsSuccess(false);
-      setEmailsList([]);
-      setEmailInput("");
-      onClose();
-    }, 1200);
-  };
+      setIsSuccess(false)
+      setEmailsList([])
+      setEmailInput("")
+      onClose()
+    }, 1200)
+  }
 
-  const totalInvites = emailsList.length + (emailInput.trim().includes("@") ? 1 : 0);
+  const totalInvites =
+    emailsList.length + (emailInput.trim().includes("@") ? 1 : 0)
 
   return (
     <div
@@ -80,7 +81,15 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full bg-blue-50 text-[#0055ff] flex items-center justify-center shadow-2xs">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+              >
                 <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
                 <circle cx="8.5" cy="7" r="4" />
                 <line x1="20" y1="8" x2="20" y2="14" />
@@ -88,8 +97,12 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
               </svg>
             </div>
             <div>
-              <h3 className="text-[14.5px] font-bold text-slate-900 leading-tight">Invite Collaborators</h3>
-              <p className="text-[10.5px] text-slate-400 font-medium">Stalwart Workspace</p>
+              <h3 className="text-[14.5px] font-bold text-slate-900 leading-tight">
+                Invite Collaborators
+              </h3>
+              <p className="text-[10.5px] text-slate-400 font-medium">
+                Stalwart Workspace
+              </p>
             </div>
           </div>
           <button
@@ -97,7 +110,15 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
             onClick={onClose}
             className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+            >
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -131,8 +152,8 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
                   <button
                     type="button"
                     onClick={(e) => {
-                      e.stopPropagation();
-                      removeEmail(em);
+                      e.stopPropagation()
+                      removeEmail(em)
                     }}
                     className="hover:text-red-500 text-[11px] font-bold cursor-pointer leading-none"
                   >
@@ -148,7 +169,11 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
                 value={emailInput}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                placeholder={emailsList.length === 0 ? "alex@site.com john@eng.com" : "Add more..."}
+                placeholder={
+                  emailsList.length === 0
+                    ? "alex@site.com john@eng.com"
+                    : "Add more..."
+                }
                 className="flex-1 min-w-[130px] bg-transparent text-[12px] text-slate-800 placeholder:text-slate-400 outline-none py-1 px-1 font-medium"
               />
             </div>
@@ -172,18 +197,22 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
               isSuccess
                 ? "bg-emerald-600 text-white"
                 : totalInvites > 0
-                ? "bg-[#0055ff] hover:bg-blue-600 active:scale-98 text-white shadow-md shadow-blue-500/25 cursor-pointer"
-                : "bg-slate-200/80 text-slate-400 cursor-not-allowed"
+                  ? "bg-[#0055ff] hover:bg-blue-600 active:scale-98 text-white shadow-md shadow-blue-500/25 cursor-pointer"
+                  : "bg-slate-200/80 text-slate-400 cursor-not-allowed"
             }`}
           >
             {isSuccess ? (
               <span>Invited Successfully! ✓</span>
             ) : (
-              <span>{totalInvites > 1 ? `Send ${totalInvites} Invites` : "Send Invitation"}</span>
+              <span>
+                {totalInvites > 1
+                  ? `Send ${totalInvites} Invites`
+                  : "Send Invitation"}
+              </span>
             )}
           </button>
         </div>
       </div>
     </div>
-  );
+  )
 }

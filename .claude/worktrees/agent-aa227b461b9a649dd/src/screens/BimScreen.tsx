@@ -1,15 +1,15 @@
-import { AppHeader } from "../components/AppHeader";
-import { BottomNav, type MainTab } from "../components/BottomNav";
-import type { Item } from "../data/mockData";
+import { AppHeader } from "../components/AppHeader"
+import { BottomNav, type MainTab } from "../components/BottomNav"
+import type { Item } from "../data/mockData"
 
 interface BimScreenProps {
-  items: Item[];
-  onItemClick: (item: Item) => void;
-  onCreateClick: () => void;
-  activeTab: MainTab;
-  onTabChange: (tab: MainTab) => void;
-  markupFilter: string;
-  onFilterChange: (f: string) => void;
+  items: Item[]
+  onItemClick: (item: Item) => void
+  onCreateClick: () => void
+  activeTab: MainTab
+  onTabChange: (tab: MainTab) => void
+  markupFilter: string
+  onFilterChange: (f: string) => void
 }
 
 const BIM_PINS = [
@@ -17,7 +17,7 @@ const BIM_PINS = [
   { id: "ISSUE-017", x: "58%", y: "28%", color: "#EF4444", label: "!" },
   { id: "RFI-001", x: "42%", y: "55%", color: "#F59E0B", label: "?" },
   { id: "TASK-001", x: "70%", y: "48%", color: "#2451FF", label: "T" },
-];
+]
 
 export function BimScreen({
   items,
@@ -29,37 +29,44 @@ export function BimScreen({
   onFilterChange,
 }: BimScreenProps) {
   const filteredItems = items.filter((item) => {
-    if (markupFilter === "all") return true;
-    if (markupFilter === "issue") return item.type === "issue";
-    if (markupFilter === "task") return item.type === "task";
-    if (markupFilter === "rfi") return item.type === "rfi";
-    if (markupFilter === "fieldnote") return item.type === "fieldnote";
-    return true;
-  });
+    if (markupFilter === "all") return true
+    if (markupFilter === "issue") return item.type === "issue"
+    if (markupFilter === "task") return item.type === "task"
+    if (markupFilter === "rfi") return item.type === "rfi"
+    if (markupFilter === "fieldnote") return item.type === "fieldnote"
+    return true
+  })
 
   const visiblePins = BIM_PINS.filter((pin) =>
-    filteredItems.some((item) => item.id === pin.id)
-  );
+    filteredItems.some((item) => item.id === pin.id),
+  )
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: "#1E2939" }}>
+    <div
+      className="flex flex-col h-full"
+      style={{ backgroundColor: "#1E2939" }}
+    >
       <AppHeader markupFilter={markupFilter} onFilterChange={onFilterChange} />
       <div className="flex-1 relative overflow-hidden">
         <div
           className="w-full h-full"
           style={{
-            backgroundImage: "url(https://images.unsplash.com/photo-1486325212027-8081e485255e?w=860&h=700&fit=crop)",
+            backgroundImage:
+              "url(https://images.unsplash.com/photo-1486325212027-8081e485255e?w=860&h=700&fit=crop)",
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
         >
           {/* Dark overlay for readability */}
-          <div className="absolute inset-0" style={{ backgroundColor: "rgba(0,0,0,0.2)" }} />
+          <div
+            className="absolute inset-0"
+            style={{ backgroundColor: "rgba(0,0,0,0.2)" }}
+          />
 
           {/* Pins */}
           {visiblePins.map((pin) => {
-            const item = items.find((i) => i.id === pin.id);
-            if (!item) return null;
+            const item = items.find((i) => i.id === pin.id)
+            if (!item) return null
             return (
               <button
                 key={pin.id}
@@ -88,10 +95,19 @@ export function BimScreen({
                     boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
                   }}
                 >
-                  <span style={{ transform: "rotate(45deg)", color: "white", fontSize: "12px", fontWeight: 700 }}>{pin.label}</span>
+                  <span
+                    style={{
+                      transform: "rotate(45deg)",
+                      color: "white",
+                      fontSize: "12px",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {pin.label}
+                  </span>
                 </div>
               </button>
-            );
+            )
           })}
 
           {/* FAB */}
@@ -111,13 +127,26 @@ export function BimScreen({
               boxShadow: "0 4px 16px rgba(36,81,255,0.4)",
             }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
           </button>
         </div>
       </div>
-      <BottomNav active={activeTab} onChange={onTabChange} onFabClick={onCreateClick} />
+      <BottomNav
+        active={activeTab}
+        onChange={onTabChange}
+        onFabClick={onCreateClick}
+      />
     </div>
-  );
+  )
 }

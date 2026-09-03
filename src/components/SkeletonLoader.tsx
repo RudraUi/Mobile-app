@@ -60,7 +60,7 @@ export function HomeSkeleton() {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 export function ListSkeleton() {
@@ -90,7 +90,7 @@ export function ListSkeleton() {
         </div>
       ))}
     </div>
-  );
+  )
 }
 
 export function PullIndicator({
@@ -98,11 +98,11 @@ export function PullIndicator({
   isRefreshing,
   pullDistance,
 }: {
-  isPulling: boolean;
-  isRefreshing: boolean;
-  pullDistance: number;
+  isPulling: boolean
+  isRefreshing: boolean
+  pullDistance: number
 }) {
-  if (!isPulling && !isRefreshing) return null;
+  if (!isPulling && !isRefreshing) return null
 
   return (
     <div
@@ -146,5 +146,5 @@ export function PullIndicator({
         )}
       </div>
     </div>
-  );
+  )
 }

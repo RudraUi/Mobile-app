@@ -1,24 +1,24 @@
-import { useState } from "react";
-import { AppHeader } from "../components/AppHeader";
-import { BottomNav, type MainTab } from "../components/BottomNav";
-import { FilterModal } from "../components/FilterModal";
-import { SearchModal } from "../components/SearchModal";
-import type { Item, ItemType, Severity, Status } from "../data/mockData";
-import { type Project, projectsList } from "../data/projectsData";
+import { useState } from "react"
+import { AppHeader } from "../components/AppHeader"
+import { BottomNav, type MainTab } from "../components/BottomNav"
+import { FilterModal } from "../components/FilterModal"
+import { SearchModal } from "../components/SearchModal"
+import type { Item, ItemType, Severity, Status } from "../data/mockData"
+import { type Project, projectsList } from "../data/projectsData"
 
 interface DroneScreenProps {
-  items: Item[];
-  onItemClick: (item: Item) => void;
-  onCreateClick: () => void;
-  activeTab: MainTab;
-  onTabChange: (tab: MainTab) => void;
-  markupFilter: string;
-  onFilterChange: (f: string) => void;
-  onInviteClick?: () => void;
-  onProfileClick?: () => void;
-  userAvatar?: string;
-  selectedProject?: Project;
-  onSelectProject?: (p: Project) => void;
+  items: Item[]
+  onItemClick: (item: Item) => void
+  onCreateClick: () => void
+  activeTab: MainTab
+  onTabChange: (tab: MainTab) => void
+  markupFilter: string
+  onFilterChange: (f: string) => void
+  onInviteClick?: () => void
+  onProfileClick?: () => void
+  userAvatar?: string
+  selectedProject?: Project
+  onSelectProject?: (p: Project) => void
 }
 
 export function DroneScreen({
@@ -35,48 +35,55 @@ export function DroneScreen({
   selectedProject = projectsList[0],
   onSelectProject,
 }: DroneScreenProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [filterType, setFilterType] = useState<ItemType | "all">("all");
-  const [filterStatus, setFilterStatus] = useState<Status | "all">("all");
-  const [filterPriority, setFilterPriority] = useState<Severity | "all">("all");
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
+  const [filterType, setFilterType] = useState<ItemType | "all">("all")
+  const [filterStatus, setFilterStatus] = useState<Status | "all">("all")
+  const [filterPriority, setFilterPriority] = useState<Severity | "all">("all")
 
-  const [flightDate, setFlightDate] = useState("Sep 01 (Today)");
-  const [isFlightDateDropdownOpen, setIsFlightDateDropdownOpen] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [selectedPinItem, setSelectedPinItem] = useState<Item | null>(null);
+  const [flightDate, setFlightDate] = useState("Sep 01 (Today)")
+  const [isFlightDateDropdownOpen, setIsFlightDateDropdownOpen] =
+    useState(false)
+  const [zoomLevel, setZoomLevel] = useState(1)
+  const [selectedPinItem, setSelectedPinItem] = useState<Item | null>(null)
 
   const filteredItems = items.filter((item) => {
-    if (markupFilter !== "all" && item.type !== markupFilter) return false;
-    if (filterType !== "all" && item.type !== filterType) return false;
-    if (filterStatus !== "all" && item.status !== filterStatus) return false;
-    if (filterPriority !== "all" && item.severity !== filterPriority) return false;
+    if (markupFilter !== "all" && item.type !== markupFilter) return false
+    if (filterType !== "all" && item.type !== filterType) return false
+    if (filterStatus !== "all" && item.status !== filterStatus) return false
+    if (filterPriority !== "all" && item.severity !== filterPriority)
+      return false
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchesTitle = item.title.toLowerCase().includes(q);
-      const matchesId = item.id.toLowerCase().includes(q);
-      const matchesDesc = item.description?.toLowerCase().includes(q);
-      return matchesTitle || matchesId || matchesDesc;
+      const q = searchQuery.toLowerCase()
+      const matchesTitle = item.title.toLowerCase().includes(q)
+      const matchesId = item.id.toLowerCase().includes(q)
+      const matchesDesc = item.description?.toLowerCase().includes(q)
+      return matchesTitle || matchesId || matchesDesc
     }
-    return true;
-  });
+    return true
+  })
 
   const getPinColor = (type: string) => {
-    if (type === "issue") return "#EF4444";
-    if (type === "rfi") return "#F59E0B";
-    if (type === "task") return "#0055ff";
-    return "#10B981";
-  };
+    if (type === "issue") return "#EF4444"
+    if (type === "rfi") return "#F59E0B"
+    if (type === "task") return "#0055ff"
+    return "#10B981"
+  }
 
   const getPinIcon = (type: string) => {
-    if (type === "issue") return "!";
-    if (type === "rfi") return "?";
-    if (type === "task") return "T";
-    return "N";
-  };
+    if (type === "issue") return "!"
+    if (type === "rfi") return "?"
+    if (type === "task") return "T"
+    return "N"
+  }
 
-  const flightDates = ["Sep 01 (Today)", "Aug 26 (Mission 08)", "Aug 18 (Mission 07)", "Aug 10 (Baseline)"];
+  const flightDates = [
+    "Sep 01 (Today)",
+    "Aug 26 (Mission 08)",
+    "Aug 18 (Mission 07)",
+    "Aug 10 (Baseline)",
+  ]
 
   return (
     <div className="flex flex-col h-full bg-[#f6f7f9] select-none overflow-hidden">
@@ -88,7 +95,11 @@ export function DroneScreen({
         onSplitViewClick={() => onTabChange("splitview")}
         isSplitViewActive={activeTab === "splitview"}
         onFilterClick={() => setIsFilterModalOpen(true)}
-        isFilterActive={filterType !== "all" || filterStatus !== "all" || filterPriority !== "all"}
+        isFilterActive={
+          filterType !== "all" ||
+          filterStatus !== "all" ||
+          filterPriority !== "all"
+        }
         onInviteClick={onInviteClick}
         onProfileClick={onProfileClick}
         userAvatar={userAvatar}
@@ -101,13 +112,17 @@ export function DroneScreen({
         {/* Orthomosaic Canvas */}
         <div
           className="w-full h-full relative transition-transform duration-200"
-          style={{ transform: `scale(${zoomLevel})`, transformOrigin: "center center" }}
+          style={{
+            transform: `scale(${zoomLevel})`,
+            transformOrigin: "center center",
+          }}
         >
           {/* Aerial Background Imagery */}
           <div
             className="w-full h-full relative"
             style={{
-              backgroundImage: "url(https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1000&h=1200&fit=crop)",
+              backgroundImage:
+                "url(https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=1000&h=1200&fit=crop)",
               backgroundSize: "cover",
               backgroundPosition: "center",
               filter: "contrast(1.05)",
@@ -138,7 +153,15 @@ export function DroneScreen({
                 { x: 340, y: 620 },
                 { x: 90, y: 640 },
               ].map((wp, i) => (
-                <circle key={i} cx={wp.x} cy={wp.y} r="3.5" fill="#0055ff" stroke="white" strokeWidth="1.2" />
+                <circle
+                  key={i}
+                  cx={wp.x}
+                  cy={wp.y}
+                  r="3.5"
+                  fill="#0055ff"
+                  stroke="white"
+                  strokeWidth="1.2"
+                />
               ))}
             </svg>
           </div>
@@ -152,18 +175,22 @@ export function DroneScreen({
                 { x: 44, y: 58, label: "Crane Clearance" },
                 { x: 76, y: 68, label: "Stockpile Volume" },
                 { x: 28, y: 78, label: "Perimeter Gate" },
-              ];
-              const pos = defaultPositions[idx] || { x: 50, y: 50, label: "Inspect Point" };
-              const color = getPinColor(item.type);
-              const label = getPinIcon(item.type);
+              ]
+              const pos = defaultPositions[idx] || {
+                x: 50,
+                y: 50,
+                label: "Inspect Point",
+              }
+              const color = getPinColor(item.type)
+              const label = getPinIcon(item.type)
 
               return (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => {
-                    setSelectedPinItem(item);
-                    onItemClick(item);
+                    setSelectedPinItem(item)
+                    onItemClick(item)
                   }}
                   className="absolute pointer-events-auto cursor-pointer group active:scale-110 transition-transform"
                   style={{
@@ -189,7 +216,7 @@ export function DroneScreen({
                     </span>
                   </div>
                 </button>
-              );
+              )
             })}
           </div>
         </div>
@@ -207,14 +234,31 @@ export function DroneScreen({
                 ✈
               </div>
               <span>{flightDate}</span>
-              <svg width="7" height="4" viewBox="0 0 10 6" fill="none" className={`transition-transform duration-200 ${isFlightDateDropdownOpen ? "rotate-180" : ""}`}>
-                <path d="M1 1L5 5L9 1" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <svg
+                width="7"
+                height="4"
+                viewBox="0 0 10 6"
+                fill="none"
+                className={`transition-transform duration-200 ${
+                  isFlightDateDropdownOpen ? "rotate-180" : ""
+                }`}
+              >
+                <path
+                  d="M1 1L5 5L9 1"
+                  stroke="#64748b"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </button>
 
             {isFlightDateDropdownOpen && (
               <>
-                <div className="fixed inset-0 z-30" onClick={() => setIsFlightDateDropdownOpen(false)} />
+                <div
+                  className="fixed inset-0 z-30"
+                  onClick={() => setIsFlightDateDropdownOpen(false)}
+                />
                 <div className="absolute top-full left-0 mt-1 w-38 bg-white/98 backdrop-blur-md rounded-xl shadow-[0_8px_20px_rgba(0,0,0,0.12)] border border-slate-200/80 p-1 z-40 animate-slide-up">
                   <div className="px-2 py-0.5 text-[8.5px] font-bold text-slate-400 uppercase tracking-wider">
                     Flight Missions
@@ -224,11 +268,13 @@ export function DroneScreen({
                       key={d}
                       type="button"
                       onClick={() => {
-                        setFlightDate(d);
-                        setIsFlightDateDropdownOpen(false);
+                        setFlightDate(d)
+                        setIsFlightDateDropdownOpen(false)
                       }}
                       className={`w-full text-left px-2 py-1 rounded-lg text-[10px] transition-colors cursor-pointer ${
-                        flightDate === d ? "bg-blue-50 text-[#0055ff] font-bold" : "text-slate-700 hover:bg-slate-50 font-medium"
+                        flightDate === d
+                          ? "bg-blue-50 text-[#0055ff] font-bold"
+                          : "text-slate-700 hover:bg-slate-50 font-medium"
                       }`}
                     >
                       {d}
@@ -251,8 +297,24 @@ export function DroneScreen({
             title="Split Screen View"
           >
             <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
-              <rect x="2.5" y="3" width="6.5" height="14" rx="2" stroke="currentColor" strokeWidth="1.8" />
-              <rect x="11" y="3" width="6.5" height="14" rx="2" stroke="currentColor" strokeWidth="1.8" />
+              <rect
+                x="2.5"
+                y="3"
+                width="6.5"
+                height="14"
+                rx="2"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              />
+              <rect
+                x="11"
+                y="3"
+                width="6.5"
+                height="14"
+                rx="2"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              />
             </svg>
           </button>
           {/* Zoom In */}
@@ -277,7 +339,14 @@ export function DroneScreen({
             onClick={() => setZoomLevel(1)}
             className="w-8 h-8 rounded-xl bg-white/95 hover:bg-white active:scale-95 backdrop-blur-md text-blue-600 flex items-center justify-center shadow-md shadow-black/15 border border-slate-200/80 transition-all cursor-pointer"
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+            >
               <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
             </svg>
           </button>
@@ -302,12 +371,16 @@ export function DroneScreen({
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-bold text-slate-400">{selectedPinItem.id}</span>
+                    <span className="text-[10px] font-bold text-slate-400">
+                      {selectedPinItem.id}
+                    </span>
                     <span className="text-[9.5px] font-bold px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded">
                       {selectedPinItem.status}
                     </span>
                   </div>
-                  <h4 className="text-[12px] font-bold text-slate-900 truncate">{selectedPinItem.title}</h4>
+                  <h4 className="text-[12px] font-bold text-slate-900 truncate">
+                    {selectedPinItem.title}
+                  </h4>
                 </div>
               </div>
               <button
@@ -333,9 +406,9 @@ export function DroneScreen({
         typeFilter={filterType}
         onTypeChange={(t) => setFilterType(t as ItemType | "all")}
         onReset={() => {
-          setFilterType("all");
-          setFilterStatus("all");
-          setFilterPriority("all");
+          setFilterType("all")
+          setFilterStatus("all")
+          setFilterPriority("all")
         }}
       />
 
@@ -348,7 +421,11 @@ export function DroneScreen({
       />
 
       {/* Bottom Nav */}
-      <BottomNav active={activeTab} onChange={onTabChange} onFabClick={onCreateClick} />
+      <BottomNav
+        active={activeTab}
+        onChange={onTabChange}
+        onFabClick={onCreateClick}
+      />
     </div>
-  );
+  )
 }

@@ -1,38 +1,38 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"
 
 interface SplashScreenProps {
-  onFinish: () => void;
+  onFinish: () => void
 }
 
 export function SplashScreen({ onFinish }: SplashScreenProps) {
-  const [isExiting, setIsExiting] = useState(false);
+  const [isExiting, setIsExiting] = useState(false)
 
   useEffect(() => {
     // Start simple flash out at 1.75s, finish handoff at 2.15s
     const exitTimer = setTimeout(() => {
-      setIsExiting(true);
-    }, 1750);
+      setIsExiting(true)
+    }, 1750)
 
     const finishTimer = setTimeout(() => {
-      onFinish();
-    }, 2150);
+      onFinish()
+    }, 2150)
 
     return () => {
-      clearTimeout(exitTimer);
-      clearTimeout(finishTimer);
-    };
-  }, [onFinish]);
+      clearTimeout(exitTimer)
+      clearTimeout(finishTimer)
+    }
+  }, [onFinish])
 
   const handleSkip = () => {
     if (!isExiting) {
-      setIsExiting(true);
+      setIsExiting(true)
       setTimeout(() => {
-        onFinish();
-      }, 400);
+        onFinish()
+      }, 400)
     } else {
-      onFinish();
+      onFinish()
     }
-  };
+  }
 
   return (
     <div
@@ -100,5 +100,5 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
         </div>
       </div>
     </div>
-  );
+  )
 }

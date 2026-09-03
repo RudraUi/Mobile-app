@@ -1,73 +1,79 @@
-import { useState, useCallback } from "react";
-import { LoginScreen } from "./screens/LoginScreen";
-import { OtpScreen } from "./screens/OtpScreen";
-import { SuccessScreen } from "./screens/SuccessScreen";
-import { HomeScreen } from "./screens/HomeScreen";
-import { MapScreen } from "./screens/MapScreen";
-import { DrawingScreen } from "./screens/DrawingScreen";
-import { BimScreen } from "./screens/BimScreen";
-import { DroneScreen } from "./screens/DroneScreen";
-import { SplitViewScreen } from "./screens/SplitViewScreen";
-import { ListScreen } from "./screens/ListScreen";
-import { ItemDetailScreen } from "./screens/ItemDetailScreen";
-import { CreateItemScreen } from "./screens/CreateItemScreen";
-import { NavigateScreen } from "./screens/NavigateScreen";
-import type { Item, ItemType, Severity } from "./data/mockData";
-import { mockItems } from "./data/mockData";
-import type { MainTab } from "./components/BottomNav";
+import { useState, useCallback } from "react"
+import { LoginScreen } from "./screens/LoginScreen"
+import { OtpScreen } from "./screens/OtpScreen"
+import { SuccessScreen } from "./screens/SuccessScreen"
+import { HomeScreen } from "./screens/HomeScreen"
+import { MapScreen } from "./screens/MapScreen"
+import { DrawingScreen } from "./screens/DrawingScreen"
+import { BimScreen } from "./screens/BimScreen"
+import { DroneScreen } from "./screens/DroneScreen"
+import { SplitViewScreen } from "./screens/SplitViewScreen"
+import { ListScreen } from "./screens/ListScreen"
+import { ItemDetailScreen } from "./screens/ItemDetailScreen"
+import { CreateItemScreen } from "./screens/CreateItemScreen"
+import { NavigateScreen } from "./screens/NavigateScreen"
+import type { Item, ItemType, Severity } from "./data/mockData"
+import { mockItems } from "./data/mockData"
+import type { MainTab } from "./components/BottomNav"
 
-type Screen =
-  | "login"
-  | "otp"
-  | "success"
-  | MainTab
-  | "list"
-  | "detail"
-  | "create"
-  | "navigate";
+type Screen = "login" | "otp" | "success" | MainTab | "list" | "detail" | "create" | "navigate"
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>("login");
-  const [email, setEmail] = useState("field.worker@bimbox.ai");
-  const [activeTab, setActiveTab] = useState<MainTab>("home");
-  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
-  const [navigateItem, setNavigateItem] = useState<Item | null>(null);
-  const [items, setItems] = useState<Item[]>(mockItems);
-  const [markupFilter, setMarkupFilter] = useState("all");
+  const [screen, setScreen] = useState<Screen>("login")
+  const [email, setEmail] = useState("field.worker@bimbox.ai")
+  const [activeTab, setActiveTab] = useState<MainTab>("home")
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null)
+  const [navigateItem, setNavigateItem] = useState<Item | null>(null)
+  const [items, setItems] = useState<Item[]>(mockItems)
+  const [markupFilter, setMarkupFilter] = useState("all")
 
   const handleLogin = useCallback((e: string) => {
-    setEmail(e);
-    setScreen("otp");
-  }, []);
+    setEmail(e)
+    setScreen("otp")
+  }, [])
 
-  const handleVerify = useCallback(() => setScreen("success"), []);
-  const handleSuccessDone = useCallback(() => setScreen("home"), []);
+  const handleVerify = useCallback(() => setScreen("success"), [])
+  const handleSuccessDone = useCallback(() => setScreen("home"), [])
 
   const handleTabChange = useCallback((tab: MainTab) => {
-    setActiveTab(tab);
-    setScreen(tab);
-  }, []);
+    setActiveTab(tab)
+    setScreen(tab)
+  }, [])
 
   const handleItemClick = useCallback((item: Item) => {
-    setSelectedItem(item);
-    setScreen("detail");
-  }, []);
+    setSelectedItem(item)
+    setScreen("detail")
+  }, [])
 
-  const handleCreateClick = useCallback(() => setScreen("create"), []);
+  const handleCreateClick = useCallback(() => setScreen("create"), [])
 
   const handleNavigate = useCallback((item: Item) => {
-    setNavigateItem(item);
-    setScreen("navigate");
-  }, []);
+    setNavigateItem(item)
+    setScreen("navigate")
+  }, [])
 
   const handleUpdate = useCallback((id: string, changes: Partial<Item>) => {
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...changes } : i)));
-    setSelectedItem((prev) => (prev?.id === id ? { ...prev, ...changes } as Item : prev));
-  }, []);
+    setItems((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, ...changes } : i)),
+    )
+    setSelectedItem((prev) =>
+      prev?.id === id ? { ...prev, ...changes } as Item : prev,
+    )
+  }, [])
 
   const handleCreateSubmit = useCallback(
-    (type: ItemType, title: string, description: string, severity: Severity) => {
-      const prefix: Record<ItemType, string> = { issue: "ISSUE", task: "TASK", rfi: "RFI", fieldnote: "FN" };
+    (
+      type: ItemType,
+      title: string,
+      description: string,
+      severity: Severity,
+    ) => {
+      const prefix: Record<ItemType, string> = {
+        issue: "ISSUE",
+        task: "TASK",
+        rfi: "RFI",
+        fieldnote: "FN",
+      }
       const newItem: Item = {
         id: `${prefix[type]}-${Math.floor(Math.random() * 900) + 100}`,
         type,
@@ -77,29 +83,38 @@ export default function App() {
         severity,
         assignees: [],
         dueDate: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
-        location: { x: 150 + Math.random() * 180, y: 200 + Math.random() * 450, label: "Location not set" },
+        location: {
+          x: 150 + Math.random() * 180,
+          y: 200 + Math.random() * 450,
+          label: "Location not set",
+        },
         photos: [],
         activity: [
           {
             id: "init",
             text: "Item created",
-            date: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+            date: new Date().toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            }),
           },
         ],
         tags: [],
-      };
-      setItems((prev) => [newItem, ...prev]);
-      setActiveTab("home");
-      setScreen("home");
+      }
+      setItems((prev) => [newItem, ...prev])
+      setActiveTab("home")
+      setScreen("home")
     },
-    []
-  );
+    [],
+  )
 
   const currentSelectedItem = selectedItem
-    ? items.find((i) => i.id === selectedItem.id) ?? selectedItem
-    : null;
+    ? (items.find((i) => i.id === selectedItem.id) ?? selectedItem)
+    : null
 
-  const isAuthScreen = screen === "login" || screen === "otp" || screen === "success";
+  const isAuthScreen =
+    screen === "login" || screen === "otp" || screen === "success"
 
   const mainTabProps = {
     items,
@@ -109,12 +124,15 @@ export default function App() {
     onTabChange: handleTabChange,
     markupFilter,
     onFilterChange: setMarkupFilter,
-  };
+  }
 
   return (
     <div
       className="w-full h-full flex items-center justify-center"
-      style={{ background: "linear-gradient(135deg, #0a0a1a 0%, #0d1b4b 50%, #0a0a1a 100%)" }}
+      style={{
+        background:
+          "linear-gradient(135deg, #0a0a1a 0%, #0d1b4b 50%, #0a0a1a 100%)",
+      }}
     >
       <div
         className="relative overflow-hidden flex flex-col"
@@ -131,7 +149,11 @@ export default function App() {
           )}
 
           {screen === "otp" && (
-            <OtpScreen email={email} onVerify={handleVerify} onBack={() => setScreen("login")} />
+            <OtpScreen
+              email={email}
+              onVerify={handleVerify}
+              onBack={() => setScreen("login")}
+            />
           )}
 
           {screen === "success" && <SuccessScreen onDone={handleSuccessDone} />}
@@ -179,5 +201,5 @@ export default function App() {
         </div>
       </div>
     </div>
-  );
+  )
 }

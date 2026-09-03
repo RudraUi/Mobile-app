@@ -1,14 +1,14 @@
-import { useEffect } from "react";
+import { useEffect } from "react"
 
 interface SuccessScreenProps {
-  onDone: () => void;
+  onDone: () => void
 }
 
 export function SuccessScreen({ onDone }: SuccessScreenProps) {
   useEffect(() => {
-    const t = setTimeout(onDone, 2000);
-    return () => clearTimeout(t);
-  }, [onDone]);
+    const t = setTimeout(onDone, 2000)
+    return () => clearTimeout(t)
+  }, [onDone])
 
   return (
     <div
@@ -31,16 +31,16 @@ export function SuccessScreen({ onDone }: SuccessScreenProps) {
           strokeLinejoin="round"
           className="select-none"
         >
-          <polyline
-            points="4 12 9 17 20 6"
-            className="animate-check-tick"
-          />
+          <polyline points="4 12 9 17 20 6" className="animate-check-tick" />
         </svg>
 
         {/* Success Message Text */}
         <h2
           className="text-[24px] font-bold text-white mt-5 tracking-tight animate-slide-up text-center"
-          style={{ fontFamily: "'Nunito Sans', sans-serif", animationDelay: "0.2s" }}
+          style={{
+            fontFamily: "'Nunito Sans', sans-serif",
+            animationDelay: "0.2s",
+          }}
         >
           Login Success !
         </h2>
@@ -56,6 +56,5 @@ export function SuccessScreen({ onDone }: SuccessScreenProps) {
         </span>
       </div>
     </div>
-  );
+  )
 }
-

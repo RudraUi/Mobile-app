@@ -1,14 +1,14 @@
-import { useEffect } from "react";
+import { useEffect } from "react"
 
 interface SuccessScreenProps {
-  onDone: () => void;
+  onDone: () => void
 }
 
 export function SuccessScreen({ onDone }: SuccessScreenProps) {
   useEffect(() => {
-    const t = setTimeout(onDone, 2200);
-    return () => clearTimeout(t);
-  }, [onDone]);
+    const t = setTimeout(onDone, 2200)
+    return () => clearTimeout(t)
+  }, [onDone])
 
   return (
     <div className="flex flex-col h-full bg-white items-center justify-center gap-6 px-8">
@@ -49,11 +49,20 @@ export function SuccessScreen({ onDone }: SuccessScreenProps) {
         </div>
       </div>
 
-      <div className="text-center animate-slide-up" style={{ animationDelay: "0.3s" }}>
-        <p className="text-[28px] font-extrabold" style={{ color: "#1a1f36", letterSpacing: "-0.5px" }}>
+      <div
+        className="text-center animate-slide-up"
+        style={{ animationDelay: "0.3s" }}
+      >
+        <p
+          className="text-[28px] font-extrabold"
+          style={{ color: "#1a1f36", letterSpacing: "-0.5px" }}
+        >
           Login Successful!
         </p>
-        <p className="text-[15px] mt-2 font-medium" style={{ color: "#94a3b8" }}>
+        <p
+          className="text-[15px] mt-2 font-medium"
+          style={{ color: "#94a3b8" }}
+        >
           Welcome back to BIMBOX Field
         </p>
       </div>
@@ -66,10 +75,13 @@ export function SuccessScreen({ onDone }: SuccessScreenProps) {
         }}
       >
         <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-        <span className="text-[13px] font-semibold" style={{ color: "#7c8498" }}>
+        <span
+          className="text-[13px] font-semibold"
+          style={{ color: "#7c8498" }}
+        >
           Redirecting to your dashboard…
         </span>
       </div>
     </div>
-  );
+  )
 }

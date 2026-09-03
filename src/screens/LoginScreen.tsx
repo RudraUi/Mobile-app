@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { CustomKeyboard } from "../components/CustomKeyboard";
+import { useState } from "react"
+import { CustomKeyboard } from "../components/CustomKeyboard"
 
 interface LoginScreenProps {
-  onLogin: (email: string) => void;
-  onOtp: () => void;
+  onLogin: (email: string) => void
+  onOtp: () => void
 }
 
 export function BimboxLogo({ size = 46 }: { size?: number }) {
@@ -15,22 +15,22 @@ export function BimboxLogo({ size = 46 }: { size?: number }) {
         fill="white"
       />
     </svg>
-  );
+  )
 }
 
 export function LoginScreen({ onLogin, onOtp }: LoginScreenProps) {
-  const [email, setEmail] = useState("alphainvent@gmail.com");
-  const [password, setPassword] = useState("••••••••");
-  const [showPassword, setShowPassword] = useState(false);
-  const [passFocused, setPassFocused] = useState(false);
-  const [emailFocused, setEmailFocused] = useState(true);
+  const [email, setEmail] = useState("alphainvent@gmail.com")
+  const [password, setPassword] = useState("••••••••")
+  const [showPassword, setShowPassword] = useState(false)
+  const [passFocused, setPassFocused] = useState(false)
+  const [emailFocused, setEmailFocused] = useState(true)
 
   const handleSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    onLogin(email || "alphainvent@gmail.com");
-  };
+    if (e) e.preventDefault()
+    onLogin(email || "alphainvent@gmail.com")
+  }
 
-  const isEmailValid = email.trim().length > 0 && email.includes("@");
+  const isEmailValid = email.trim().length > 0 && email.includes("@")
 
   return (
     <div className="flex flex-col justify-between h-full bg-white select-none">
@@ -42,10 +42,16 @@ export function LoginScreen({ onLogin, onOtp }: LoginScreenProps) {
         </div>
 
         {/* Heading */}
-        <div className="mt-5 animate-slide-up" style={{ animationDelay: "0.04s" }}>
+        <div
+          className="mt-5 animate-slide-up"
+          style={{ animationDelay: "0.04s" }}
+        >
           <h1
             className="text-[26px] font-bold leading-tight"
-            style={{ color: "#0055ff", fontFamily: "'Nunito Sans', sans-serif" }}
+            style={{
+              color: "#0055ff",
+              fontFamily: "'Nunito Sans', sans-serif",
+            }}
           >
             Sign in
           </h1>
@@ -55,7 +61,11 @@ export function LoginScreen({ onLogin, onOtp }: LoginScreenProps) {
         </div>
 
         {/* Input Fields */}
-        <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-3 animate-slide-up" style={{ animationDelay: "0.08s" }}>
+        <form
+          onSubmit={handleSubmit}
+          className="mt-8 flex flex-col gap-3 animate-slide-up"
+          style={{ animationDelay: "0.08s" }}
+        >
           {/* Email Input */}
           <div
             className={`w-full h-[52px] px-4 rounded-2xl flex items-center gap-3 transition-all duration-150 ${
@@ -65,7 +75,16 @@ export function LoginScreen({ onLogin, onOtp }: LoginScreenProps) {
             }`}
           >
             {/* Mail icon */}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#64748b"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <rect x="2" y="4" width="20" height="16" rx="2.5" />
               <path d="M22 7l-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7" />
             </svg>
@@ -79,7 +98,16 @@ export function LoginScreen({ onLogin, onOtp }: LoginScreenProps) {
               className="flex-1 bg-transparent text-[14px] text-slate-800 placeholder-slate-400 font-normal outline-none"
             />
             {isEmailValid && (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#475569"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             )}
@@ -108,12 +136,30 @@ export function LoginScreen({ onLogin, onOtp }: LoginScreenProps) {
               className="text-slate-500 hover:text-slate-700 p-1 focus:outline-none"
             >
               {showPassword ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#475569"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                   <circle cx="12" cy="12" r="3" />
                 </svg>
               ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#475569"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
                   <line x1="1" y1="1" x2="23" y2="23" />
                 </svg>
@@ -150,20 +196,20 @@ export function LoginScreen({ onLogin, onOtp }: LoginScreenProps) {
         actionLabel="Login"
         onKeyPress={(char) => {
           if (emailFocused) {
-            setEmail((prev) => prev + char);
+            setEmail((prev) => prev + char)
           } else if (passFocused) {
-            setPassword((prev) => prev + char);
+            setPassword((prev) => prev + char)
           }
         }}
         onBackspace={() => {
           if (emailFocused) {
-            setEmail((prev) => prev.slice(0, -1));
+            setEmail((prev) => prev.slice(0, -1))
           } else if (passFocused) {
-            setPassword((prev) => prev.slice(0, -1));
+            setPassword((prev) => prev.slice(0, -1))
           }
         }}
         onSubmit={() => handleSubmit()}
       />
     </div>
-  );
+  )
 }

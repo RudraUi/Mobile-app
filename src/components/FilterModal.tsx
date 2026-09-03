@@ -1,13 +1,13 @@
 interface FilterModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  statusFilter: string;
-  onStatusChange: (status: string) => void;
-  priorityFilter: string;
-  onPriorityChange: (priority: string) => void;
-  typeFilter: string;
-  onTypeChange: (type: string) => void;
-  onReset: () => void;
+  isOpen: boolean
+  onClose: () => void
+  statusFilter: string
+  onStatusChange: (status: string) => void
+  priorityFilter: string
+  onPriorityChange: (priority: string) => void
+  typeFilter: string
+  onTypeChange: (type: string) => void
+  onReset: () => void
 }
 
 export function FilterModal({
@@ -21,7 +21,7 @@ export function FilterModal({
   onTypeChange,
   onReset,
 }: FilterModalProps) {
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   const statuses = [
     { id: "all", label: "All Statuses" },
@@ -29,14 +29,14 @@ export function FilterModal({
     { id: "IN PROGRESS", label: "In Progress" },
     { id: "REVIEW", label: "In Review" },
     { id: "COMPLETED", label: "Completed" },
-  ];
+  ]
 
   const priorities = [
     { id: "all", label: "All", dot: undefined },
     { id: "HIGH", label: "High", dot: "#EF4444" },
     { id: "MEDIUM", label: "Medium", dot: "#F59E0B" },
     { id: "LOW", label: "Low", dot: "#94A3B8" },
-  ];
+  ]
 
   const types = [
     { id: "all", label: "All" },
@@ -44,12 +44,12 @@ export function FilterModal({
     { id: "issue", label: "Issues" },
     { id: "rfi", label: "RFIs" },
     { id: "fieldnote", label: "Field Notes" },
-  ];
+  ]
 
   const activeCount =
     (statusFilter !== "all" ? 1 : 0) +
     (priorityFilter !== "all" ? 1 : 0) +
-    (typeFilter !== "all" ? 1 : 0);
+    (typeFilter !== "all" ? 1 : 0)
 
   return (
     <div
@@ -65,14 +65,40 @@ export function FilterModal({
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full bg-blue-50 text-[#0055ff] flex items-center justify-center shadow-2xs">
               <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-                <path d="M2.5 6.5h4.5M11.5 6.5h6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-                <circle cx="9" cy="6.5" r="2.2" fill="#0055ff" stroke="currentColor" strokeWidth="1.6" />
-                <path d="M2.5 13.5h7.5M14.5 13.5h3" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-                <circle cx="12.5" cy="13.5" r="2.2" fill="#0055ff" stroke="currentColor" strokeWidth="1.6" />
+                <path
+                  d="M2.5 6.5h4.5M11.5 6.5h6"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                />
+                <circle
+                  cx="9"
+                  cy="6.5"
+                  r="2.2"
+                  fill="#0055ff"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                />
+                <path
+                  d="M2.5 13.5h7.5M14.5 13.5h3"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                />
+                <circle
+                  cx="12.5"
+                  cy="13.5"
+                  r="2.2"
+                  fill="#0055ff"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                />
               </svg>
             </div>
             <div className="flex items-center gap-2">
-              <h3 className="text-[15px] font-bold text-slate-900 tracking-tight">Filters</h3>
+              <h3 className="text-[15px] font-bold text-slate-900 tracking-tight">
+                Filters
+              </h3>
               {activeCount > 0 && (
                 <span className="px-2 py-0.5 rounded-full bg-blue-100 text-[#0055ff] text-[10px] font-black">
                   {activeCount} active
@@ -85,7 +111,15 @@ export function FilterModal({
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-slate-100/90 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            >
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -101,7 +135,7 @@ export function FilterModal({
             </span>
             <div className="flex flex-wrap gap-1.5">
               {types.map((t) => {
-                const isActive = typeFilter === t.id;
+                const isActive = typeFilter === t.id
                 return (
                   <button
                     type="button"
@@ -115,7 +149,7 @@ export function FilterModal({
                   >
                     {t.label}
                   </button>
-                );
+                )
               })}
             </div>
           </div>
@@ -127,7 +161,7 @@ export function FilterModal({
             </span>
             <div className="flex flex-wrap gap-1.5">
               {statuses.map((s) => {
-                const isActive = statusFilter === s.id;
+                const isActive = statusFilter === s.id
                 return (
                   <button
                     type="button"
@@ -141,7 +175,7 @@ export function FilterModal({
                   >
                     {s.label}
                   </button>
-                );
+                )
               })}
             </div>
           </div>
@@ -153,7 +187,7 @@ export function FilterModal({
             </span>
             <div className="flex flex-wrap gap-1.5">
               {priorities.map((p) => {
-                const isActive = priorityFilter === p.id;
+                const isActive = priorityFilter === p.id
                 return (
                   <button
                     type="button"
@@ -168,12 +202,14 @@ export function FilterModal({
                     {p.dot && (
                       <span
                         className="w-1.5 h-1.5 rounded-full"
-                        style={{ backgroundColor: isActive ? "#ffffff" : p.dot }}
+                        style={{
+                          backgroundColor: isActive ? "#ffffff" : p.dot,
+                        }}
                       />
                     )}
                     <span>{p.label}</span>
                   </button>
-                );
+                )
               })}
             </div>
           </div>
@@ -198,5 +234,5 @@ export function FilterModal({
         </div>
       </div>
     </div>
-  );
+  )
 }

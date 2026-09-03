@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect } from "react";
-import type { Item, ItemType } from "../data/mockData";
+import { useState, useRef, useEffect } from "react"
+import type { Item, ItemType } from "../data/mockData"
 
 interface SearchModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  items: Item[];
-  onItemClick: (item: Item) => void;
+  isOpen: boolean
+  onClose: () => void
+  items: Item[]
+  onItemClick: (item: Item) => void
 }
 
 const recentSearches = [
@@ -13,27 +13,32 @@ const recentSearches = [
   "Drainage clash",
   "Rebar clearance",
   "Concrete test",
-];
+]
 
-export function SearchModal({ isOpen, onClose, items, onItemClick }: SearchModalProps) {
-  const [query, setQuery] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+export function SearchModal({
+  isOpen,
+  onClose,
+  items,
+  onItemClick,
+}: SearchModalProps) {
+  const [query, setQuery] = useState("")
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => {
-        inputRef.current?.focus();
-      }, 50);
+        inputRef.current?.focus()
+      }, 50)
     } else {
-      setQuery("");
+      setQuery("")
     }
-  }, [isOpen]);
+  }, [isOpen])
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   const filteredResults = query.trim()
     ? items.filter((item) => {
-        const q = query.toLowerCase();
+        const q = query.toLowerCase()
         return (
           item.title.toLowerCase().includes(q) ||
           item.id.toLowerCase().includes(q) ||
@@ -41,9 +46,9 @@ export function SearchModal({ isOpen, onClose, items, onItemClick }: SearchModal
           item.status.toLowerCase().includes(q) ||
           item.severity.toLowerCase().includes(q) ||
           item.tags?.some((t) => t.toLowerCase().includes(q))
-        );
+        )
       })
-    : [];
+    : []
 
   const getTypeIcon = (type: ItemType) => {
     switch (type) {
@@ -51,47 +56,86 @@ export function SearchModal({ isOpen, onClose, items, onItemClick }: SearchModal
         return (
           <div className="w-6 h-6 rounded-md bg-blue-50 text-[#0055ff] flex items-center justify-center shrink-0">
             <svg width="12" height="12" viewBox="0 0 20 20" fill="none">
-              <rect x="2" y="3" width="16" height="14" rx="3" stroke="currentColor" strokeWidth="2" />
-              <path d="m6 10 2.5 2.5L14 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              <rect
+                x="2"
+                y="3"
+                width="16"
+                height="14"
+                rx="3"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+              <path
+                d="m6 10 2.5 2.5L14 7"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </div>
-        );
+        )
       case "issue":
         return (
           <div className="w-6 h-6 rounded-md bg-red-50 text-red-600 flex items-center justify-center shrink-0">
             <svg width="12" height="12" viewBox="0 0 20 20" fill="none">
-              <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="2" />
-              <path d="M10 6v5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+              <circle
+                cx="10"
+                cy="10"
+                r="7.5"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+              <path
+                d="M10 6v5"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+              />
               <circle cx="10" cy="14" r="1.1" fill="currentColor" />
             </svg>
           </div>
-        );
+        )
       case "rfi":
         return (
           <div className="w-6 h-6 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
             <svg width="12" height="12" viewBox="0 0 20 20" fill="none">
-              <path d="M5 2.5h7l4 4v11H5z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-              <path d="M12 2.5v4h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              <path
+                d="M5 2.5h7l4 4v11H5z"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M12 2.5v4h4"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
             </svg>
           </div>
-        );
+        )
       case "fieldnote":
         return (
           <div className="w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
             <svg width="12" height="12" viewBox="0 0 20 20" fill="none">
-              <path d="M4 3h10a2 2 0 0 1 2 2v12H6a2 2 0 0 1-2-2z" stroke="currentColor" strokeWidth="1.8" />
+              <path
+                d="M4 3h10a2 2 0 0 1 2 2v12H6a2 2 0 0 1-2-2z"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              />
               <path d="m8 12 1.5-3.5 5-5 1.5 1.5-5 5z" fill="currentColor" />
             </svg>
           </div>
-        );
+        )
     }
-  };
+  }
 
   const getPriorityColor = (sev: string) => {
-    if (sev === "HIGH") return "#DC2626";
-    if (sev === "MEDIUM") return "#D97706";
-    return "#2563EB";
-  };
+    if (sev === "HIGH") return "#DC2626"
+    if (sev === "MEDIUM") return "#D97706"
+    return "#2563EB"
+  }
 
   return (
     <div className="absolute inset-0 z-50 flex flex-col bg-white select-none animate-fade-in">
@@ -105,14 +149,31 @@ export function SearchModal({ isOpen, onClose, items, onItemClick }: SearchModal
             className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors cursor-pointer shrink-0"
             aria-label="Back"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
           </button>
 
           {/* Search Input Box */}
           <div className="flex-1 flex items-center gap-2 bg-slate-100/90 rounded-full px-3 py-1.5 border border-slate-200/80 focus-within:border-[#0055ff] focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100/80 transition-all">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.4" strokeLinecap="round">
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#64748b"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+            >
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
@@ -164,7 +225,14 @@ export function SearchModal({ isOpen, onClose, items, onItemClick }: SearchModal
                     onClick={() => setQuery(s)}
                     className="flex items-center gap-1 px-2.5 py-[3px] rounded-full bg-slate-100/90 hover:bg-slate-200 text-slate-600 text-[10px] font-semibold transition-all cursor-pointer active:scale-95"
                   >
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.4">
+                    <svg
+                      width="9"
+                      height="9"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#94a3b8"
+                      strokeWidth="2.4"
+                    >
                       <circle cx="12" cy="12" r="10" />
                       <polyline points="12 6 12 12 16 14" />
                     </svg>
@@ -184,8 +252,8 @@ export function SearchModal({ isOpen, onClose, items, onItemClick }: SearchModal
                   <div
                     key={item.id}
                     onClick={() => {
-                      onItemClick(item);
-                      onClose();
+                      onItemClick(item)
+                      onClose()
                     }}
                     className="py-2.5 flex items-center justify-between gap-2.5 hover:bg-slate-50 rounded-xl px-1.5 cursor-pointer transition-colors group"
                   >
@@ -214,26 +282,31 @@ export function SearchModal({ isOpen, onClose, items, onItemClick }: SearchModal
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">
-                {filteredResults.length} {filteredResults.length === 1 ? "Result" : "Results"}
+                {filteredResults.length}{" "}
+                {filteredResults.length === 1 ? "Result" : "Results"}
               </span>
             </div>
 
             {filteredResults.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-[13px] font-bold text-slate-700">No matching items</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Try a different search term</p>
+                <p className="text-[13px] font-bold text-slate-700">
+                  No matching items
+                </p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Try a different search term
+                </p>
               </div>
             ) : (
               <div className="divide-y divide-slate-100">
                 {filteredResults.map((item) => {
-                  const priorityColor = getPriorityColor(item.severity);
+                  const priorityColor = getPriorityColor(item.severity)
 
                   return (
                     <div
                       key={item.id}
                       onClick={() => {
-                        onItemClick(item);
-                        onClose();
+                        onItemClick(item)
+                        onClose()
                       }}
                       className="py-3 flex items-center justify-between gap-3 hover:bg-slate-50 rounded-xl px-2 cursor-pointer transition-colors group"
                     >
@@ -267,7 +340,7 @@ export function SearchModal({ isOpen, onClose, items, onItemClick }: SearchModal
                         </span>
                       </div>
                     </div>
-                  );
+                  )
                 })}
               </div>
             )}
@@ -275,5 +348,5 @@ export function SearchModal({ isOpen, onClose, items, onItemClick }: SearchModal
         )}
       </div>
     </div>
-  );
+  )
 }

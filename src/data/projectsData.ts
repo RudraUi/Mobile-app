@@ -1,39 +1,36 @@
-import type { ItemType, Severity, Status } from "./mockData";
+import type { ItemType, Severity, Status } from "./mockData"
 
 export interface Project {
-  id: string;
-  name: string;
-  code: string;
-  badge: string;
-  badgeBg: string;
-  location: string;
-  tabData: Record<
-    string,
-    {
-      statCards: Array<{
-        id: string;
-        title: string;
-        subtitle: string;
-        background: string;
-        color: string;
-        iconBackground: string;
-        iconColor: string;
-        hasBorder?: boolean;
-      }>;
-      recentRows: Array<{
-        id: string;
-        title: string;
-        flag: string;
-        type: ItemType;
-        status: Status;
-        severity: Severity;
-      }>;
-      phases: Array<{ name: string; count: string }>;
-      categoryCount: string;
-      itemLabel: string;
-      itemCount: string;
-    }
-  >;
+  id: string
+  name: string
+  code: string
+  badge: string
+  badgeBg: string
+  location: string
+  tabData: Record<string, {
+    statCards: Array<{
+      id: string
+      title: string
+      subtitle: string
+      background: string
+      color: string
+      iconBackground: string
+      iconColor: string
+      hasBorder?: boolean
+    }>
+    recentRows: Array<{
+      id: string
+      title: string
+      flag: string
+      type: ItemType
+      status: Status
+      severity: Severity
+    }>
+    phases: Array<{ name: string count: string }>
+    categoryCount: string
+    itemLabel: string
+    itemCount: string
+  }>
 }
 
 export const projectsList: Project[] = [
@@ -47,18 +44,95 @@ export const projectsList: Project[] = [
     tabData: {
       all: {
         statCards: [
-          { id: "today", title: "Today 02", subtitle: "24 overdue", background: "#F0F4FF", color: "#18243D", iconBackground: "#0055FF", iconColor: "#FFFFFF", hasBorder: true },
-          { id: "not-started", title: "Not Started", subtitle: "16 tasks", background: "#0055FF", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#0055FF" },
-          { id: "in-progress", title: "In Progress", subtitle: "12 active", background: "#7525FA", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#7525FA" },
-          { id: "in-review", title: "In Review", subtitle: "8 pending", background: "#FF9500", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#FF9500" },
-          { id: "blocked", title: "Blocked", subtitle: "5 issues", background: "#FF2D55", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#FF2D55" },
-          { id: "completed", title: "Completed", subtitle: "32 done", background: "#00A868", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#00A868" },
+          {
+            id: "today",
+            title: "Today 02",
+            subtitle: "24 overdue",
+            background: "#F0F4FF",
+            color: "#18243D",
+            iconBackground: "#0055FF",
+            iconColor: "#FFFFFF",
+            hasBorder: true,
+          },
+          {
+            id: "not-started",
+            title: "Not Started",
+            subtitle: "16 tasks",
+            background: "#0055FF",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#0055FF",
+          },
+          {
+            id: "in-progress",
+            title: "In Progress",
+            subtitle: "12 active",
+            background: "#7525FA",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#7525FA",
+          },
+          {
+            id: "in-review",
+            title: "In Review",
+            subtitle: "8 pending",
+            background: "#FF9500",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#FF9500",
+          },
+          {
+            id: "blocked",
+            title: "Blocked",
+            subtitle: "5 issues",
+            background: "#FF2D55",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#FF2D55",
+          },
+          {
+            id: "completed",
+            title: "Completed",
+            subtitle: "32 done",
+            background: "#00A868",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#00A868",
+          },
         ],
         recentRows: [
-          { id: "TASK-005", title: "Install supply air duct in Level 03 corridor", flag: "#FF6D00", type: "task", status: "IN PROGRESS", severity: "MEDIUM" },
-          { id: "ISSUE-018", title: "Structural column clash with M&E drainage pipe", flag: "#FF001F", type: "issue", status: "TO DO", severity: "HIGH" },
-          { id: "RFI-104", title: "Rebar clearance clarification at shear wall SW-02", flag: "#1558F5", type: "rfi", status: "REVIEW", severity: "LOW" },
-          { id: "FN-012", title: "Concrete slump test verified before Level 04 slab pour", flag: "#1558F5", type: "fieldnote", status: "COMPLETED", severity: "LOW" },
+          {
+            id: "TASK-005",
+            title: "Install supply air duct in Level 03 corridor",
+            flag: "#FF6D00",
+            type: "task",
+            status: "IN PROGRESS",
+            severity: "MEDIUM",
+          },
+          {
+            id: "ISSUE-018",
+            title: "Structural column clash with M&E drainage pipe",
+            flag: "#FF001F",
+            type: "issue",
+            status: "TO DO",
+            severity: "HIGH",
+          },
+          {
+            id: "RFI-104",
+            title: "Rebar clearance clarification at shear wall SW-02",
+            flag: "#1558F5",
+            type: "rfi",
+            status: "REVIEW",
+            severity: "LOW",
+          },
+          {
+            id: "FN-012",
+            title: "Concrete slump test verified before Level 04 slab pour",
+            flag: "#1558F5",
+            type: "fieldnote",
+            status: "COMPLETED",
+            severity: "LOW",
+          },
         ],
         phases: [
           { name: "Pre - construction", count: "45" },
@@ -71,18 +145,95 @@ export const projectsList: Project[] = [
       },
       task: {
         statCards: [
-          { id: "today", title: "Today 01", subtitle: "14 due today", background: "#F0F4FF", color: "#18243D", iconBackground: "#0055FF", iconColor: "#FFFFFF", hasBorder: true },
-          { id: "not-started", title: "Not Started", subtitle: "9 pending", background: "#0055FF", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#0055FF" },
-          { id: "in-progress", title: "In Progress", subtitle: "8 active", background: "#7525FA", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#7525FA" },
-          { id: "in-review", title: "In Review", subtitle: "4 QA review", background: "#FF9500", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#FF9500" },
-          { id: "blocked", title: "Blocked", subtitle: "2 waiting parts", background: "#FF2D55", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#FF2D55" },
-          { id: "completed", title: "Completed", subtitle: "18 done", background: "#00A868", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#00A868" },
+          {
+            id: "today",
+            title: "Today 01",
+            subtitle: "14 due today",
+            background: "#F0F4FF",
+            color: "#18243D",
+            iconBackground: "#0055FF",
+            iconColor: "#FFFFFF",
+            hasBorder: true,
+          },
+          {
+            id: "not-started",
+            title: "Not Started",
+            subtitle: "9 pending",
+            background: "#0055FF",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#0055FF",
+          },
+          {
+            id: "in-progress",
+            title: "In Progress",
+            subtitle: "8 active",
+            background: "#7525FA",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#7525FA",
+          },
+          {
+            id: "in-review",
+            title: "In Review",
+            subtitle: "4 QA review",
+            background: "#FF9500",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#FF9500",
+          },
+          {
+            id: "blocked",
+            title: "Blocked",
+            subtitle: "2 waiting parts",
+            background: "#FF2D55",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#FF2D55",
+          },
+          {
+            id: "completed",
+            title: "Completed",
+            subtitle: "18 done",
+            background: "#00A868",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#00A868",
+          },
         ],
         recentRows: [
-          { id: "TASK-001", title: "Install supply air duct in Level 03 corridor", flag: "#FF6D00", type: "task", status: "IN PROGRESS", severity: "MEDIUM" },
-          { id: "TASK-002", title: "Inspect and repair fire alarm system at Level 02", flag: "#1558F5", type: "task", status: "TO DO", severity: "LOW" },
-          { id: "TASK-003", title: "Replace ceiling tiles in Level 04 conference room", flag: "#FF001F", type: "task", status: "TO DO", severity: "HIGH" },
-          { id: "TASK-004", title: "Test emergency lighting fixtures throughout Tower B", flag: "#1558F5", type: "task", status: "IN PROGRESS", severity: "LOW" },
+          {
+            id: "TASK-001",
+            title: "Install supply air duct in Level 03 corridor",
+            flag: "#FF6D00",
+            type: "task",
+            status: "IN PROGRESS",
+            severity: "MEDIUM",
+          },
+          {
+            id: "TASK-002",
+            title: "Inspect and repair fire alarm system at Level 02",
+            flag: "#1558F5",
+            type: "task",
+            status: "TO DO",
+            severity: "LOW",
+          },
+          {
+            id: "TASK-003",
+            title: "Replace ceiling tiles in Level 04 conference room",
+            flag: "#FF001F",
+            type: "task",
+            status: "TO DO",
+            severity: "HIGH",
+          },
+          {
+            id: "TASK-004",
+            title: "Test emergency lighting fixtures throughout Tower B",
+            flag: "#1558F5",
+            type: "task",
+            status: "IN PROGRESS",
+            severity: "LOW",
+          },
         ],
         phases: [
           { name: "Pre - construction Tasks", count: "28" },
@@ -95,18 +246,95 @@ export const projectsList: Project[] = [
       },
       issue: {
         statCards: [
-          { id: "today", title: "Critical 04", subtitle: "8 open clashes", background: "#FFF1F2", color: "#18243D", iconBackground: "#FF2D55", iconColor: "#FFFFFF", hasBorder: true },
-          { id: "not-started", title: "New Clashes", subtitle: "11 reported", background: "#0055FF", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#0055FF" },
-          { id: "in-progress", title: "Investigating", subtitle: "6 resolving", background: "#7525FA", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#7525FA" },
-          { id: "in-review", title: "BIM Review", subtitle: "4 pending", background: "#FF9500", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#FF9500" },
-          { id: "blocked", title: "High Severity", subtitle: "3 critical", background: "#FF2D55", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#FF2D55" },
-          { id: "completed", title: "Resolved", subtitle: "22 cleared", background: "#00A868", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#00A868" },
+          {
+            id: "today",
+            title: "Critical 04",
+            subtitle: "8 open clashes",
+            background: "#FFF1F2",
+            color: "#18243D",
+            iconBackground: "#FF2D55",
+            iconColor: "#FFFFFF",
+            hasBorder: true,
+          },
+          {
+            id: "not-started",
+            title: "New Clashes",
+            subtitle: "11 reported",
+            background: "#0055FF",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#0055FF",
+          },
+          {
+            id: "in-progress",
+            title: "Investigating",
+            subtitle: "6 resolving",
+            background: "#7525FA",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#7525FA",
+          },
+          {
+            id: "in-review",
+            title: "BIM Review",
+            subtitle: "4 pending",
+            background: "#FF9500",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#FF9500",
+          },
+          {
+            id: "blocked",
+            title: "High Severity",
+            subtitle: "3 critical",
+            background: "#FF2D55",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#FF2D55",
+          },
+          {
+            id: "completed",
+            title: "Resolved",
+            subtitle: "22 cleared",
+            background: "#00A868",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#00A868",
+          },
         ],
         recentRows: [
-          { id: "ISSUE-018", title: "HVAC supply duct clashes with primary column B4", flag: "#FF001F", type: "issue", status: "TO DO", severity: "HIGH" },
-          { id: "ISSUE-019", title: "Water leakage identified near basement elevator shaft", flag: "#FF001F", type: "issue", status: "IN PROGRESS", severity: "HIGH" },
-          { id: "ISSUE-020", title: "Missing fire dampers on Level 02 exhaust shaft", flag: "#FF6D00", type: "issue", status: "TO DO", severity: "MEDIUM" },
-          { id: "ISSUE-021", title: "Precast slab joint misalignment at Grid C-12", flag: "#FF6D00", type: "issue", status: "REVIEW", severity: "MEDIUM" },
+          {
+            id: "ISSUE-018",
+            title: "HVAC supply duct clashes with primary column B4",
+            flag: "#FF001F",
+            type: "issue",
+            status: "TO DO",
+            severity: "HIGH",
+          },
+          {
+            id: "ISSUE-019",
+            title: "Water leakage identified near basement elevator shaft",
+            flag: "#FF001F",
+            type: "issue",
+            status: "IN PROGRESS",
+            severity: "HIGH",
+          },
+          {
+            id: "ISSUE-020",
+            title: "Missing fire dampers on Level 02 exhaust shaft",
+            flag: "#FF6D00",
+            type: "issue",
+            status: "TO DO",
+            severity: "MEDIUM",
+          },
+          {
+            id: "ISSUE-021",
+            title: "Precast slab joint misalignment at Grid C-12",
+            flag: "#FF6D00",
+            type: "issue",
+            status: "REVIEW",
+            severity: "MEDIUM",
+          },
         ],
         phases: [
           { name: "Architectural Clashes", count: "18" },
@@ -119,18 +347,95 @@ export const projectsList: Project[] = [
       },
       rfi: {
         statCards: [
-          { id: "today", title: "Urgent 02", subtitle: "5 awaiting approval", background: "#FFFBEB", color: "#18243D", iconBackground: "#FF9500", iconColor: "#FFFFFF", hasBorder: true },
-          { id: "not-started", title: "Drafted", subtitle: "7 submitted", background: "#0055FF", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#0055FF" },
-          { id: "in-progress", title: "In Review", subtitle: "4 engineering", background: "#7525FA", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#7525FA" },
-          { id: "in-review", title: "Consultant", subtitle: "3 consultant", background: "#FF9500", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#FF9500" },
-          { id: "blocked", title: "Overdue", subtitle: "1 structural", background: "#FF2D55", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#FF2D55" },
-          { id: "completed", title: "Answered", subtitle: "14 closed", background: "#00A868", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#00A868" },
+          {
+            id: "today",
+            title: "Urgent 02",
+            subtitle: "5 awaiting approval",
+            background: "#FFFBEB",
+            color: "#18243D",
+            iconBackground: "#FF9500",
+            iconColor: "#FFFFFF",
+            hasBorder: true,
+          },
+          {
+            id: "not-started",
+            title: "Drafted",
+            subtitle: "7 submitted",
+            background: "#0055FF",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#0055FF",
+          },
+          {
+            id: "in-progress",
+            title: "In Review",
+            subtitle: "4 engineering",
+            background: "#7525FA",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#7525FA",
+          },
+          {
+            id: "in-review",
+            title: "Consultant",
+            subtitle: "3 consultant",
+            background: "#FF9500",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#FF9500",
+          },
+          {
+            id: "blocked",
+            title: "Overdue",
+            subtitle: "1 structural",
+            background: "#FF2D55",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#FF2D55",
+          },
+          {
+            id: "completed",
+            title: "Answered",
+            subtitle: "14 closed",
+            background: "#00A868",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#00A868",
+          },
         ],
         recentRows: [
-          { id: "RFI-104", title: "RFI-104: Column reinforcement rebar clearance spec", flag: "#FF6D00", type: "rfi", status: "REVIEW", severity: "MEDIUM" },
-          { id: "RFI-088", title: "RFI-088: Waterproofing membrane material change request", flag: "#1558F5", type: "rfi", status: "IN PROGRESS", severity: "LOW" },
-          { id: "RFI-076", title: "RFI-076: Chilled water piping routing conflict at Grid D", flag: "#FF001F", type: "rfi", status: "TO DO", severity: "HIGH" },
-          { id: "RFI-052", title: "RFI-052: Electrical trench depth approval for North Wing", flag: "#1558F5", type: "rfi", status: "COMPLETED", severity: "LOW" },
+          {
+            id: "RFI-104",
+            title: "RFI-104: Column reinforcement rebar clearance spec",
+            flag: "#FF6D00",
+            type: "rfi",
+            status: "REVIEW",
+            severity: "MEDIUM",
+          },
+          {
+            id: "RFI-088",
+            title: "RFI-088: Waterproofing membrane material change request",
+            flag: "#1558F5",
+            type: "rfi",
+            status: "IN PROGRESS",
+            severity: "LOW",
+          },
+          {
+            id: "RFI-076",
+            title: "RFI-076: Chilled water piping routing conflict at Grid D",
+            flag: "#FF001F",
+            type: "rfi",
+            status: "TO DO",
+            severity: "HIGH",
+          },
+          {
+            id: "RFI-052",
+            title: "RFI-052: Electrical trench depth approval for North Wing",
+            flag: "#1558F5",
+            type: "rfi",
+            status: "COMPLETED",
+            severity: "LOW",
+          },
         ],
         phases: [
           { name: "Design Clarifications", count: "15" },
@@ -143,18 +448,96 @@ export const projectsList: Project[] = [
       },
       fieldnote: {
         statCards: [
-          { id: "today", title: "Today 05", subtitle: "12 site notes", background: "#ECFDF5", color: "#18243D", iconBackground: "#00A868", iconColor: "#FFFFFF", hasBorder: true },
-          { id: "not-started", title: "Draft Notes", subtitle: "4 unverified", background: "#0055FF", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#0055FF" },
-          { id: "in-progress", title: "Inspected", subtitle: "8 verified", background: "#7525FA", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#7525FA" },
-          { id: "in-review", title: "QA Signed", subtitle: "5 approved", background: "#FF9500", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#FF9500" },
-          { id: "blocked", title: "Attention", subtitle: "2 safety flags", background: "#FF2D55", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#FF2D55" },
-          { id: "completed", title: "Archived", subtitle: "19 logged", background: "#00A868", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#00A868" },
+          {
+            id: "today",
+            title: "Today 05",
+            subtitle: "12 site notes",
+            background: "#ECFDF5",
+            color: "#18243D",
+            iconBackground: "#00A868",
+            iconColor: "#FFFFFF",
+            hasBorder: true,
+          },
+          {
+            id: "not-started",
+            title: "Draft Notes",
+            subtitle: "4 unverified",
+            background: "#0055FF",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#0055FF",
+          },
+          {
+            id: "in-progress",
+            title: "Inspected",
+            subtitle: "8 verified",
+            background: "#7525FA",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#7525FA",
+          },
+          {
+            id: "in-review",
+            title: "QA Signed",
+            subtitle: "5 approved",
+            background: "#FF9500",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#FF9500",
+          },
+          {
+            id: "blocked",
+            title: "Attention",
+            subtitle: "2 safety flags",
+            background: "#FF2D55",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#FF2D55",
+          },
+          {
+            id: "completed",
+            title: "Archived",
+            subtitle: "19 logged",
+            background: "#00A868",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#00A868",
+          },
         ],
         recentRows: [
-          { id: "FN-012", title: "FN-012: Concrete slump test verified before Level 04 pour", flag: "#1558F5", type: "fieldnote", status: "COMPLETED", severity: "LOW" },
-          { id: "FN-009", title: "FN-009: Scaffolding safety checklist inspection passed", flag: "#1558F5", type: "fieldnote", status: "COMPLETED", severity: "LOW" },
-          { id: "FN-007", title: "FN-007: Daily weather & site workforce log (42 crew on site)", flag: "#FF6D00", type: "fieldnote", status: "IN PROGRESS", severity: "MEDIUM" },
-          { id: "FN-003", title: "FN-003: Rebar placement inspection photo log Level 03", flag: "#1558F5", type: "fieldnote", status: "COMPLETED", severity: "LOW" },
+          {
+            id: "FN-012",
+            title: "FN-012: Concrete slump test verified before Level 04 pour",
+            flag: "#1558F5",
+            type: "fieldnote",
+            status: "COMPLETED",
+            severity: "LOW",
+          },
+          {
+            id: "FN-009",
+            title: "FN-009: Scaffolding safety checklist inspection passed",
+            flag: "#1558F5",
+            type: "fieldnote",
+            status: "COMPLETED",
+            severity: "LOW",
+          },
+          {
+            id: "FN-007",
+            title:
+              "FN-007: Daily weather & site workforce log (42 crew on site)",
+            flag: "#FF6D00",
+            type: "fieldnote",
+            status: "IN PROGRESS",
+            severity: "MEDIUM",
+          },
+          {
+            id: "FN-003",
+            title: "FN-003: Rebar placement inspection photo log Level 03",
+            flag: "#1558F5",
+            type: "fieldnote",
+            status: "COMPLETED",
+            severity: "LOW",
+          },
         ],
         phases: [
           { name: "Foundation Inspection", count: "12" },
@@ -177,18 +560,95 @@ export const projectsList: Project[] = [
     tabData: {
       all: {
         statCards: [
-          { id: "today", title: "Today 04", subtitle: "18 urgent", background: "#F5F3FF", color: "#18243D", iconBackground: "#7525FA", iconColor: "#FFFFFF", hasBorder: true },
-          { id: "not-started", title: "Not Started", subtitle: "22 tasks", background: "#7525FA", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#7525FA" },
-          { id: "in-progress", title: "In Progress", subtitle: "19 active", background: "#0055FF", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#0055FF" },
-          { id: "in-review", title: "In Review", subtitle: "5 testing", background: "#FF9500", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#FF9500" },
-          { id: "blocked", title: "Blocked", subtitle: "3 vendor", background: "#FF2D55", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#FF2D55" },
-          { id: "completed", title: "Completed", subtitle: "48 done", background: "#00A868", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#00A868" },
+          {
+            id: "today",
+            title: "Today 04",
+            subtitle: "18 urgent",
+            background: "#F5F3FF",
+            color: "#18243D",
+            iconBackground: "#7525FA",
+            iconColor: "#FFFFFF",
+            hasBorder: true,
+          },
+          {
+            id: "not-started",
+            title: "Not Started",
+            subtitle: "22 tasks",
+            background: "#7525FA",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#7525FA",
+          },
+          {
+            id: "in-progress",
+            title: "In Progress",
+            subtitle: "19 active",
+            background: "#0055FF",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#0055FF",
+          },
+          {
+            id: "in-review",
+            title: "In Review",
+            subtitle: "5 testing",
+            background: "#FF9500",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#FF9500",
+          },
+          {
+            id: "blocked",
+            title: "Blocked",
+            subtitle: "3 vendor",
+            background: "#FF2D55",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#FF2D55",
+          },
+          {
+            id: "completed",
+            title: "Completed",
+            subtitle: "48 done",
+            background: "#00A868",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#00A868",
+          },
         ],
         recentRows: [
-          { id: "TASK-102", title: "Escalator truss alignment check at Atrium Central", flag: "#FF001F", type: "task", status: "TO DO", severity: "HIGH" },
-          { id: "ISSUE-042", title: "Smoke exhaust duct penetration clashes with beam G6", flag: "#FF001F", type: "issue", status: "IN PROGRESS", severity: "HIGH" },
-          { id: "RFI-120", title: "Curtain wall glass solar heat coefficient approval", flag: "#FF6D00", type: "rfi", status: "REVIEW", severity: "MEDIUM" },
-          { id: "FN-033", title: "Food court grease trap drainage pipe leak test", flag: "#1558F5", type: "fieldnote", status: "COMPLETED", severity: "LOW" },
+          {
+            id: "TASK-102",
+            title: "Escalator truss alignment check at Atrium Central",
+            flag: "#FF001F",
+            type: "task",
+            status: "TO DO",
+            severity: "HIGH",
+          },
+          {
+            id: "ISSUE-042",
+            title: "Smoke exhaust duct penetration clashes with beam G6",
+            flag: "#FF001F",
+            type: "issue",
+            status: "IN PROGRESS",
+            severity: "HIGH",
+          },
+          {
+            id: "RFI-120",
+            title: "Curtain wall glass solar heat coefficient approval",
+            flag: "#FF6D00",
+            type: "rfi",
+            status: "REVIEW",
+            severity: "MEDIUM",
+          },
+          {
+            id: "FN-033",
+            title: "Food court grease trap drainage pipe leak test",
+            flag: "#1558F5",
+            type: "fieldnote",
+            status: "COMPLETED",
+            severity: "LOW",
+          },
         ],
         phases: [
           { name: "Retail Concourse Fit-out", count: "32" },
@@ -211,18 +671,95 @@ export const projectsList: Project[] = [
     tabData: {
       all: {
         statCards: [
-          { id: "today", title: "Today 08", subtitle: "32 critical", background: "#FFFBEB", color: "#18243D", iconBackground: "#FF9500", iconColor: "#FFFFFF", hasBorder: true },
-          { id: "not-started", title: "Not Started", subtitle: "35 tasks", background: "#FF9500", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#FF9500" },
-          { id: "in-progress", title: "In Progress", subtitle: "28 active", background: "#0055FF", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#0055FF" },
-          { id: "in-review", title: "In Review", subtitle: "12 safety", background: "#7525FA", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#7525FA" },
-          { id: "blocked", title: "Blocked", subtitle: "7 tunnel", background: "#FF2D55", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#FF2D55" },
-          { id: "completed", title: "Completed", subtitle: "64 done", background: "#00A868", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#00A868" },
+          {
+            id: "today",
+            title: "Today 08",
+            subtitle: "32 critical",
+            background: "#FFFBEB",
+            color: "#18243D",
+            iconBackground: "#FF9500",
+            iconColor: "#FFFFFF",
+            hasBorder: true,
+          },
+          {
+            id: "not-started",
+            title: "Not Started",
+            subtitle: "35 tasks",
+            background: "#FF9500",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#FF9500",
+          },
+          {
+            id: "in-progress",
+            title: "In Progress",
+            subtitle: "28 active",
+            background: "#0055FF",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#0055FF",
+          },
+          {
+            id: "in-review",
+            title: "In Review",
+            subtitle: "12 safety",
+            background: "#7525FA",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#7525FA",
+          },
+          {
+            id: "blocked",
+            title: "Blocked",
+            subtitle: "7 tunnel",
+            background: "#FF2D55",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#FF2D55",
+          },
+          {
+            id: "completed",
+            title: "Completed",
+            subtitle: "64 done",
+            background: "#00A868",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#00A868",
+          },
         ],
         recentRows: [
-          { id: "TASK-204", title: "Tunnel boring machine segment ring 412 torque check", flag: "#FF001F", type: "task", status: "IN PROGRESS", severity: "HIGH" },
-          { id: "ISSUE-088", title: "Underground seepage detected near Cross-Passage 03", flag: "#FF001F", type: "issue", status: "TO DO", severity: "HIGH" },
-          { id: "RFI-144", title: "Track slab vibration damping pad specifications", flag: "#FF6D00", type: "rfi", status: "REVIEW", severity: "MEDIUM" },
-          { id: "FN-051", title: "Emergency ventilation shaft air pressure benchmark test", flag: "#1558F5", type: "fieldnote", status: "COMPLETED", severity: "LOW" },
+          {
+            id: "TASK-204",
+            title: "Tunnel boring machine segment ring 412 torque check",
+            flag: "#FF001F",
+            type: "task",
+            status: "IN PROGRESS",
+            severity: "HIGH",
+          },
+          {
+            id: "ISSUE-088",
+            title: "Underground seepage detected near Cross-Passage 03",
+            flag: "#FF001F",
+            type: "issue",
+            status: "TO DO",
+            severity: "HIGH",
+          },
+          {
+            id: "RFI-144",
+            title: "Track slab vibration damping pad specifications",
+            flag: "#FF6D00",
+            type: "rfi",
+            status: "REVIEW",
+            severity: "MEDIUM",
+          },
+          {
+            id: "FN-051",
+            title: "Emergency ventilation shaft air pressure benchmark test",
+            flag: "#1558F5",
+            type: "fieldnote",
+            status: "COMPLETED",
+            severity: "LOW",
+          },
         ],
         phases: [
           { name: "Tunnel Boring & Ring Lining", count: "52" },
@@ -245,18 +782,95 @@ export const projectsList: Project[] = [
     tabData: {
       all: {
         statCards: [
-          { id: "today", title: "Today 01", subtitle: "8 due today", background: "#ECFDF5", color: "#18243D", iconBackground: "#00A868", iconColor: "#FFFFFF", hasBorder: true },
-          { id: "not-started", title: "Not Started", subtitle: "12 tasks", background: "#00A868", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#00A868" },
-          { id: "in-progress", title: "In Progress", subtitle: "14 active", background: "#0055FF", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#0055FF" },
-          { id: "in-review", title: "In Review", subtitle: "6 finishes", background: "#FF9500", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#FF9500" },
-          { id: "blocked", title: "Blocked", subtitle: "1 permit", background: "#FF2D55", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#FF2D55" },
-          { id: "completed", title: "Completed", subtitle: "52 done", background: "#7525FA", color: "#FFFFFF", iconBackground: "#FFFFFF", iconColor: "#7525FA" },
+          {
+            id: "today",
+            title: "Today 01",
+            subtitle: "8 due today",
+            background: "#ECFDF5",
+            color: "#18243D",
+            iconBackground: "#00A868",
+            iconColor: "#FFFFFF",
+            hasBorder: true,
+          },
+          {
+            id: "not-started",
+            title: "Not Started",
+            subtitle: "12 tasks",
+            background: "#00A868",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#00A868",
+          },
+          {
+            id: "in-progress",
+            title: "In Progress",
+            subtitle: "14 active",
+            background: "#0055FF",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#0055FF",
+          },
+          {
+            id: "in-review",
+            title: "In Review",
+            subtitle: "6 finishes",
+            background: "#FF9500",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#FF9500",
+          },
+          {
+            id: "blocked",
+            title: "Blocked",
+            subtitle: "1 permit",
+            background: "#FF2D55",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#FF2D55",
+          },
+          {
+            id: "completed",
+            title: "Completed",
+            subtitle: "52 done",
+            background: "#7525FA",
+            color: "#FFFFFF",
+            iconBackground: "#FFFFFF",
+            iconColor: "#7525FA",
+          },
         ],
         recentRows: [
-          { id: "TASK-310", title: "Balcony glass railing balustrade stress testing", flag: "#1558F5", type: "task", status: "IN PROGRESS", severity: "LOW" },
-          { id: "ISSUE-065", title: "Infinity pool infinity edge waterproofing sealant defect", flag: "#FF001F", type: "issue", status: "TO DO", severity: "HIGH" },
-          { id: "RFI-160", title: "Saltwater corrosion resistant marine grade steel spec", flag: "#FF6D00", type: "rfi", status: "REVIEW", severity: "MEDIUM" },
-          { id: "FN-072", title: "Rooftop penthouse acoustic insulation verification", flag: "#1558F5", type: "fieldnote", status: "COMPLETED", severity: "LOW" },
+          {
+            id: "TASK-310",
+            title: "Balcony glass railing balustrade stress testing",
+            flag: "#1558F5",
+            type: "task",
+            status: "IN PROGRESS",
+            severity: "LOW",
+          },
+          {
+            id: "ISSUE-065",
+            title: "Infinity pool infinity edge waterproofing sealant defect",
+            flag: "#FF001F",
+            type: "issue",
+            status: "TO DO",
+            severity: "HIGH",
+          },
+          {
+            id: "RFI-160",
+            title: "Saltwater corrosion resistant marine grade steel spec",
+            flag: "#FF6D00",
+            type: "rfi",
+            status: "REVIEW",
+            severity: "MEDIUM",
+          },
+          {
+            id: "FN-072",
+            title: "Rooftop penthouse acoustic insulation verification",
+            flag: "#1558F5",
+            type: "fieldnote",
+            status: "COMPLETED",
+            severity: "LOW",
+          },
         ],
         phases: [
           { name: "Superstructure Facade", count: "21" },
@@ -269,4 +883,4 @@ export const projectsList: Project[] = [
       },
     },
   },
-];
+]

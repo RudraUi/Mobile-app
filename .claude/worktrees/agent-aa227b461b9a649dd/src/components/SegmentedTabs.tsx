@@ -1,16 +1,16 @@
-import { useRef, useLayoutEffect, useState } from "react";
+import { useRef, useLayoutEffect, useState } from "react"
 
 interface TabItem<T extends string> {
-  id: T;
-  label: string;
-  count?: number;
+  id: T
+  label: string
+  count?: number
 }
 
 interface SegmentedTabsProps<T extends string> {
-  tabs: TabItem<T>[];
-  active: T;
-  onChange: (id: T) => void;
-  color?: string;
+  tabs: TabItem<T>[]
+  active: T
+  onChange: (id: T) => void
+  color?: string
 }
 
 export function SegmentedTabs<T extends string>({
@@ -19,24 +19,24 @@ export function SegmentedTabs<T extends string>({
   onChange,
   color = "#0052ff",
 }: SegmentedTabsProps<T>) {
-  const activeIndex = tabs.findIndex((t) => t.id === active);
-  const total = tabs.length;
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [pillStyle, setPillStyle] = useState<{ left: string; width: string }>({
+  const activeIndex = tabs.findIndex((t) => t.id === active)
+  const total = tabs.length
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [pillStyle, setPillStyle] = useState<{ left: string width: string }>({
     left: "0%",
     width: `${100 / total}%`,
-  });
+  })
 
   useLayoutEffect(() => {
-    if (!containerRef.current) return;
-    const container = containerRef.current;
-    const buttons = container.querySelectorAll<HTMLButtonElement>("button");
-    const btn = buttons[activeIndex];
-    if (!btn) return;
-    const left = btn.offsetLeft;
-    const width = btn.offsetWidth;
-    setPillStyle({ left: `${left}px`, width: `${width}px` });
-  }, [activeIndex, tabs]);
+    if (!containerRef.current) return
+    const container = containerRef.current
+    const buttons = container.querySelectorAll<HTMLButtonElement>("button")
+    const btn = buttons[activeIndex]
+    if (!btn) return
+    const left = btn.offsetLeft
+    const width = btn.offsetWidth
+    setPillStyle({ left: `${left}px`, width: `${width}px` })
+  }, [activeIndex, tabs])
 
   return (
     <div
@@ -67,7 +67,7 @@ export function SegmentedTabs<T extends string>({
       />
 
       {tabs.map((tab) => {
-        const isActive = tab.id === active;
+        const isActive = tab.id === active
         return (
           <button
             key={tab.id}
@@ -115,10 +115,10 @@ export function SegmentedTabs<T extends string>({
               </span>
             )}
           </button>
-        );
+        )
       })}
     </div>
-  );
+  )
 }
 
-export default SegmentedTabs;
+export default SegmentedTabs

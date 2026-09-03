@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import type { ReactNode } from "react"
 import type { Assignee, ItemType, Severity, Status } from "../data/mockData"
 import { CustomKeyboard } from "../components/CustomKeyboard"
+import { Calendar } from "../components/Calendar"
 
 export interface CreateItemDraft {
   type: ItemType
@@ -89,13 +90,13 @@ const availableMembers = [
   },
 ]
 
-const priorities: Array<{ value: Severity; label: string; color: string }> = [
+const priorities: Array<{ value: Severity label: string color: string }> = [
   { value: "LOW", label: "Low", color: "#2563EB" },
   { value: "MEDIUM", label: "Medium", color: "#D97706" },
   { value: "HIGH", label: "High", color: "#DC2626" },
 ]
 
-const statuses: Array<{ value: Status; label: string; bg: string; text: string }> =
+const statuses: Array<{ value: Status label: string bg: string text: string }> =
   [
     { value: "TO DO", label: "Todo", bg: "bg-sky-500", text: "text-white" },
     {
@@ -132,100 +133,48 @@ const statuses: Array<{ value: Status; label: string; bg: string; text: string }
 
 const quickTags = ["MEP", "Structural", "Level 03", "HVAC", "Safety", "Quality"]
 
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-]
-
-const MONTH_NAMES_SHORT = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-]
-
 const WEEKDAY_NAMES = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
 
-function getWeeksInMonth(year: number, month: number) {
-  const weeks = []
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  let startDay = 1
-
-  while (startDay <= daysInMonth) {
-    const endDay = Math.min(startDay + 6, daysInMonth)
-    const startDate = new Date(year, month, startDay)
-    const endDate = new Date(year, month, endDay)
-
-    const firstJan = new Date(year, 0, 1)
-    const dayOfYear = Math.floor(
-      (startDate.getTime() - firstJan.getTime()) / (24 * 60 * 60 * 1000)
-    )
-    const weekNumber = Math.ceil((dayOfYear + firstJan.getDay() + 1) / 7)
-
-    const startStr = startDate.toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-    })
-    const endStr = endDate.toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-    })
-    const targetDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(
-      endDay
-    ).padStart(2, "0")}`
-    const label = `Week ${weekNumber} (${startStr} - ${endStr})`
-
-    weeks.push({
-      title: `Week ${weekNumber}`,
-      range: `${startStr} – ${endStr}, ${year}`,
-      daysCount: endDay - startDay + 1,
-      targetDate,
-      label,
-    })
-
-    startDay = endDay + 1
-  }
-  return weeks
-}
-
 const GALLERY_PHOTOS = [
-  { id: "g1", url: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=400&fit=crop&auto=format" },
-  { id: "g2", url: "https://images.unsplash.com/photo-1590012314607-cda9d9b699ae?w=400&h=400&fit=crop&auto=format" },
-  { id: "g3", url: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=400&h=400&fit=crop&auto=format" },
-  { id: "g4", url: "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?w=400&h=400&fit=crop&auto=format" },
-  { id: "g5", url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&h=400&fit=crop&auto=format" },
-  { id: "g6", url: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=400&fit=crop&auto=format" },
-  { id: "g7", url: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=400&h=400&fit=crop&auto=format" },
-  { id: "g8", url: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400&h=400&fit=crop&auto=format" },
-  { id: "g9", url: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=400&h=400&fit=crop&auto=format" },
+  {
+    id: "g1",
+    url: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=400&fit=crop&auto=format",
+  },
+  {
+    id: "g2",
+    url: "https://images.unsplash.com/photo-1590012314607-cda9d9b699ae?w=400&h=400&fit=crop&auto=format",
+  },
+  {
+    id: "g3",
+    url: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=400&h=400&fit=crop&auto=format",
+  },
+  {
+    id: "g4",
+    url: "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?w=400&h=400&fit=crop&auto=format",
+  },
+  {
+    id: "g5",
+    url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&h=400&fit=crop&auto=format",
+  },
+  {
+    id: "g6",
+    url: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=400&fit=crop&auto=format",
+  },
+  {
+    id: "g7",
+    url: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=400&h=400&fit=crop&auto=format",
+  },
+  {
+    id: "g8",
+    url: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400&h=400&fit=crop&auto=format",
+  },
+  {
+    id: "g9",
+    url: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=400&h=400&fit=crop&auto=format",
+  },
 ]
 
-type PropertySheet =
-  | "type"
-  | "status"
-  | "priority"
-  | "assignee"
-  | "date"
-  | "tags"
-  | "attachments"
+type PropertySheet = "type" | "status" | "priority" | "assignee" | "date" | "tags" | "attachments"
 
 function ChevronIcon() {
   return (
@@ -278,9 +227,17 @@ function PropertyGlyph({ type }: { type: PropertySheet }) {
 
   switch (type) {
     case "type":
-      return <svg {...common}><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+      return (
+        <svg {...common}>
+          <path d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      )
     case "status":
-      return <svg {...common}><circle cx="12" cy="12" r="8" strokeDasharray="3 3" /></svg>
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="8" strokeDasharray="3 3" />
+        </svg>
+      )
     case "priority":
       return (
         <svg
@@ -307,13 +264,32 @@ function PropertyGlyph({ type }: { type: PropertySheet }) {
         </svg>
       )
     case "assignee":
-      return <svg {...common}><circle cx="12" cy="8" r="3.5" /><path d="M5.5 20c.5-4.5 2.7-6.5 6.5-6.5s6 2 6.5 6.5" /></svg>
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="8" r="3.5" />
+          <path d="M5.5 20c.5-4.5 2.7-6.5 6.5-6.5s6 2 6.5 6.5" />
+        </svg>
+      )
     case "date":
-      return <svg {...common}><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M7 3v4M17 3v4M3 10h18" /></svg>
+      return (
+        <svg {...common}>
+          <rect x="3" y="5" width="18" height="16" rx="3" />
+          <path d="M7 3v4M17 3v4M3 10h18" />
+        </svg>
+      )
     case "tags":
-      return <svg {...common}><path d="m3 13 10-10h7v7L10 20a2.5 2.5 0 0 1-3.5 0L3 16.5A2.5 2.5 0 0 1 3 13Z" /><circle cx="16.5" cy="6.5" r="1" fill="currentColor" stroke="none" /></svg>
+      return (
+        <svg {...common}>
+          <path d="m3 13 10-10h7v7L10 20a2.5 2.5 0 0 1-3.5 0L3 16.5A2.5 2.5 0 0 1 3 13Z" />
+          <circle cx="16.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+        </svg>
+      )
     case "attachments":
-      return <svg {...common}><path d="m8.5 12.5 6-6a3.2 3.2 0 1 1 4.5 4.5l-8.5 8.5a5 5 0 0 1-7-7l9-9" /></svg>
+      return (
+        <svg {...common}>
+          <path d="m8.5 12.5 6-6a3.2 3.2 0 1 1 4.5 4.5l-8.5 8.5a5 5 0 0 1-7-7l9-9" />
+        </svg>
+      )
   }
 }
 
@@ -332,18 +308,15 @@ export function CreateItemScreen({
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [attachedPhotos, setAttachedPhotos] = useState<string[]>([])
 
-  const [calendarTab, setCalendarTab] = useState<"date" | "week" | "month">("date")
-  const [calYear, setCalYear] = useState(() =>
-    dueDate ? new Date(`${dueDate}T00:00:00`).getFullYear() : 2026
-  )
-  const [calMonth, setCalMonth] = useState(() =>
-    dueDate ? new Date(`${dueDate}T00:00:00`).getMonth() : 8
+  const [calendarTab, setCalendarTab] = useState<"date" | "week" | "month">(
+    "date",
   )
   const [dueDateLabelCustom, setDueDateLabelCustom] = useState<string>("")
 
   const [activePropertySheet, setActivePropertySheet] =
     useState<PropertySheet | null>(null)
-  const [activeField, setActiveField] = useState<"title" | "description" | null>(null)
+  const [activeField, setActiveField] =
+    useState<"title" | "description" | null>(null)
 
   const [assigneeSearchQuery, setAssigneeSearchQuery] = useState("")
   const [isAssigneeSearchFocused, setIsAssigneeSearchFocused] = useState(false)
@@ -412,17 +385,8 @@ export function CreateItemScreen({
 
   const togglePhotoAttachment = (url: string) => {
     setAttachedPhotos((prev) =>
-      prev.includes(url) ? prev.filter((p) => p !== url) : [...prev, url]
+      prev.includes(url) ? prev.filter((p) => p !== url) : [...prev, url],
     )
-  }
-
-  const setQuickDate = (offsetDays: number) => {
-    const d = new Date()
-    d.setDate(d.getDate() + offsetDays)
-    const dateStr = d.toISOString().split("T")[0]
-    setDueDate(dateStr)
-    setDueDateLabelCustom("")
-    setActivePropertySheet(null)
   }
 
   const getTypeIcon = (type: ItemType) => {
@@ -514,21 +478,45 @@ export function CreateItemScreen({
     .map((member) => member.name)
     .join(", ")
   const dueDateLabel = dueDate
-    ? (dueDateLabelCustom ||
-       new Date(`${dueDate}T00:00:00`).toLocaleDateString("en-GB", {
-         day: "2-digit",
-         month: "short",
-         year: "numeric",
-       }))
+    ? dueDateLabelCustom ||
+      new Date(`${dueDate}T00:00:00`).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
     : "Set a due date"
-  const propertySheetMeta: Record<PropertySheet, { title: string; hint: string }> = {
-    type: { title: "Select item type", hint: "Choose the classification for this new item." },
-    status: { title: "Choose status", hint: "Select the starting workflow state." },
-    priority: { title: "Set priority", hint: "Choose how urgently this needs attention." },
-    assignee: { title: "Choose assignee", hint: "Select or remove a team member." },
-    date: { title: "Set due date", hint: "Choose when this item should be completed." },
-    tags: { title: "Choose tags", hint: "Select or remove a classification tag." },
-    attachments: { title: "Add attachments", hint: "Upload site photos for this item." },
+  const propertySheetMeta: Record<PropertySheet, {
+    title: string
+    hint: string
+  }> = {
+    type: {
+      title: "Select item type",
+      hint: "Choose the classification for this new item.",
+    },
+    status: {
+      title: "Choose status",
+      hint: "Select the starting workflow state.",
+    },
+    priority: {
+      title: "Set priority",
+      hint: "Choose how urgently this needs attention.",
+    },
+    assignee: {
+      title: "Choose assignee",
+      hint: "Select or remove a team member.",
+    },
+    date: {
+      title: "Set due date",
+      hint: "Choose when this item should be completed.",
+    },
+    tags: {
+      title: "Choose tags",
+      hint: "Select or remove a classification tag.",
+    },
+    attachments: {
+      title: "Add attachments",
+      hint: "Upload site photos for this item.",
+    },
   }
 
   return (
@@ -554,7 +542,9 @@ export function CreateItemScreen({
           }
         }}
         className="absolute inset-0 cursor-default"
-        aria-label={activePropertySheet ? "Back to create form" : "Close dialog"}
+        aria-label={
+          activePropertySheet ? "Back to create form" : "Close dialog"
+        }
       />
 
       {activePropertySheet === null && (
@@ -579,7 +569,10 @@ export function CreateItemScreen({
                 className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[13px] font-semibold text-slate-800 transition-colors hover:bg-slate-100/80 active:bg-slate-100"
                 aria-label="Change item type"
               >
-                <span style={{ color: selectedTypeInfo.color }} className="shrink-0">
+                <span
+                  style={{ color: selectedTypeInfo.color }}
+                  className="shrink-0"
+                >
                   {getTypeIcon(selectedType)}
                 </span>
                 <span>{selectedTypeInfo.label}</span>
@@ -647,7 +640,10 @@ export function CreateItemScreen({
               </span>
               <span
                 className="shrink-0 text-slate-300 font-normal select-none text-[14px]"
-                style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
+                style={{
+                  fontFamily:
+                    'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                }}
               >
                 /
               </span>
@@ -671,7 +667,10 @@ export function CreateItemScreen({
               </span>
               <span
                 className="shrink-0 text-slate-300 font-normal select-none text-[14px]"
-                style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
+                style={{
+                  fontFamily:
+                    'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                }}
               >
                 /
               </span>
@@ -692,7 +691,12 @@ export function CreateItemScreen({
                 </svg>
                 <span>
                   Rebar{" "}
-                  <span style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+                  <span
+                    style={{
+                      fontFamily:
+                        'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    }}
+                  >
                     &amp;
                   </span>{" "}
                   Formwork
@@ -744,12 +748,16 @@ export function CreateItemScreen({
               >
                 <div
                   className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-                    selectedMemberNames ? "bg-violet-100 text-violet-600" : "bg-slate-100 text-slate-400"
+                    selectedMemberNames
+                      ? "bg-violet-100 text-violet-600"
+                      : "bg-slate-100 text-slate-400"
                   }`}
                 >
                   <PropertyGlyph type="assignee" />
                 </div>
-                <span className="text-[13px] font-medium text-slate-500">Assignee</span>
+                <span className="text-[13px] font-medium text-slate-500">
+                  Assignee
+                </span>
                 <div className="ml-auto flex items-center">
                   {selectedAssigneeMembers.length > 0 ? (
                     <div className="flex -space-x-1.5 overflow-hidden py-0.5">
@@ -770,8 +778,20 @@ export function CreateItemScreen({
                     </span>
                   )}
                 </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0 text-slate-300">
-                  <path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="shrink-0 text-slate-300"
+                >
+                  <path
+                    d="m9 6 6 6-6 6"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </button>
 
@@ -786,17 +806,33 @@ export function CreateItemScreen({
               >
                 <div
                   className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-                    dueDate ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-400"
+                    dueDate
+                      ? "bg-amber-100 text-amber-600"
+                      : "bg-slate-100 text-slate-400"
                   }`}
                 >
                   <PropertyGlyph type="date" />
                 </div>
-                <span className="text-[13px] font-medium text-slate-500">Due date</span>
+                <span className="text-[13px] font-medium text-slate-500">
+                  Due date
+                </span>
                 <span className="ml-auto text-[13px] font-medium text-slate-800">
                   {dueDate ? dueDateLabel : "None"}
                 </span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0 text-slate-300">
-                  <path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="shrink-0 text-slate-300"
+                >
+                  <path
+                    d="m9 6 6 6-6 6"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </button>
             </div>
@@ -844,11 +880,15 @@ export function CreateItemScreen({
                     setActivePropertySheet("tags")
                   }}
                   className="relative flex h-8 w-8 items-center justify-center rounded-lg transition-all active:scale-95 hover:bg-slate-50"
-                  title={`Tags: ${selectedTags.length ? selectedTags.join(", ") : "None"}`}
+                  title={`Tags: ${
+                    selectedTags.length ? selectedTags.join(", ") : "None"
+                  }`}
                 >
                   <div
                     className={`flex h-7 w-7 items-center justify-center ${
-                      selectedTags.length ? "text-emerald-600" : "text-slate-500"
+                      selectedTags.length
+                        ? "text-emerald-600"
+                        : "text-slate-500"
                     }`}
                   >
                     <PropertyGlyph type="tags" />
@@ -868,7 +908,11 @@ export function CreateItemScreen({
                     setActivePropertySheet("attachments")
                   }}
                   className="relative flex h-8 w-8 items-center justify-center rounded-lg transition-all active:scale-95 hover:bg-slate-50"
-                  title={`Files: ${attachedPhotos.length ? attachedPhotos.length + " attached" : "None"}`}
+                  title={`Files: ${
+                    attachedPhotos.length
+                      ? attachedPhotos.length + " attached"
+                      : "None"
+                  }`}
                 >
                   <div
                     className={`flex h-7 w-7 items-center justify-center ${
@@ -902,7 +946,6 @@ export function CreateItemScreen({
               </div>
             </div>
           </div>
-
         </section>
       )}
 
@@ -1149,7 +1192,15 @@ export function CreateItemScreen({
                         className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300 active:scale-95"
                         aria-label="Clear search"
                       >
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                        <svg
+                          width="10"
+                          height="10"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                        >
                           <path d="M18 6 6 18M6 6l12 12" />
                         </svg>
                       </button>
@@ -1213,390 +1264,22 @@ export function CreateItemScreen({
                     'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 }}
               >
-                {/* Minimal Segmented Tabs */}
-                <div className="flex items-center justify-center">
-                  <div className="flex rounded-lg bg-slate-100 p-0.5 text-[11.5px] font-medium text-slate-500">
-                    <button
-                      type="button"
-                      onClick={() => setCalendarTab("date")}
-                      className={`rounded-md px-3 py-1 transition-all ${
-                        calendarTab === "date"
-                          ? "bg-white font-semibold text-slate-900 shadow-xs"
-                          : "hover:text-slate-900"
-                      }`}
-                    >
-                      Date wise
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCalendarTab("week")}
-                      className={`rounded-md px-3 py-1 transition-all ${
-                        calendarTab === "week"
-                          ? "bg-white font-semibold text-slate-900 shadow-xs"
-                          : "hover:text-slate-900"
-                      }`}
-                    >
-                      Week wise
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCalendarTab("month")}
-                      className={`rounded-md px-3 py-1 transition-all ${
-                        calendarTab === "month"
-                          ? "bg-white font-semibold text-slate-900 shadow-xs"
-                          : "hover:text-slate-900"
-                      }`}
-                    >
-                      Monthly
-                    </button>
-                  </div>
-                </div>
-
-                {/* TAB 1: DATE WISE */}
-                {calendarTab === "date" && (
-                  <div>
-                    {/* Minimal Quick Chips */}
-                    <div className="mb-2.5 flex items-center justify-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setQuickDate(0)}
-                        className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10.5px] font-medium text-slate-600 transition-colors hover:bg-slate-200 active:scale-95"
-                      >
-                        Today
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setQuickDate(1)}
-                        className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10.5px] font-medium text-slate-600 transition-colors hover:bg-slate-200 active:scale-95"
-                      >
-                        Tomorrow
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setQuickDate(7)}
-                        className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10.5px] font-medium text-slate-600 transition-colors hover:bg-slate-200 active:scale-95"
-                      >
-                        Next week
-                      </button>
-                    </div>
-
-                    {/* Month Navigator */}
-                    <div className="mb-2 flex items-center justify-between px-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (calMonth === 0) {
-                            setCalMonth(11)
-                            setCalYear((y) => y - 1)
-                          } else {
-                            setCalMonth((m) => m - 1)
-                          }
-                        }}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 active:scale-95"
-                        aria-label="Previous month"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="m15 18-6-6 6-6" />
-                        </svg>
-                      </button>
-                      <h3 className="text-[13px] font-bold text-slate-900">
-                        {MONTH_NAMES[calMonth]} {calYear}
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (calMonth === 11) {
-                            setCalMonth(0)
-                            setCalYear((y) => y + 1)
-                          } else {
-                            setCalMonth((m) => m + 1)
-                          }
-                        }}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 active:scale-95"
-                        aria-label="Next month"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="m9 18 6-6-6-6" />
-                        </svg>
-                      </button>
-                    </div>
-
-                    {/* Weekday Headers */}
-                    <div className="mb-1 grid grid-cols-7 gap-0.5 text-center">
-                      {WEEKDAY_NAMES.map((d) => (
-                        <span
-                          key={d}
-                          className="text-[10px] font-semibold text-slate-400"
-                        >
-                          {d}
-                        </span>
-                      ))}
-                    </div>
-
-                    {/* Compact Days Grid */}
-                    {(() => {
-                      const daysInMonth = new Date(
-                        calYear,
-                        calMonth + 1,
-                        0,
-                      ).getDate()
-                      const firstDayIndex =
-                        (new Date(calYear, calMonth, 1).getDay() + 6) % 7
-
-                      return (
-                        <div className="grid grid-cols-7 gap-0.5 text-center">
-                          {Array.from({ length: firstDayIndex }).map((_, i) => (
-                            <div key={`blank-${i}`} className="h-7.5 w-7.5" />
-                          ))}
-                          {Array.from({ length: daysInMonth }).map((_, i) => {
-                            const day = i + 1
-                            const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
-                            const isSelected =
-                              dueDate === dateStr && !dueDateLabelCustom
-                            const isToday =
-                              new Date().getDate() === day &&
-                              new Date().getMonth() === calMonth &&
-                              new Date().getFullYear() === calYear
-
-                            return (
-                              <button
-                                type="button"
-                                key={dateStr}
-                                onClick={() => {
-                                  setDueDate(dateStr)
-                                  setDueDateLabelCustom("")
-                                  setActivePropertySheet(null)
-                                }}
-                                className={
-                                  "mx-auto flex h-7.5 w-7.5 items-center justify-center rounded-full text-[12px] font-medium transition-all active:scale-95 " +
-                                  (isSelected
-                                    ? "bg-blue-600 font-bold text-white shadow-xs"
-                                    : isToday
-                                      ? "border border-blue-500 font-bold text-blue-600 hover:bg-blue-50"
-                                      : "text-slate-800 hover:bg-slate-100")
-                                }
-                              >
-                                {day}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      )
-                    })()}
-                  </div>
-                )}
-
-                {/* TAB 2: WEEK WISE */}
-                {calendarTab === "week" && (
-                  <div className="space-y-2">
-                    {/* Month Navigator */}
-                    <div className="flex items-center justify-between px-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (calMonth === 0) {
-                            setCalMonth(11)
-                            setCalYear((y) => y - 1)
-                          } else {
-                            setCalMonth((m) => m - 1)
-                          }
-                        }}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 active:scale-95"
-                        aria-label="Previous month"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="m15 18-6-6 6-6" />
-                        </svg>
-                      </button>
-                      <h3 className="text-[13px] font-bold text-slate-900">
-                        {MONTH_NAMES[calMonth]} {calYear}
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (calMonth === 11) {
-                            setCalMonth(0)
-                            setCalYear((y) => y + 1)
-                          } else {
-                            setCalMonth((m) => m + 1)
-                          }
-                        }}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 active:scale-95"
-                        aria-label="Next month"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="m9 18 6-6-6-6" />
-                        </svg>
-                      </button>
-                    </div>
-
-                    {/* Weeks flat list */}
-                    <div className="divide-y divide-slate-100">
-                      {getWeeksInMonth(calYear, calMonth).map((w, idx) => {
-                        const isSelected =
-                          dueDateLabelCustom === w.label ||
-                          dueDate === w.targetDate
-                        return (
-                          <button
-                            type="button"
-                            key={`week-${idx}`}
-                            onClick={() => {
-                              setDueDate(w.targetDate)
-                              setDueDateLabelCustom(w.label)
-                              setActivePropertySheet(null)
-                            }}
-                            className={
-                              "flex w-full items-center justify-between py-2.5 px-2 text-left rounded-lg transition-colors hover:bg-slate-50 " +
-                              (isSelected ? "bg-blue-50 text-blue-700" : "")
-                            }
-                          >
-                            <div>
-                              <span
-                                className={
-                                  "block text-[12.5px] " +
-                                  (isSelected
-                                    ? "font-bold text-blue-700"
-                                    : "font-semibold text-slate-800")
-                                }
-                              >
-                                {w.title}
-                              </span>
-                              <span className="text-[11px] text-slate-400">
-                                {w.range}
-                              </span>
-                            </div>
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
-                              {w.daysCount} days
-                            </span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* TAB 3: MONTHLY */}
-                {calendarTab === "month" && (
-                  <div className="space-y-3">
-                    {/* Year Selector */}
-                    <div className="flex items-center justify-between px-1">
-                      <button
-                        type="button"
-                        onClick={() => setCalYear((y) => y - 1)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 active:scale-95"
-                        aria-label="Previous year"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="m15 18-6-6 6-6" />
-                        </svg>
-                      </button>
-                      <span className="text-[14px] font-bold text-slate-900">
-                        {calYear}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setCalYear((y) => y + 1)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 active:scale-95"
-                        aria-label="Next year"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="m9 18 6-6-6-6" />
-                        </svg>
-                      </button>
-                    </div>
-
-                    {/* Months Grid */}
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {MONTH_NAMES_SHORT.map((mName, mIdx) => {
-                        const isSelected =
-                          dueDateLabelCustom === `${MONTH_NAMES[mIdx]} ${calYear}`
-                        return (
-                          <button
-                            type="button"
-                            key={mName}
-                            onClick={() => {
-                              const lastDay = new Date(
-                                calYear,
-                                mIdx + 1,
-                                0,
-                              ).getDate()
-                              const targetDate = `${calYear}-${String(mIdx + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`
-                              setDueDate(targetDate)
-                              setDueDateLabelCustom(
-                                `${MONTH_NAMES[mIdx]} ${calYear}`,
-                              )
-                              setActivePropertySheet(null)
-                            }}
-                            className={
-                              "flex h-10 flex-col items-center justify-center rounded-lg text-center transition-all active:scale-95 " +
-                              (isSelected
-                                ? "bg-blue-600 font-bold text-white shadow-xs"
-                                : "bg-slate-50 text-slate-700 hover:bg-slate-100")
-                            }
-                          >
-                            <span className="text-[12px] font-semibold">
-                              {mName}
-                            </span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
+                <Calendar
+                  value={dueDate || undefined}
+                  onChange={(selection) => {
+                    setDueDate(selection.start)
+                    // Day picks read fine from the ISO date; week and month
+                    // picks need their own wording carried through.
+                    setDueDateLabelCustom(
+                      selection.mode === "day" ? "" : selection.label,
+                    )
+                  }}
+                  mode={calendarTab === "date" ? "day" : calendarTab}
+                  onModeChange={(next) =>
+                    setCalendarTab(next === "day" ? "date" : next)
+                  }
+                  accent="#0055ff"
+                />
 
                 {/* Clear Option */}
                 {dueDate && (
@@ -1627,7 +1310,8 @@ export function CreateItemScreen({
                   Coming soon
                 </span>
                 <p className="mt-2.5 max-w-xs text-[12px] leading-relaxed text-slate-400">
-                  Custom tags and classifications will be available in an upcoming update.
+                  Custom tags and classifications will be available in an
+                  upcoming update.
                 </p>
               </div>
             )}
@@ -1643,12 +1327,23 @@ export function CreateItemScreen({
                     className="flex flex-col items-center justify-center gap-1.5 py-1 transition-transform active:scale-95"
                   >
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-500 text-white shadow-[0_4px_12px_rgba(244,63,94,0.28)]">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
                         <circle cx="12" cy="13" r="3" />
                       </svg>
                     </div>
-                    <span className="text-[11.5px] font-medium text-slate-700">Camera</span>
+                    <span className="text-[11.5px] font-medium text-slate-700">
+                      Camera
+                    </span>
                   </button>
 
                   {/* Gallery */}
@@ -1658,13 +1353,31 @@ export function CreateItemScreen({
                     className="flex flex-col items-center justify-center gap-1.5 py-1 transition-transform active:scale-95"
                   >
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-purple-500 to-indigo-600 text-white shadow-[0_4px_12px_rgba(99,102,241,0.28)]">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                      <svg
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect
+                          width="18"
+                          height="18"
+                          x="3"
+                          y="3"
+                          rx="2"
+                          ry="2"
+                        />
                         <circle cx="9" cy="9" r="2" />
                         <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
                       </svg>
                     </div>
-                    <span className="text-[11.5px] font-medium text-slate-700">Gallery</span>
+                    <span className="text-[11.5px] font-medium text-slate-700">
+                      Gallery
+                    </span>
                   </button>
 
                   {/* Video */}
@@ -1674,12 +1387,30 @@ export function CreateItemScreen({
                     className="flex flex-col items-center justify-center gap-1.5 py-1 transition-transform active:scale-95"
                   >
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-[0_4px_12px_rgba(245,158,11,0.28)]">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <path d="m22 8-6 4 6 4V8Z" />
-                        <rect width="14" height="12" x="2" y="6" rx="2" ry="2" />
+                        <rect
+                          width="14"
+                          height="12"
+                          x="2"
+                          y="6"
+                          rx="2"
+                          ry="2"
+                        />
                       </svg>
                     </div>
-                    <span className="text-[11.5px] font-medium text-slate-700">Video</span>
+                    <span className="text-[11.5px] font-medium text-slate-700">
+                      Video
+                    </span>
                   </button>
 
                   {/* Document / Files */}
@@ -1689,7 +1420,16 @@ export function CreateItemScreen({
                     className="flex flex-col items-center justify-center gap-1.5 py-1 transition-transform active:scale-95"
                   >
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-500 to-sky-600 text-white shadow-[0_4px_12px_rgba(37,99,235,0.28)]">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
                         <path d="M14 2v4a2 2 0 0 0 2 2h4" />
                         <path d="M10 9H8" />
@@ -1697,7 +1437,9 @@ export function CreateItemScreen({
                         <path d="M16 17H8" />
                       </svg>
                     </div>
-                    <span className="text-[11.5px] font-medium text-slate-700">Files</span>
+                    <span className="text-[11.5px] font-medium text-slate-700">
+                      Files
+                    </span>
                   </button>
                 </div>
 
@@ -1738,7 +1480,15 @@ export function CreateItemScreen({
                           {isSelected && (
                             <div className="absolute inset-0 flex items-start justify-end bg-blue-600/20 p-1.5">
                               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                >
                                   <polyline points="20 6 9 17 4 12" />
                                 </svg>
                               </span>
@@ -1756,7 +1506,8 @@ export function CreateItemScreen({
                         onClick={() => setActivePropertySheet(null)}
                         className="flex h-11 w-full items-center justify-center rounded-xl bg-blue-600 text-[13px] font-semibold text-white shadow-[0_2px_8px_rgba(0,85,255,0.3)] transition-all hover:bg-blue-700 active:scale-98"
                       >
-                        Attach {attachedPhotos.length} Media Item{attachedPhotos.length > 1 ? "s" : ""}
+                        Attach {attachedPhotos.length} Media Item
+                        {attachedPhotos.length > 1 ? "s" : ""}
                       </button>
                     </div>
                   )}

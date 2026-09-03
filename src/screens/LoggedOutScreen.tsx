@@ -1,14 +1,14 @@
-import { useEffect } from "react";
+import { useEffect } from "react"
 
 interface LoggedOutScreenProps {
-  onDone: () => void;
+  onDone: () => void
 }
 
 export function LoggedOutScreen({ onDone }: LoggedOutScreenProps) {
   useEffect(() => {
-    const t = setTimeout(onDone, 1800);
-    return () => clearTimeout(t);
-  }, [onDone]);
+    const t = setTimeout(onDone, 1800)
+    return () => clearTimeout(t)
+  }, [onDone])
 
   return (
     <div
@@ -46,7 +46,10 @@ export function LoggedOutScreen({ onDone }: LoggedOutScreenProps) {
         {/* Logged Out Message Text */}
         <h2
           className="text-[24px] font-bold text-white mt-5 tracking-tight animate-slide-up text-center"
-          style={{ fontFamily: "'Nunito Sans', sans-serif", animationDelay: "0.2s" }}
+          style={{
+            fontFamily: "'Nunito Sans', sans-serif",
+            animationDelay: "0.2s",
+          }}
         >
           Logged Out !
         </h2>
@@ -70,5 +73,5 @@ export function LoggedOutScreen({ onDone }: LoggedOutScreenProps) {
         </span>
       </div>
     </div>
-  );
+  )
 }

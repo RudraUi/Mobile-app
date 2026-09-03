@@ -1,81 +1,88 @@
-import { useState, useRef, useEffect } from "react";
-import { BimboxLogo } from "./LoginScreen";
-import { CustomKeyboard } from "../components/CustomKeyboard";
+import { useState, useRef, useEffect } from "react"
+import { BimboxLogo } from "./LoginScreen"
+import { CustomKeyboard } from "../components/CustomKeyboard"
 
 interface OtpScreenProps {
-  email: string;
-  onVerify: () => void;
-  onBack: () => void;
+  email: string
+  onVerify: () => void
+  onBack: () => void
 }
 
-export function OtpScreen({ email, onVerify, onBack: _onBack }: OtpScreenProps) {
-  const [otp, setOtp] = useState(["5", "3", "", "", "", ""]);
-  const [timer, setTimer] = useState(18);
-  const [activeIndex, setActiveIndex] = useState(2);
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+export function OtpScreen({
+  email,
+  onVerify,
+  onBack: _onBack,
+}: OtpScreenProps) {
+  const [otp, setOtp] = useState(["5", "3", "", "", "", ""])
+  const [timer, setTimer] = useState(18)
+  const [activeIndex, setActiveIndex] = useState(2)
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   useEffect(() => {
     // Focus the 3rd box initially (matching image 3)
-    inputRefs.current[2]?.focus();
-  }, []);
+    inputRefs.current[2]?.focus()
+  }, [])
 
   useEffect(() => {
-    if (timer <= 0) return;
-    const t = setTimeout(() => setTimer((v) => v - 1), 1000);
-    return () => clearTimeout(t);
-  }, [timer]);
+    if (timer <= 0) return
+    const t = setTimeout(() => setTimer((v) => v - 1), 1000)
+    return () => clearTimeout(t)
+  }, [timer])
 
   const handleChange = (i: number, val: string) => {
-    const lastChar = val.slice(-1);
-    if (!/^\d*$/.test(lastChar)) return;
+    const lastChar = val.slice(-1)
+    if (!/^\d*$/.test(lastChar)) return
 
-    const next = [...otp];
-    next[i] = lastChar;
-    setOtp(next);
+    const next = [...otp]
+    next[i] = lastChar
+    setOtp(next)
 
     if (lastChar && i < 5) {
-      inputRefs.current[i + 1]?.focus();
-      setActiveIndex(i + 1);
+      inputRefs.current[i + 1]?.focus()
+      setActiveIndex(i + 1)
     } else if (!lastChar && i > 0) {
-      inputRefs.current[i - 1]?.focus();
-      setActiveIndex(i - 1);
+      inputRefs.current[i - 1]?.focus()
+      setActiveIndex(i - 1)
     }
-  };
+  }
 
-  const handleKeyDown = (i: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (
+    i: number,
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
     if (e.key === "Backspace" && !otp[i] && i > 0) {
-      inputRefs.current[i - 1]?.focus();
-      setActiveIndex(i - 1);
+      inputRefs.current[i - 1]?.focus()
+      setActiveIndex(i - 1)
     }
-  };
+  }
 
   const handleNumericKeyPress = (num: string) => {
-    const next = [...otp];
-    next[activeIndex] = num;
-    setOtp(next);
+    const next = [...otp]
+    next[activeIndex] = num
+    setOtp(next)
     if (activeIndex < 5) {
-      setActiveIndex(activeIndex + 1);
-      inputRefs.current[activeIndex + 1]?.focus();
+      setActiveIndex(activeIndex + 1)
+      inputRefs.current[activeIndex + 1]?.focus()
     }
-  };
+  }
 
   const handleNumericBackspace = () => {
-    const next = [...otp];
+    const next = [...otp]
     if (next[activeIndex]) {
-      next[activeIndex] = "";
-      setOtp(next);
+      next[activeIndex] = ""
+      setOtp(next)
     } else if (activeIndex > 0) {
-      next[activeIndex - 1] = "";
-      setOtp(next);
-      setActiveIndex(activeIndex - 1);
-      inputRefs.current[activeIndex - 1]?.focus();
+      next[activeIndex - 1] = ""
+      setOtp(next)
+      setActiveIndex(activeIndex - 1)
+      inputRefs.current[activeIndex - 1]?.focus()
     }
-  };
+  }
 
   const handleSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    onVerify();
-  };
+    if (e) e.preventDefault()
+    onVerify()
+  }
 
   return (
     <div className="flex flex-col justify-between h-full bg-white select-none">
@@ -87,10 +94,16 @@ export function OtpScreen({ email, onVerify, onBack: _onBack }: OtpScreenProps) 
         </div>
 
         {/* Heading */}
-        <div className="mt-5 animate-slide-up" style={{ animationDelay: "0.04s" }}>
+        <div
+          className="mt-5 animate-slide-up"
+          style={{ animationDelay: "0.04s" }}
+        >
           <h1
             className="text-[26px] font-bold leading-tight"
-            style={{ color: "#0055ff", fontFamily: "'Nunito Sans', sans-serif" }}
+            style={{
+              color: "#0055ff",
+              fontFamily: "'Nunito Sans', sans-serif",
+            }}
           >
             Verify OTP
           </h1>
@@ -103,7 +116,11 @@ export function OtpScreen({ email, onVerify, onBack: _onBack }: OtpScreenProps) 
         </div>
 
         {/* Enter OTP Label & Inputs */}
-        <form onSubmit={handleSubmit} className="mt-7 animate-slide-up" style={{ animationDelay: "0.08s" }}>
+        <form
+          onSubmit={handleSubmit}
+          className="mt-7 animate-slide-up"
+          style={{ animationDelay: "0.08s" }}
+        >
           <label className="block text-[15px] font-normal text-slate-700 mb-3.5">
             Enter OTP
           </label>
@@ -111,27 +128,27 @@ export function OtpScreen({ email, onVerify, onBack: _onBack }: OtpScreenProps) 
           {/* 6 OTP Boxes */}
           <div className="flex items-center justify-between gap-2.5">
             {otp.map((digit, idx) => {
-              const isFilled = digit !== "";
-              const isActive = activeIndex === idx;
+              const isFilled = digit !== ""
+              const isActive = activeIndex === idx
 
               return (
                 <div
                   key={idx}
                   onClick={() => {
-                    setActiveIndex(idx);
-                    inputRefs.current[idx]?.focus();
+                    setActiveIndex(idx)
+                    inputRefs.current[idx]?.focus()
                   }}
                   className={`relative flex-1 max-w-[48px] h-[52px] rounded-[18px] flex items-center justify-center cursor-pointer transition-all duration-150 ${
                     isFilled
                       ? "bg-[#0055ff] text-white shadow-xs"
                       : isActive
-                      ? "bg-white border-[1.5px] border-[#0055ff]"
-                      : "bg-[#f1f4f9] border border-slate-200/50"
+                        ? "bg-white border-[1.5px] border-[#0055ff]"
+                        : "bg-[#f1f4f9] border border-slate-200/50"
                   }`}
                 >
                   <input
                     ref={(el) => {
-                      inputRefs.current[idx] = el;
+                      inputRefs.current[idx] = el
                     }}
                     type="text"
                     inputMode="numeric"
@@ -150,7 +167,7 @@ export function OtpScreen({ email, onVerify, onBack: _onBack }: OtpScreenProps) 
                     <div className="w-[1.5px] h-[22px] bg-slate-400 animate-pulse pointer-events-none" />
                   ) : null}
                 </div>
-              );
+              )
             })}
           </div>
 
@@ -191,5 +208,5 @@ export function OtpScreen({ email, onVerify, onBack: _onBack }: OtpScreenProps) 
         onSubmit={() => handleSubmit()}
       />
     </div>
-  );
+  )
 }
