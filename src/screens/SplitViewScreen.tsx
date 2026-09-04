@@ -461,11 +461,13 @@ function MiniToggle({ on, onToggle }: { on: boolean onToggle: () => void }) {
       type="button"
       onClick={onToggle}
       className={`w-9 h-5 rounded-full transition-colors duration-200 relative flex-shrink-0 cursor-pointer p-0.5 outline-none ${
-        on ? "bg-[#0055ff]" : "bg-[#CBD5E1]"
+        on
+          ? "bg-[#0055ff] shadow-[0_0_10px_rgba(0,85,255,0.4)]"
+          : "bg-[#CBD5E1] dark:bg-slate-700/80 dark:ring-1 dark:ring-white/15"
       }`}
     >
       <div
-        className={`w-4 h-4 rounded-full bg-white transition-transform duration-200 shadow-xs ${
+        className={`w-4 h-4 rounded-full bg-white switch-thumb transition-transform duration-200 shadow-xs ${
           on ? "translate-x-4" : "translate-x-0"
         }`}
       />

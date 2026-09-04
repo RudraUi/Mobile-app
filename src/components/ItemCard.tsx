@@ -13,11 +13,7 @@ export function ItemCard({ item, onClick }: ItemCardProps) {
   return (
     <button
       onClick={() => onClick(item)}
-      className="w-full text-left bg-white rounded-3xl p-4 active:scale-[0.97] transition-transform duration-150"
-      style={{
-        boxShadow: "0 2px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
-        border: "1px solid rgba(240,244,255,0.8)",
-      }}
+      className="item-card w-full text-left bg-white dark:bg-[#151829] rounded-3xl p-4 active:scale-[0.97] transition-transform duration-150 border border-slate-100 dark:border-white/10 shadow-xs dark:shadow-none"
     >
       {/* Top row: ID + severity */}
       <div className="flex items-center justify-between gap-2 mb-2.5">
@@ -37,20 +33,14 @@ export function ItemCard({ item, onClick }: ItemCardProps) {
       </div>
 
       {/* Title */}
-      <p
-        className="text-[14px] font-semibold leading-snug mb-3 line-clamp-2"
-        style={{ color: "#1a1f36" }}
-      >
+      <p className="item-card-title text-[14px] font-semibold leading-snug mb-3 line-clamp-2 text-slate-900 dark:text-slate-100">
         {item.title}
       </p>
 
       {/* Progress bar (tasks) */}
       {item.type === "task" && item.progress !== undefined && (
         <div className="mb-3">
-          <div
-            className="w-full h-1.5 rounded-full overflow-hidden"
-            style={{ backgroundColor: "#f0f4ff" }}
-          >
+          <div className="item-card-progress-track w-full h-1.5 rounded-full overflow-hidden bg-slate-100 dark:bg-white/10">
             <div
               className="h-full rounded-full"
               style={{ width: `${item.progress}%`, backgroundColor: typeColor }}

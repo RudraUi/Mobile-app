@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { LoginScreen } from "./screens/LoginScreen"
 import { OtpScreen } from "./screens/OtpScreen"
 import { SuccessScreen } from "./screens/SuccessScreen"
@@ -23,7 +23,17 @@ import { CapturesScreen } from "./screens/CapturesScreen"
 import { DataLibraryScreen } from "./screens/DataLibraryScreen"
 import type { DataCategoryId } from "./data/dataLibrary"
 import { NavigateScreen } from "./screens/NavigateScreen"
-import { ProfileScreen, type UserProfileData } from "./screens/ProfileScreen"
+import {
+  ProfileScreen,
+  type UserProfileData,
+  type AppFontFamily,
+  type AppThemeMode,
+} from "./screens/ProfileScreen"
+import { NotificationsScreen } from "./screens/NotificationsScreen"
+import {
+  initialNotifications,
+  type AppNotification,
+} from "./data/notificationsData"
 import { SideDrawer } from "./components/SideDrawer"
 import { InviteModal } from "./components/InviteModal"
 import { QuickCreateSheet } from "./components/QuickCreateSheet"
@@ -32,7 +42,7 @@ import type { Item, ItemType, Status } from "./data/mockData"
 import { mockItems } from "./data/mockData"
 import type { MainTab } from "./components/BottomNav"
 
-type Screen = "login" | "otp" | "success" | "logged_out" | MainTab | "list" | "detail" | "create" | "sitecapture" | "captures" | "navigate" | "profile" | "walkthrough" | "data"
+type Screen = "login" | "otp" | "success" | "logged_out" | MainTab | "list" | "detail" | "create" | "sitecapture" | "captures" | "navigate" | "profile" | "walkthrough" | "data" | "notifications"
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true)
@@ -43,6 +53,8 @@ export default function App() {
   const [navigateItem, setNavigateItem] = useState<Item | null>(null)
   const [items, setItems] = useState<Item[]>(mockItems)
   const [markupFilter, setMarkupFilter] = useState("all")
+  const [notifications, setNotifications] =
+    useState<AppNotification[]>(initialNotifications)
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
   const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
@@ -57,19 +69,87 @@ export default function App() {
   })
   const [prevScreen, setPrevScreen] = useState<Screen>("home")
 
-  const [profile, setProfile] = useState<UserProfileData>({
-    name: "Anil Kumar Patra",
-    email: "alphainvent@gmail.com",
-    role: "Senior BIM Coordinator",
-    organization: "Stalwart Infrastructure",
-    phone: "+1 (555) 438-9210",
-    avatar:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop",
-    trade: "Structural & MEP Coordination",
-    location: "Tower B, Level 03",
-    notifications: true,
-    offlineSync: true,
+  const [profile, setProfile] = useState<UserProfileData>(() => {
+    const savedFont =
+      (typeof localStorage !== "undefined"
+        ? localStorage.getItem("app_font") as AppFontFamily
+        : null) || "proxima"
+    const savedTheme =
+      (typeof localStorage !== "undefined"
+        ? localStorage.getItem("app_theme") as AppThemeMode
+        : null) || "dark"
+    return {
+      name: "Anil Kumar Patra",
+      email: "alphainvent@gmail.com",
+      role: "Senior BIM Coordinator",
+      organization: "Stalwart Infrastructure",
+      phone: "+1 (555) 438-9210",
+      avatar:
+        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop",
+      trade: "Structural & MEP Coordination",
+      location: "Tower B, Level 03",
+      notifications: true,
+      offlineSync: true,
+      fontFamily: savedFont,
+      themeMode: savedTheme,
+    }
   })
+
+  useEffect(() => {
+    const font = profile.fontFamily || "proxima"
+    document.documentElement.setAttribute("data-font", font)
+    document.body.setAttribute("data-font", font)
+    const rootEl = document.getElementById("root")
+    if (rootEl) rootEl.setAttribute("data-font", font)
+    localStorage.setItem("app_font", font)
+  }, [profile.fontFamily])
+
+  useEffect(() => {
+    const theme = profile.themeMode || "dark"
+    document.documentElement.setAttribute("data-theme", theme)
+    document.body.setAttribute("data-theme", theme)
+    const rootEl = document.getElementById("root")
+    if (rootEl) rootEl.setAttribute("data-theme", theme)
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark")
+      document.body.classList.add("dark")
+    } else {
+      document.documentElement.classList.remove("dark")
+      document.body.classList.remove("dark")
+    }
+    localStorage.setItem("app_theme", theme)
+  }, [profile.themeMode])
+
+  const handleUpdateProfile = useCallback(
+    (updated: Partial<UserProfileData>) => {
+      setProfile((prev) => {
+        const next = { ...prev, ...updated }
+        if (updated.fontFamily) {
+          document.documentElement.setAttribute("data-font", updated.fontFamily)
+          document.body.setAttribute("data-font", updated.fontFamily)
+          const rootEl = document.getElementById("root")
+          if (rootEl) rootEl.setAttribute("data-font", updated.fontFamily)
+          localStorage.setItem("app_font", updated.fontFamily)
+        }
+        if (updated.themeMode) {
+          document.documentElement.setAttribute("data-theme", updated.themeMode)
+          document.body.setAttribute("data-theme", updated.themeMode)
+          const rootEl = document.getElementById("root")
+          if (rootEl) rootEl.setAttribute("data-theme", updated.themeMode)
+          if (updated.themeMode === "dark") {
+            document.documentElement.classList.add("dark")
+            document.body.classList.add("dark")
+          } else {
+            document.documentElement.classList.remove("dark")
+            document.body.classList.remove("dark")
+          }
+          localStorage.setItem("app_theme", updated.themeMode)
+        }
+        return next
+      })
+    },
+    [],
+  )
 
   const handleLogin = useCallback((e: string) => {
     setEmail(e)
@@ -216,22 +296,35 @@ export default function App() {
     onFilterChange: setMarkupFilter,
     onInviteClick: () => setIsInviteModalOpen(true),
     onProfileClick: () => setIsDrawerOpen(true),
+    onNotificationClick: () => setScreen("notifications"),
+    unreadNotificationCount: notifications.filter((n) => !n.read).length,
     userAvatar: profile.avatar,
     selectedProject,
     onSelectProject: setSelectedProject,
     onViewAll: handleViewAll,
   }
 
+  const isDark = profile.themeMode === "dark"
+
   return (
-    <div className="flex h-full w-full items-center justify-center bg-[#18191c]">
+    <div
+      className={`flex h-full w-full items-center justify-center transition-colors duration-300 ${
+        isDark ? "bg-[#06070b]" : "bg-[#18191c]"
+      }`}
+    >
       <div
-        className="relative flex h-full w-full flex-col overflow-hidden"
+        data-theme={profile.themeMode || "dark"}
+        className={`relative flex h-full w-full flex-col overflow-hidden transition-colors duration-300 app-phone-shell ${
+          isDark ? "dark" : ""
+        }`}
         style={{
           width: "100%",
           maxWidth: "430px",
           height: "100%",
-          backgroundColor: "#ffffff",
-          boxShadow: "0 0 50px rgba(0, 0, 0, 0.45)",
+          backgroundColor: isDark ? "#0a0c14" : "#ffffff",
+          boxShadow: isDark
+            ? "0 0 70px rgba(0, 85, 255, 0.16), 0 0 35px rgba(0, 0, 0, 0.95)"
+            : "0 0 50px rgba(0, 0, 0, 0.45)",
         }}
       >
         {/* Modern Animated Splash Screen */}
@@ -359,11 +452,35 @@ export default function App() {
           {screen === "profile" && (
             <ProfileScreen
               profile={profile}
-              onUpdateProfile={(updated) =>
-                setProfile((prev) => ({ ...prev, ...updated }))
-              }
+              onUpdateProfile={handleUpdateProfile}
               onBack={() => setScreen(activeTab)}
               onSignOut={() => setScreen("logged_out")}
+            />
+          )}
+
+          {screen === "notifications" && (
+            <NotificationsScreen
+              notifications={notifications}
+              onBack={() => setScreen(activeTab)}
+              items={items}
+              onItemClick={(item) => {
+                setSelectedItem(item)
+                setPrevScreen("notifications")
+                setScreen("detail")
+              }}
+              onMarkAllRead={() => {
+                setNotifications((prev) =>
+                  prev.map((n) => ({ ...n, read: true })),
+                )
+              }}
+              onToggleRead={(id) => {
+                setNotifications((prev) =>
+                  prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
+                )
+              }}
+              onDeleteNotification={(id) => {
+                setNotifications((prev) => prev.filter((n) => n.id !== id))
+              }}
             />
           )}
         </div>

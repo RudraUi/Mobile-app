@@ -988,7 +988,7 @@ export function ListScreen({
                     {/* Simple 2-Lined Details */}
                     <div className="min-w-0 flex-1">
                       {/* Line 1: Title */}
-                      <h4 className="text-[13.5px] font-bold text-[#0F172A] leading-snug group-hover:text-[#0055ff] transition-colors truncate">
+                      <h4 className="text-[13.5px] font-semibold text-[#0F172A] dark:text-slate-100 leading-snug group-hover:text-[#0055ff] transition-colors truncate">
                         {item.title}
                       </h4>
 

@@ -20,6 +20,8 @@ export interface AppHeaderProps {
   projectName?: string
   projectBadge?: string
   projectBadgeBg?: string
+  onNotificationClick?: () => void
+  unreadNotificationCount?: number
   onProjectClick?: () => void
   isProjectOpen?: boolean
 }
@@ -238,6 +240,8 @@ export function AppHeader({
   projectName,
   projectBadge,
   projectBadgeBg,
+  onNotificationClick,
+  unreadNotificationCount = 0,
   onProjectClick,
   isProjectOpen,
 }: AppHeaderProps) {
@@ -331,103 +335,103 @@ export function AppHeader({
               </div>
             </button>
 
-          {/* Anchored Tooltip Popover directly under the project button */}
-          {isDropdownVisible && (
-            <>
-              <div
-                className="fixed inset-0 z-40 bg-black/10 backdrop-blur-2xs cursor-default"
-                onClick={handleCloseProject}
-              />
-              <div
-                onClick={(e) => e.stopPropagation()}
-                className="absolute top-full left-0 mt-2 w-60 bg-white/98 backdrop-blur-md rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.22)] border border-slate-100 p-1.5 z-50 animate-slide-up origin-top-left text-slate-800"
-              >
-                {/* Tooltip Triangle Pointer */}
-                <div className="absolute -top-1.5 left-5 w-3 h-3 bg-white rotate-45 border-t border-l border-slate-100 rounded-xs" />
+            {/* Anchored Tooltip Popover directly under the project button */}
+            {isDropdownVisible && (
+              <>
+                <div
+                  className="fixed inset-0 z-40 bg-black/10 backdrop-blur-2xs cursor-default"
+                  onClick={handleCloseProject}
+                />
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute top-full left-0 mt-2 w-60 bg-white/98 backdrop-blur-md rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.22)] border border-slate-100 p-1.5 z-50 animate-slide-up origin-top-left text-slate-800"
+                >
+                  {/* Tooltip Triangle Pointer */}
+                  <div className="absolute -top-1.5 left-5 w-3 h-3 bg-white rotate-45 border-t border-l border-slate-100 rounded-xs" />
 
-                {/* Header */}
-                <div className="flex items-center justify-between px-2.5 pt-1.5 pb-1">
-                  <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider">
-                    Switch Project
-                  </span>
-                  <span className="text-[9px] font-semibold text-slate-400">
-                    {projectsList.length} workspaces
-                  </span>
-                </div>
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-2.5 pt-1.5 pb-1">
+                    <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider">
+                      Switch Project
+                    </span>
+                    <span className="text-[9px] font-semibold text-slate-400">
+                      {projectsList.length} workspaces
+                    </span>
+                  </div>
 
-                {/* Projects List */}
-                <div className="space-y-0.5 max-h-[240px] overflow-y-auto">
-                  {projectsList.map((project) => {
-                    const isSelected = currentProject.id === project.id
-                    return (
-                      <button
-                        type="button"
-                        key={project.id}
-                        onClick={() => {
-                          onSelectProject?.(project)
-                          handleCloseProject()
-                        }}
-                        className={`w-full p-2 rounded-xl flex items-center justify-between text-left transition-all cursor-pointer ${
-                          isSelected
-                            ? "bg-blue-50/90 text-[#0055ff] shadow-2xs"
-                            : "text-slate-700 hover:bg-slate-50 active:bg-slate-100"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div
-                            className="w-7 h-7 rounded-lg flex items-center justify-center font-extrabold text-white text-[12px] shadow-2xs shrink-0"
-                            style={{ backgroundColor: project.badgeBg }}
-                          >
-                            {project.badge}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span
-                                className={`text-[12px] truncate ${
-                                  isSelected
-                                    ? "font-bold text-[#0055ff]"
-                                    : "font-semibold text-slate-800"
-                                }`}
-                              >
-                                {project.name}
-                              </span>
-                              <span className="text-[8.5px] font-bold px-1 py-0.2 rounded bg-black/5 text-slate-500 font-mono shrink-0">
-                                {project.code}
-                              </span>
-                            </div>
-                            <p className="text-[10px] text-slate-400 font-medium truncate leading-tight mt-0.5">
-                              {project.location}
-                            </p>
-                          </div>
-                        </div>
-
-                        {isSelected && (
-                          <div className="w-4 h-4 rounded-full bg-[#0055ff] text-white flex items-center justify-center shrink-0 ml-1.5">
-                            <svg
-                              width="9"
-                              height="9"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="3.2"
-                              strokeLinecap="round"
+                  {/* Projects List */}
+                  <div className="space-y-0.5 max-h-[240px] overflow-y-auto">
+                    {projectsList.map((project) => {
+                      const isSelected = currentProject.id === project.id
+                      return (
+                        <button
+                          type="button"
+                          key={project.id}
+                          onClick={() => {
+                            onSelectProject?.(project)
+                            handleCloseProject()
+                          }}
+                          className={`w-full p-2 rounded-xl flex items-center justify-between text-left transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-blue-50/90 text-[#0055ff] shadow-2xs"
+                              : "text-slate-700 hover:bg-slate-50 active:bg-slate-100"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div
+                              className="w-7 h-7 rounded-lg flex items-center justify-center font-extrabold text-white text-[12px] shadow-2xs shrink-0"
+                              style={{ backgroundColor: project.badgeBg }}
                             >
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
+                              {project.badge}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span
+                                  className={`text-[12px] truncate ${
+                                    isSelected
+                                      ? "font-bold text-[#0055ff]"
+                                      : "font-semibold text-slate-800"
+                                  }`}
+                                >
+                                  {project.name}
+                                </span>
+                                <span className="text-[8.5px] font-bold px-1 py-0.2 rounded bg-black/5 text-slate-500 font-mono shrink-0">
+                                  {project.code}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-slate-400 font-medium truncate leading-tight mt-0.5">
+                                {project.location}
+                              </p>
+                            </div>
                           </div>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
 
-      {/* Right side: Search, Filter, Invite */}
-      <div className="flex items-center gap-[7px]">
+                          {isSelected && (
+                            <div className="w-4 h-4 rounded-full bg-[#0055ff] text-white flex items-center justify-center shrink-0 ml-1.5">
+                              <svg
+                                width="9"
+                                height="9"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3.2"
+                                strokeLinecap="round"
+                              >
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            </div>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Right side: Search, Filter, Invite */}
+        <div className="flex items-center gap-[7px]">
           {/* Search Icon Button */}
           <button
             type="button"
@@ -499,6 +503,34 @@ export function AppHeader({
             {isFilterActive && (
               <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-[#FF2D55] rounded-full border-2 border-white" />
             )}
+          </button>
+
+          {/* Notification Bell Icon Button */}
+          <button
+            type="button"
+            onClick={onNotificationClick}
+            className="relative w-[32px] h-[32px] rounded-full bg-white/[0.14] hover:bg-white/25 active:scale-95 flex items-center justify-center text-white transition-all cursor-pointer shadow-2xs"
+            aria-label="Notifications"
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+            {typeof unreadNotificationCount === "number" &&
+              unreadNotificationCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] px-1 bg-[#FF2D55] text-white rounded-full text-[8.5px] font-black flex items-center justify-center border-1.5 border-white dark:border-[#090c1a] shadow-xs animate-scale-in leading-none">
+                  {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
+                </span>
+              )}
           </button>
 
           {/* Invite Member Icon Button */}

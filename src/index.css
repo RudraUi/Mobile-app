@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@200..900&family=Mulish:ital,wght@0,300..900;1,300..900&family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap');
 @import 'tailwindcss';
 
 @font-face {
@@ -128,8 +129,148 @@
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+/* Helvena Grotesk font family (local) */
+@font-face {
+  font-family: 'Helvena';
+  src: url('./helvena-grotesk-modern-bold-brand-identity-font/helvena-extralight.otf') format('opentype'),
+       url('./helvena-grotesk-modern-bold-brand-identity-font/helvena-extralight.ttf') format('truetype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvena';
+  src: url('./helvena-grotesk-modern-bold-brand-identity-font/helvena-light.otf') format('opentype'),
+       url('./helvena-grotesk-modern-bold-brand-identity-font/helvena-light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvena';
+  src: url('./helvena-grotesk-modern-bold-brand-identity-font/helvena-regular.otf') format('opentype'),
+       url('./helvena-grotesk-modern-bold-brand-identity-font/helvena-regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvena';
+  src: url('./helvena-grotesk-modern-bold-brand-identity-font/helvena-medium.otf') format('opentype'),
+       url('./helvena-grotesk-modern-bold-brand-identity-font/helvena-medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvena';
+  src: url('./helvena-grotesk-modern-bold-brand-identity-font/helvena-semibold.otf') format('opentype'),
+       url('./helvena-grotesk-modern-bold-brand-identity-font/helvena-semibold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvena';
+  src: url('./helvena-grotesk-modern-bold-brand-identity-font/helvena-bold.otf') format('opentype'),
+       url('./helvena-grotesk-modern-bold-brand-identity-font/helvena-bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvena';
+  src: url('./helvena-grotesk-modern-bold-brand-identity-font/helvena-extrabold.otf') format('opentype'),
+       url('./helvena-grotesk-modern-bold-brand-identity-font/helvena-extrabold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvena';
+  src: url('./helvena-grotesk-modern-bold-brand-identity-font/helvena-black.otf') format('opentype'),
+       url('./helvena-grotesk-modern-bold-brand-identity-font/helvena-black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --app-font: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+:root[data-font="proxima"],
+body[data-font="proxima"],
+#root[data-font="proxima"] {
+  --app-font: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+:root[data-font="helvena"],
+body[data-font="helvena"],
+#root[data-font="helvena"] {
+  --app-font: 'Helvena', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Helvena', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+:root[data-font="mulish"],
+body[data-font="mulish"],
+#root[data-font="mulish"] {
+  --app-font: 'Mulish', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Mulish', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+/* Google Sans font family */
+@font-face {
+  font-family: 'Google Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Google Sans Regular'), local('Google Sans'), local('GoogleSans-Regular'),
+       url(https://fonts.gstatic.com/s/googlesans/v58/4UaGrEJGoUpBxZgkbaaCBz45GPk.woff2) format('woff2');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Google Sans';
+  font-style: normal;
+  font-weight: 500;
+  src: local('Google Sans Medium'), local('GoogleSans-Medium'),
+       url(https://fonts.gstatic.com/s/googlesans/v58/4UabrEJGoUpBxZgkbaaGmmcw7PxS7w.woff2) format('woff2');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Google Sans';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Google Sans Bold'), local('GoogleSans-Bold'),
+       url(https://fonts.gstatic.com/s/googlesans/v58/4UabrEJGoUpBxZgkbaaGmmc06_xS7w.woff2) format('woff2');
+  font-display: swap;
+}
+
+:root[data-font="googlesans"],
+body[data-font="googlesans"],
+#root[data-font="googlesans"] {
+  --app-font: 'Google Sans', 'Google Sans Flex', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Google Sans', 'Google Sans Flex', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+:root[data-font="sourcesans3"],
+body[data-font="sourcesans3"],
+#root[data-font="sourcesans3"] {
+  --app-font: 'Source Sans 3', 'Source Sans Pro', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Source Sans 3', 'Source Sans Pro', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
 @theme {
-  --font-sans: 'Proxima Nova', system-ui, -apple-system, sans-serif;
+  --font-sans: var(--app-font);
 }
 
 html,
@@ -139,11 +280,475 @@ body,
   margin: 0;
   overflow: hidden;
   background: #18191c;
-  font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--app-font);
   color: #18243d;
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
 }
+
+.font-proxima {
+  font-family: 'Proxima Nova', system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+.font-helvena {
+  font-family: 'Helvena', system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+.font-mulish {
+  font-family: 'Mulish', system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+.font-googlesans {
+  font-family: 'Google Sans', 'Google Sans Flex', system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+.font-sourcesans3 {
+  font-family: 'Source Sans 3', 'Source Sans Pro', system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+/* ==========================================================================
+   AESTHETIC DARK VIBE - COMPREHENSIVE GLOBAL APPLICATION THEME
+   Applies across the entire app whenever data-theme="dark" or .dark is set
+   ========================================================================== */
+
+[data-theme="dark"],
+.dark {
+  color-scheme: dark;
+  --dark-bg-base: #0a0c14;
+  --dark-bg-surface: #101322;
+  --dark-bg-card: #151829;
+  --dark-bg-elevated: #1a1e33;
+  --dark-border: rgba(255, 255, 255, 0.08);
+  --dark-text-primary: #f8fafc;
+  --dark-text-secondary: #94a3b8;
+  --dark-text-muted: #64748b;
+  --dark-accent: #0055ff;
+}
+
+[data-theme="dark"] html,
+[data-theme="dark"] body,
+[data-theme="dark"] #root,
+.dark html,
+.dark body,
+.dark #root {
+  background: #06070b !important;
+  color: #f8fafc !important;
+}
+
+/* App Phone Shell */
+[data-theme="dark"] .app-phone-shell,
+.dark .app-phone-shell {
+  background-color: #0a0c14 !important;
+  box-shadow: 0 0 70px rgba(0, 85, 255, 0.16), 0 0 35px rgba(0, 0, 0, 0.95) !important;
+}
+
+/* All White Backgrounds become Sleek Dark Obsidian Surfaces (excluding switch thumbs/knobs) */
+[data-theme="dark"] .bg-white:not(.switch-thumb):not(.toggle-thumb),
+.dark .bg-white:not(.switch-thumb):not(.toggle-thumb),
+[data-theme="dark"] .bg-\[\#ffffff\]:not(.switch-thumb):not(.toggle-thumb),
+.dark .bg-\[\#ffffff\]:not(.switch-thumb):not(.toggle-thumb) {
+  background-color: #101322 !important;
+}
+
+/* Canvas / Background areas */
+[data-theme="dark"] .bg-\[\#F5F6F8\],
+.dark .bg-\[\#F5F6F8\],
+[data-theme="dark"] .bg-\[\#f5f6f8\],
+.dark .bg-\[\#f5f6f8\],
+[data-theme="dark"] .bg-\[\#f8fafc\],
+.dark .bg-\[\#f8fafc\] {
+  background-color: #0a0c14 !important;
+}
+
+[data-theme="dark"] .bg-slate-50,
+.dark .bg-slate-50,
+[data-theme="dark"] .bg-slate-50\/60,
+.dark .bg-slate-50\/60,
+[data-theme="dark"] .bg-slate-50\/70,
+.dark .bg-slate-50\/70,
+[data-theme="dark"] .bg-slate-50\/80,
+.dark .bg-slate-50\/80 {
+  background-color: #141728 !important;
+}
+
+[data-theme="dark"] .bg-slate-100,
+.dark .bg-slate-100,
+[data-theme="dark"] .bg-slate-100\/80,
+.dark .bg-slate-100\/80,
+[data-theme="dark"] .bg-slate-100\/90,
+.dark .bg-slate-100\/90 {
+  background-color: #1a1e32 !important;
+}
+
+[data-theme="dark"] .bg-slate-200,
+.dark .bg-slate-200,
+[data-theme="dark"] .bg-slate-200\/60,
+.dark .bg-slate-200\/60,
+[data-theme="dark"] .bg-slate-200\/80,
+.dark .bg-slate-200\/80 {
+  background-color: #242940 !important;
+}
+
+/* ==========================================================================
+   SWITCHES & TOGGLES (CRUCIAL FIXES FOR CONTRAST & VISIBILITY)
+   ========================================================================== */
+
+/* 1. Switch Thumb Knob MUST be crisp white #ffffff in dark mode */
+[data-theme="dark"] .switch-thumb,
+.dark .switch-thumb,
+[data-theme="dark"] .toggle-thumb,
+.dark .toggle-thumb,
+[data-theme="dark"] button > div.rounded-full.bg-white,
+.dark button > div.rounded-full.bg-white,
+[data-theme="dark"] button > span.rounded-full.bg-white,
+.dark button > span.rounded-full.bg-white,
+[data-theme="dark"] button > div.w-4.h-4.rounded-full,
+.dark button > div.w-4.h-4.rounded-full {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45), 0 0 1px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* 2. Inactive Switch Track in dark mode (clean visible slate track) */
+[data-theme="dark"] button.bg-slate-300,
+.dark button.bg-slate-300,
+[data-theme="dark"] button.bg-\[\#CBD5E1\],
+.dark button.bg-\[\#CBD5E1\],
+[data-theme="dark"] button.bg-\[\#252b40\],
+.dark button.bg-\[\#252b40\] {
+  background-color: #334155 !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* 3. Active Switch Track & Primary Brand Blue Elements (STAY VIBRANT ELECTRIC BLUE) */
+[data-theme="dark"] button.bg-\[\#0055ff\],
+.dark button.bg-\[\#0055ff\],
+[data-theme="dark"] button.bg-\[\#0055FF\],
+.dark button.bg-\[\#0055FF\],
+[data-theme="dark"] button.bg-blue-600,
+.dark button.bg-blue-600,
+[data-theme="dark"] a.bg-\[\#0055ff\],
+.dark a.bg-\[\#0055ff\],
+[data-theme="dark"] .btn-primary,
+.dark .btn-primary,
+[data-theme="dark"] .switch-active,
+.dark .switch-active {
+  background-color: #0055ff !important;
+  color: #ffffff !important;
+}
+
+/* Primary Top Headers (HomeHeader, ListScreen Header, etc.) */
+[data-theme="dark"] .home-header,
+.dark .home-header,
+[data-theme="dark"] header.home-header,
+.dark header.home-header,
+[data-theme="dark"] header.bg-\[\#0055FF\],
+.dark header.bg-\[\#0055FF\],
+[data-theme="dark"] header.bg-\[\#0055ff\],
+.dark header.bg-\[\#0055ff\] {
+  background-color: #090c1a !important;
+  background-image: none !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Home Screen Top Background Section Containers in Dark Mode (screen wrappers only) */
+[data-theme="dark"] div.flex.h-full.min-h-0.flex-col.bg-\[\#0055ff\],
+.dark div.flex.h-full.min-h-0.flex-col.bg-\[\#0055ff\],
+[data-theme="dark"] div.flex.h-full.min-h-0.flex-col.bg-\[\#0055FF\],
+.dark div.flex.h-full.min-h-0.flex-col.bg-\[\#0055FF\],
+[data-theme="dark"] div.min-h-0.flex-1.overflow-y-auto.bg-\[\#0055ff\],
+.dark div.min-h-0.flex-1.overflow-y-auto.bg-\[\#0055ff\],
+[data-theme="dark"] div.animate-fade-in.flex.flex-col.flex-1.min-h-full.bg-\[\#0055ff\],
+.dark div.animate-fade-in.flex.flex-col.flex-1.min-h-full.bg-\[\#0055ff\],
+[data-theme="dark"] section.bg-\[\#0055ff\],
+.dark section.bg-\[\#0055ff\] {
+  background-color: #090c1a !important;
+}
+
+[data-theme="dark"] .rounded-t-\[30px\].bg-white,
+.dark .rounded-t-\[30px\].bg-white,
+[data-theme="dark"] .rounded-t-\[28px\].bg-white,
+.dark .rounded-t-\[28px\].bg-white {
+  background-color: #101322 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Bottom Navigation Bar */
+[data-theme="dark"] [data-bottom-nav],
+.dark [data-bottom-nav],
+[data-theme="dark"] div.relative.w-full.bg-white.flex.flex-col,
+.dark div.relative.w-full.bg-white.flex.flex-col {
+  background-color: #0d101c !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Bottom Nav Center Arch Dome */
+[data-theme="dark"] div.absolute.-top-\[16px\].left-1\/2.bg-white,
+.dark div.absolute.-top-\[16px\].left-1\/2.bg-white {
+  background-color: #0d101c !important;
+}
+
+/* Center Squircle FAB Button border & background */
+[data-theme="dark"] button.absolute.-top-\[14px\],
+.dark button.absolute.-top-\[14px\] {
+  border-color: #0d101c !important;
+  background-color: #0055FF !important;
+  box-shadow: 0 0 16px rgba(0, 85, 255, 0.4) !important;
+}
+
+/* ==========================================================================
+   PASTEL BADGES & CHIPS (AESTHETIC TRANSLUCENT GLOW IN DARK MODE)
+   ========================================================================== */
+
+[data-theme="dark"] .bg-blue-50,
+.dark .bg-blue-50,
+[data-theme="dark"] .bg-blue-100,
+.dark .bg-blue-100 {
+  background-color: rgba(0, 85, 255, 0.18) !important;
+  color: #60a5fa !important;
+}
+
+[data-theme="dark"] .bg-red-50,
+.dark .bg-red-50,
+[data-theme="dark"] .bg-red-100,
+.dark .bg-red-100 {
+  background-color: rgba(239, 68, 68, 0.18) !important;
+  color: #f87171 !important;
+}
+
+[data-theme="dark"] .bg-amber-50,
+.dark .bg-amber-50,
+[data-theme="dark"] .bg-amber-100,
+.dark .bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.18) !important;
+  color: #fbbf24 !important;
+}
+
+[data-theme="dark"] .bg-emerald-50,
+.dark .bg-emerald-50,
+[data-theme="dark"] .bg-emerald-100,
+.dark .bg-emerald-100,
+[data-theme="dark"] .bg-green-50,
+.dark .bg-green-50,
+[data-theme="dark"] .bg-green-100,
+.dark .bg-green-100 {
+  background-color: rgba(16, 185, 129, 0.18) !important;
+  color: #34d399 !important;
+}
+
+[data-theme="dark"] .bg-purple-50,
+.dark .bg-purple-50,
+[data-theme="dark"] .bg-purple-100,
+.dark .bg-purple-100 {
+  background-color: rgba(168, 85, 247, 0.18) !important;
+  color: #c084fc !important;
+}
+
+[data-theme="dark"] .bg-rose-50,
+.dark .bg-rose-50,
+[data-theme="dark"] .bg-rose-100,
+.dark .bg-rose-100 {
+  background-color: rgba(244, 63, 94, 0.18) !important;
+  color: #fb7185 !important;
+}
+
+[data-theme="dark"] .bg-cyan-50,
+.dark .bg-cyan-50,
+[data-theme="dark"] .bg-cyan-100,
+.dark .bg-cyan-100 {
+  background-color: rgba(6, 182, 212, 0.18) !important;
+  color: #22d3ee !important;
+}
+
+/* Status & Severity Badges */
+[data-theme="dark"] .status-badge[data-status="TO DO"],
+.dark .status-badge[data-status="TO DO"] {
+  background-color: rgba(59, 130, 246, 0.18) !important;
+  color: #60a5fa !important;
+}
+[data-theme="dark"] .status-badge[data-status="IN PROGRESS"],
+.dark .status-badge[data-status="IN PROGRESS"] {
+  background-color: rgba(168, 85, 247, 0.18) !important;
+  color: #c084fc !important;
+}
+[data-theme="dark"] .status-badge[data-status="COMPLETED"],
+.dark .status-badge[data-status="COMPLETED"],
+[data-theme="dark"] .status-badge[data-status="APPROVED"],
+.dark .status-badge[data-status="APPROVED"] {
+  background-color: rgba(34, 197, 94, 0.18) !important;
+  color: #4ade80 !important;
+}
+[data-theme="dark"] .status-badge[data-status="BLOCKED"],
+.dark .status-badge[data-status="BLOCKED"] {
+  background-color: rgba(239, 68, 68, 0.18) !important;
+  color: #f87171 !important;
+}
+[data-theme="dark"] .status-badge[data-status="REVIEW"],
+.dark .status-badge[data-status="REVIEW"] {
+  background-color: rgba(245, 158, 11, 0.18) !important;
+  color: #fbbf24 !important;
+}
+
+[data-theme="dark"] .severity-badge[data-severity="HIGH"],
+.dark .severity-badge[data-severity="HIGH"] {
+  background-color: rgba(249, 115, 22, 0.18) !important;
+  color: #fb923c !important;
+}
+[data-theme="dark"] .severity-badge[data-severity="MEDIUM"],
+.dark .severity-badge[data-severity="MEDIUM"] {
+  background-color: rgba(59, 130, 246, 0.18) !important;
+  color: #60a5fa !important;
+}
+[data-theme="dark"] .severity-badge[data-severity="LOW"],
+.dark .severity-badge[data-severity="LOW"] {
+  background-color: rgba(148, 163, 184, 0.14) !important;
+  color: #cbd5e1 !important;
+}
+
+/* Item Card Dark Mode Styling */
+[data-theme="dark"] .item-card,
+.dark .item-card {
+  background-color: #151829 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .item-card-title,
+.dark .item-card-title {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .item-card-progress-track,
+.dark .item-card-progress-track {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Text Colors */
+[data-theme="dark"] .text-slate-900,
+.dark .text-slate-900,
+[data-theme="dark"] .text-slate-800,
+.dark .text-slate-800,
+[data-theme="dark"] .text-slate-950,
+.dark .text-slate-950,
+[data-theme="dark"] .text-\[\#0F172A\],
+.dark .text-\[\#0F172A\],
+[data-theme="dark"] .text-\[\#0f172a\],
+.dark .text-\[\#0f172a\],
+[data-theme="dark"] .text-\[\#18243D\],
+.dark .text-\[\#18243D\],
+[data-theme="dark"] .text-\[\#18243d\],
+.dark .text-\[\#18243d\],
+[data-theme="dark"] .text-\[\#1a1f36\],
+.dark .text-\[\#1a1f36\],
+[data-theme="dark"] [style*="color: #1a1f36"],
+.dark [style*="color: #1a1f36"],
+[data-theme="dark"] [style*="color:#1a1f36"],
+.dark [style*="color:#1a1f36"] {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .text-slate-700,
+.dark .text-slate-700,
+[data-theme="dark"] .text-slate-600,
+.dark .text-slate-600 {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .text-slate-500,
+.dark .text-slate-500,
+[data-theme="dark"] .text-slate-400,
+.dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+/* Borders and Dividers */
+[data-theme="dark"] .border-slate-100,
+.dark .border-slate-100,
+[data-theme="dark"] .border-slate-200,
+.dark .border-slate-200,
+[data-theme="dark"] .border-slate-300,
+.dark .border-slate-300,
+[data-theme="dark"] .border-slate-100\/80,
+.dark .border-slate-100\/80 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .divide-slate-100 > * + *,
+.dark .divide-slate-100 > * + *,
+[data-theme="dark"] .divide-slate-200 > * + *,
+.dark .divide-slate-200 > * + * {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Side Navigation Drawer */
+[data-theme="dark"] aside,
+.dark aside {
+  background-color: #0b0d18 !important;
+  color: #f8fafc !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] aside .bg-slate-50,
+.dark aside .bg-slate-50,
+[data-theme="dark"] aside .bg-slate-100,
+.dark aside .bg-slate-100 {
+  background-color: #141829 !important;
+}
+
+/* Modals and Sheets */
+[data-theme="dark"] .bg-white.rounded-\[24px\],
+.dark .bg-white.rounded-\[24px\],
+[data-theme="dark"] .bg-white.rounded-t-\[28px\],
+.dark .bg-white.rounded-t-\[28px\] {
+  background-color: #101322 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Interactive list rows hover & active */
+[data-theme="dark"] .hover\:bg-slate-50:hover,
+.dark .hover\:bg-slate-50:hover {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+[data-theme="dark"] .hover\:bg-slate-100:hover,
+.dark .hover\:bg-slate-100:hover {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+[data-theme="dark"] .active\:bg-slate-100:active,
+.dark .active\:bg-slate-100:active {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Inputs and textareas */
+[data-theme="dark"] input,
+.dark input,
+[data-theme="dark"] textarea,
+.dark textarea,
+[data-theme="dark"] select,
+.dark select {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] input::placeholder,
+.dark input::placeholder,
+[data-theme="dark"] textarea::placeholder,
+.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* Shadows */
+[data-theme="dark"] .shadow-xs,
+.dark .shadow-xs,
+[data-theme="dark"] .shadow-sm,
+.dark .shadow-sm,
+[data-theme="dark"] .shadow-md,
+.dark .shadow-md,
+[data-theme="dark"] .shadow-lg,
+.dark .shadow-lg {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
 
 * {
   -webkit-tap-highlight-color: transparent;
@@ -557,3 +1162,36 @@ select {
 .animate-cal-prev { animation: calSlideFromLeft  0.22s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .animate-cal-pop  { animation: calPop  0.2s cubic-bezier(0.34, 1.45, 0.64, 1) both; }
 .animate-cal-row  { animation: calRowIn 0.24s cubic-bezier(0.34, 1.3, 0.64, 1) both; }
+
+/* Camera -> mobile transfer strip */
+@keyframes syncIndeterminate {
+  0%   { transform: translateX(-110%); }
+  100% { transform: translateX(310%); }
+}
+
+.animate-sync-indeterminate {
+  animation: syncIndeterminate 1.15s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes syncSweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-sync-sweep {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.85) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: syncSweep 1.2s ease-in-out infinite;
+}
+
+@keyframes spinSlow {
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 1.1s linear infinite;
+}

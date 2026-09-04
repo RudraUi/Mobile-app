@@ -20,7 +20,7 @@ export function BackButton({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className={`flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-slate-100 text-slate-700 transition-all hover:bg-slate-200 active:scale-95 ${className}`}
+      className={`flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 transition-all hover:bg-slate-200 dark:hover:bg-white/15 active:scale-95 ${className}`}
     >
       <svg
         width="18"

@@ -2366,9 +2366,9 @@ export function TaskDetailScreen({
             onBlur={saveTitle}
             rows={1}
             placeholder="Task title..."
-            className="w-full resize-none border-none bg-transparent p-0 text-[26px] font-extrabold leading-tight tracking-tight text-slate-900 outline-none caret-[#0055ff] placeholder:font-normal placeholder:text-slate-300 focus:outline-none focus:ring-0 cursor-text"
+            className="w-full resize-none border-none bg-transparent p-0 text-[26px] font-semibold leading-tight tracking-tight text-slate-900 dark:text-slate-100 outline-none caret-[#0055ff] placeholder:font-normal placeholder:text-slate-300 dark:placeholder:text-slate-500 focus:outline-none focus:ring-0 cursor-text"
             style={{
-              fontWeight: 800,
+              fontWeight: 600,
               fontSize: "26px",
               lineHeight: "1.25",
             }}
@@ -2448,8 +2448,7 @@ export function TaskDetailScreen({
                 <span
                   className="h-2 w-2 rounded-full shrink-0"
                   style={{
-                    backgroundColor:
-                      statusColors[item.status] || "#0ea5e9",
+                    backgroundColor: statusColors[item.status] || "#0ea5e9",
                   }}
                 />
                 <span>{formatStatus(item.status)}</span>

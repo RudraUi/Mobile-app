@@ -4,6 +4,10 @@ import { BottomNav, type MainTab } from "../components/BottomNav"
 import { FilterModal } from "../components/FilterModal"
 import { SearchModal } from "../components/SearchModal"
 import { HomeSkeleton, PullIndicator } from "../components/SkeletonLoader"
+import {
+  CameraSyncStrip,
+  useDemoCameraSync,
+} from "../components/CameraSyncStrip"
 import type { Item, ItemType, Severity, Status } from "../data/mockData"
 import { type Project, projectsList } from "../data/projectsData"
 
@@ -17,6 +21,8 @@ interface HomeScreenProps {
   onFilterChange: (filter: string) => void
   onInviteClick?: () => void
   onProfileClick?: () => void
+  onNotificationClick?: () => void
+  unreadNotificationCount?: number
   userAvatar?: string
   selectedProject?: Project
   onSelectProject?: (p: Project) => void
@@ -366,6 +372,8 @@ export function HomeScreen({
   onFilterChange,
   onInviteClick,
   onProfileClick,
+  onNotificationClick,
+  unreadNotificationCount = 0,
   userAvatar,
   selectedProject = projectsList[0],
   onSelectProject,
@@ -397,6 +405,10 @@ export function HomeScreen({
   }
 
   // Pull to Refresh & Skeleton Loader state
+  /* Camera -> mobile import progress shown in the strip under the cards.
+     Replace the demo driver with the real transfer state when available. */
+  const [cameraSync, cancelCameraSync] = useDemoCameraSync()
+
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isPulling, setIsPulling] = useState(false)
   const [pullDistance, setPullDistance] = useState(0)
@@ -492,6 +504,8 @@ export function HomeScreen({
         isSplitViewActive={activeTab === "splitview"}
         onInviteClick={onInviteClick}
         onProfileClick={onProfileClick}
+        onNotificationClick={onNotificationClick}
+        unreadNotificationCount={unreadNotificationCount}
         onFilterClick={() => setIsFilterModalOpen(true)}
         isFilterActive={isFilterActive}
         userAvatar={userAvatar}
@@ -664,7 +678,7 @@ export function HomeScreen({
           >
             {/* Top Cards Section inside Expanded Blue Section */}
             <section
-              className="bg-[#0055ff] pt-2 pb-7 shrink-0"
+              className="bg-[#0055ff] pt-2 pb-6 shrink-0"
               aria-label="Task summary"
             >
               <div
@@ -705,23 +719,23 @@ export function HomeScreen({
                         viewMode: "list",
                       })
                     }}
-                    className="flex flex-col justify-between rounded-[18px] p-3.5 text-left transition-all active:scale-[0.97] flex-shrink-0 cursor-pointer bg-white/[0.18] hover:bg-white/[0.26] backdrop-blur-md text-white"
+                    className="group flex items-center gap-2 rounded-[14px] px-2.5 py-2 text-left transition-all duration-200 active:scale-[0.97] flex-shrink-0 cursor-pointer bg-white/[0.16] hover:bg-white/[0.24] ring-1 ring-white/[0.12] backdrop-blur-md text-white"
                     style={{
-                      width: "136px",
-                      height: "96px",
+                      width: "138px",
+                      height: "56px",
                     }}
                   >
                     {/* Icon Badge in translucent light-blue / white box */}
-                    <div className="flex h-[26px] w-[26px] items-center justify-center rounded-[8px] bg-white/20 text-white">
+                    <div className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[8px] bg-white/20 text-white transition-colors group-hover:bg-white/30">
                       <StatIcon id={card.id} color="#ffffff" />
                     </div>
 
                     {/* Text Content */}
-                    <div className="mt-auto">
-                      <div className="text-[13.5px] font-bold leading-tight tracking-[-0.2px] whitespace-nowrap text-white">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[12.5px] font-bold leading-tight tracking-[-0.2px] truncate text-white">
                         {card.title}
                       </div>
-                      <div className="text-[11px] font-medium leading-tight mt-0.5 whitespace-nowrap text-blue-100/90">
+                      <div className="text-[10px] font-medium leading-tight mt-[1px] truncate text-blue-100/85">
                         {card.subtitle}
                       </div>
                     </div>
@@ -729,6 +743,9 @@ export function HomeScreen({
                 ))}
                 <div className="w-1 flex-shrink-0" aria-hidden="true" />
               </div>
+
+              {/* Camera -> mobile transfer / sync progress strip */}
+              <CameraSyncStrip state={cameraSync} onCancel={cancelCameraSync} />
             </section>
 
             {/* Rounded Top White Bottom Container Sheet */}
@@ -818,7 +835,7 @@ export function HomeScreen({
                           {getItemTypeIcon(row.type)}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <h4 className="text-[13.5px] font-bold text-[#0F172A] leading-snug group-hover:text-[#0055ff] transition-colors truncate">
+                          <h4 className="text-[13.5px] font-semibold text-[#0F172A] dark:text-slate-100 leading-snug group-hover:text-[#0055ff] transition-colors truncate">
                             {row.title}
                           </h4>
                           <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400 mt-0.5">

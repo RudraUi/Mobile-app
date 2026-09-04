@@ -4,7 +4,8 @@ export function StatusBadge({ status }: { status: string }) {
   const colors = statusColors[status] ?? { bg: "#f3f4f6", text: "#6b7280" }
   return (
     <span
-      className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap"
+      data-status={status}
+      className="status-badge inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap"
       style={{
         backgroundColor: colors.bg,
         color: colors.text,
@@ -24,7 +25,8 @@ export function SeverityBadge({ severity }: { severity: string }) {
   }
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold"
+      data-severity={severity}
+      className="severity-badge inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold"
       style={{
         backgroundColor: colors.bg,
         color: colors.text,
@@ -32,7 +34,7 @@ export function SeverityBadge({ severity }: { severity: string }) {
       }}
     >
       <span
-        className="w-1.5 h-1.5 rounded-full"
+        className="w-1.5 h-1.5 rounded-full shrink-0"
         style={{ backgroundColor: colors.dot }}
       />
       {severity}
