@@ -232,7 +232,7 @@ export function NotificationsScreen({
               <button
                 type="button"
                 onClick={() => setShowFilterDropdown((prev) => !prev)}
-                className={`h-7 px-2 rounded-full text-[11px] font-medium shrink-0 flex items-center gap-1 cursor-pointer active:scale-95 transition-all border ${
+                className={`h-7 px-2.5 rounded-full text-[11px] font-medium shrink-0 flex items-center gap-1 cursor-pointer active:scale-95 transition-all border ${
                   activeTab !== "all"
                     ? "bg-blue-50 dark:bg-blue-500/15 text-[#0055ff] dark:text-blue-400 border-blue-200 dark:border-blue-500/30 font-semibold"
                     : "bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 border-transparent hover:bg-slate-200/80 dark:hover:bg-white/15"
@@ -241,17 +241,6 @@ export function NotificationsScreen({
                 aria-label="Filter notifications"
               >
                 <span>{activeTabInfo.label}</span>
-                {activeTabInfo.count > 0 && (
-                  <span
-                    className={`min-w-[14px] h-[14px] text-[9px] leading-none px-0.5 rounded-full font-bold flex items-center justify-center text-center ${
-                      activeTab !== "all"
-                        ? "bg-[#0055ff] text-white"
-                        : "bg-slate-200 dark:bg-white/15 text-slate-600 dark:text-slate-300"
-                    }`}
-                  >
-                    {activeTabInfo.count}
-                  </span>
-                )}
                 <svg
                   width="10"
                   height="10"
