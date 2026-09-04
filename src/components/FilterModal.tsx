@@ -54,17 +54,25 @@ export function FilterModal({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-4 select-none animate-fade-in"
+      className="fixed inset-0 z-50 flex flex-col justify-end bg-black/45 backdrop-blur-xs select-none animate-fade-in"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[340px] bg-white rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.22)] overflow-hidden flex flex-col animate-slide-up border border-slate-100"
+        className="relative z-10 mx-auto flex w-full max-w-[430px] flex-col overflow-hidden rounded-t-[28px] border-t border-slate-200 dark:border-white/10 bg-white dark:bg-[#121524] shadow-[0_-12px_40px_rgba(0,0,0,0.25)] animate-slide-up max-h-[85vh]"
       >
-        {/* Modern Header */}
-        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100/80">
+        {/* Grab Handle */}
+        <div className="shrink-0 pt-2.5 pb-1">
+          <div
+            className="mx-auto h-1 w-9 rounded-full bg-slate-300 dark:bg-white/20"
+            aria-hidden="true"
+          />
+        </div>
+
+        {/* Modern Compact Header with proper padding */}
+        <div className="flex items-center justify-between px-5 pt-2 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-blue-50 text-[#0055ff] flex items-center justify-center shadow-2xs">
-              <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+            <div className="w-7 h-7 rounded-full bg-blue-50 dark:bg-blue-500/15 text-[#0055ff] dark:text-blue-400 flex items-center justify-center shadow-2xs shrink-0">
+              <svg width="12" height="12" viewBox="0 0 20 20" fill="none">
                 <path
                   d="M2.5 6.5h4.5M11.5 6.5h6"
                   stroke="currentColor"
@@ -96,11 +104,11 @@ export function FilterModal({
               </svg>
             </div>
             <div className="flex items-center gap-2">
-              <h3 className="text-[15px] font-bold text-slate-900 tracking-tight">
+              <h3 className="text-[13px] font-bold text-slate-900 dark:text-white tracking-tight leading-none">
                 Filters
               </h3>
               {activeCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-blue-100 text-[#0055ff] text-[10px] font-black">
+                <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/20 text-[#0055ff] dark:text-blue-400 text-[9px] font-bold leading-none">
                   {activeCount} active
                 </span>
               )}
@@ -109,11 +117,12 @@ export function FilterModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-100/90 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+            className="w-7 h-7 rounded-full bg-slate-100/90 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/15 text-slate-400 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            aria-label="Close filters"
           >
             <svg
-              width="13"
-              height="13"
+              width="11"
+              height="11"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -126,14 +135,14 @@ export function FilterModal({
           </button>
         </div>
 
-        {/* Filter Sections */}
-        <div className="p-4 space-y-3.5 max-h-[65vh] overflow-y-auto">
+        {/* Filter Sections - Balanced spacing & padding */}
+        <div className="px-5 py-4 space-y-4 max-h-[60vh] overflow-y-auto no-scrollbar">
           {/* Type Filter */}
           <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+            <span className="text-[9.5px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-2">
               Item Type
             </span>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {types.map((t) => {
                 const isActive = typeFilter === t.id
                 return (
@@ -141,10 +150,10 @@ export function FilterModal({
                     type="button"
                     key={t.id}
                     onClick={() => onTypeChange(t.id)}
-                    className={`px-3.5 py-1.5 rounded-full text-[12px] font-semibold transition-all cursor-pointer ${
+                    className={`h-7 px-3 rounded-full text-[11px] font-medium transition-all cursor-pointer active:scale-95 flex items-center justify-center ${
                       isActive
-                        ? "bg-[#0055ff] text-white shadow-sm shadow-blue-500/25 font-bold scale-[1.02]"
-                        : "bg-slate-100/90 text-slate-700 hover:bg-slate-200/80"
+                        ? "bg-[#0055ff] text-white font-semibold shadow-xs shadow-blue-500/25"
+                        : "bg-slate-100/90 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 hover:bg-slate-200/80 dark:hover:bg-white/10"
                     }`}
                   >
                     {t.label}
@@ -156,10 +165,10 @@ export function FilterModal({
 
           {/* Status Filter */}
           <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+            <span className="text-[9.5px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-2">
               Status
             </span>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {statuses.map((s) => {
                 const isActive = statusFilter === s.id
                 return (
@@ -167,10 +176,10 @@ export function FilterModal({
                     type="button"
                     key={s.id}
                     onClick={() => onStatusChange(s.id)}
-                    className={`px-3.5 py-1.5 rounded-full text-[12px] font-semibold transition-all cursor-pointer ${
+                    className={`h-7 px-3 rounded-full text-[11px] font-medium transition-all cursor-pointer active:scale-95 flex items-center justify-center ${
                       isActive
-                        ? "bg-[#0055ff] text-white shadow-sm shadow-blue-500/25 font-bold scale-[1.02]"
-                        : "bg-slate-100/90 text-slate-700 hover:bg-slate-200/80"
+                        ? "bg-[#0055ff] text-white font-semibold shadow-xs shadow-blue-500/25"
+                        : "bg-slate-100/90 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 hover:bg-slate-200/80 dark:hover:bg-white/10"
                     }`}
                   >
                     {s.label}
@@ -182,10 +191,10 @@ export function FilterModal({
 
           {/* Priority Level */}
           <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+            <span className="text-[9.5px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-2">
               Priority
             </span>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {priorities.map((p) => {
                 const isActive = priorityFilter === p.id
                 return (
@@ -193,10 +202,10 @@ export function FilterModal({
                     type="button"
                     key={p.id}
                     onClick={() => onPriorityChange(p.id)}
-                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-semibold transition-all cursor-pointer ${
+                    className={`h-7 inline-flex items-center gap-1.5 px-3 rounded-full text-[11px] font-medium transition-all cursor-pointer active:scale-95 ${
                       isActive
-                        ? "bg-[#0055ff] text-white shadow-sm shadow-blue-500/25 font-bold scale-[1.02]"
-                        : "bg-slate-100/90 text-slate-700 hover:bg-slate-200/80"
+                        ? "bg-[#0055ff] text-white font-semibold shadow-xs shadow-blue-500/25"
+                        : "bg-slate-100/90 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 hover:bg-slate-200/80 dark:hover:bg-white/10"
                     }`}
                   >
                     {p.dot && (
@@ -215,19 +224,19 @@ export function FilterModal({
           </div>
         </div>
 
-        {/* Rounded Modern Footer */}
-        <div className="p-3.5 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between gap-3">
+        {/* Compact Modern Footer with proper padding */}
+        <div className="px-5 pt-3 pb-6 border-t border-slate-100 dark:border-white/[0.06] bg-slate-50/50 dark:bg-[#161a2b]/50 flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={onReset}
-            className="px-4 py-2 rounded-full text-slate-500 hover:text-slate-800 hover:bg-slate-100 text-[12.5px] font-bold transition-all cursor-pointer"
+            className="px-3.5 py-1.5 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 text-[11px] font-semibold transition-all cursor-pointer"
           >
             Reset
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2.5 px-5 rounded-full bg-[#0055ff] hover:bg-blue-600 active:scale-98 text-white text-[13px] font-bold shadow-md shadow-blue-500/25 transition-all cursor-pointer"
+            className="flex-1 h-8 px-4 rounded-full bg-[#0055ff] hover:bg-blue-600 active:scale-95 text-white text-[11.5px] font-semibold shadow-xs shadow-blue-500/25 transition-all cursor-pointer flex items-center justify-center"
           >
             Apply Filters
           </button>

@@ -171,17 +171,17 @@ export function NotificationDetailSheet({
         </div>
 
         {/* Header Bar */}
-        <header className="shrink-0 px-4.5 pt-1.5 pb-3 border-b border-slate-100 dark:border-white/[0.06] flex items-center justify-between">
+        <header className="shrink-0 px-4.5 pt-2 pb-3 border-b border-slate-100 dark:border-white/[0.06] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${badge.bg}`}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${badge.bg}`}
             >
               {badge.icon}
               {badge.label}
             </span>
 
             {notification.priority === "high" && (
-              <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400 text-[10px] font-black uppercase tracking-wider">
+              <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400 text-[10px] font-bold uppercase tracking-wider">
                 High Priority
               </span>
             )}
@@ -190,10 +190,10 @@ export function NotificationDetailSheet({
           <div className="flex items-center gap-2">
             {/* Read/Unread Status Indicator */}
             <span
-              className={`text-[11px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+              className={`text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 ${
                 notification.read
                   ? "bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400"
-                  : "bg-blue-50 dark:bg-blue-500/15 text-[#0055ff] dark:text-blue-400 font-bold"
+                  : "bg-blue-50 dark:bg-blue-500/15 text-[#0055ff] dark:text-blue-400"
               }`}
             >
               {!notification.read && (
@@ -206,12 +206,12 @@ export function NotificationDetailSheet({
             <button
               type="button"
               onClick={onClose}
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors active:scale-95 cursor-pointer"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors active:scale-95 cursor-pointer"
               aria-label="Close details"
             >
               <svg
-                width="13"
-                height="13"
+                width="14"
+                height="14"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -229,10 +229,10 @@ export function NotificationDetailSheet({
         <div className="flex-1 overflow-y-auto px-4.5 py-4 space-y-4 no-scrollbar">
           {/* Title & Metadata */}
           <div>
-            <h2 className="text-[17px] font-bold text-slate-900 dark:text-white leading-snug tracking-tight">
+            <h2 className="text-base font-bold text-slate-900 dark:text-white leading-snug tracking-tight">
               {notification.title}
             </h2>
-            <div className="flex items-center gap-2 mt-1.5 text-[11.5px] font-medium text-slate-400">
+            <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-400 dark:text-slate-500">
               <span className="font-semibold text-slate-600 dark:text-slate-300">
                 {notification.projectName}
               </span>
@@ -243,7 +243,7 @@ export function NotificationDetailSheet({
 
           {/* Full Message Box */}
           <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#181d33] border border-slate-100 dark:border-white/[0.06]">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">
               Details
             </span>
             <p className="text-[13px] text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
@@ -258,10 +258,10 @@ export function NotificationDetailSheet({
                 <img
                   src={notification.author.avatar}
                   alt={notification.author.name}
-                  className="w-10 h-10 rounded-full object-cover shrink-0 ring-2 ring-white dark:ring-white/10"
+                  className="w-9 h-9 rounded-full object-cover shrink-0 ring-2 ring-white dark:ring-white/10"
                 />
               ) : (
-                <span className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 text-[12px] font-bold flex items-center justify-center text-slate-700 dark:text-slate-200 shrink-0">
+                <span className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 text-xs font-bold flex items-center justify-center text-slate-700 dark:text-slate-200 shrink-0">
                   {notification.author.initials}
                 </span>
               )}
@@ -272,7 +272,7 @@ export function NotificationDetailSheet({
                 <h4 className="text-[13px] font-bold text-slate-900 dark:text-white truncate">
                   {notification.author.name}
                 </h4>
-                <p className="text-[11px] text-slate-400 font-medium truncate">
+                <p className="text-xs text-slate-400 font-medium truncate">
                   {notification.author.role}
                 </p>
               </div>
@@ -282,7 +282,7 @@ export function NotificationDetailSheet({
           {/* Linked Work Item Card (if present) */}
           {notification.itemId && (
             <div className="space-y-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block px-0.5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block px-0.5">
                 Related Work Item
               </span>
 
@@ -295,7 +295,7 @@ export function NotificationDetailSheet({
                   className="p-3 rounded-2xl border border-blue-200/80 dark:border-blue-500/25 bg-blue-50/40 dark:bg-blue-500/[0.08] hover:bg-blue-50/70 dark:hover:bg-blue-500/[0.12] transition-colors cursor-pointer group"
                 >
                   <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span className="text-[12px] font-bold text-[#0055ff] dark:text-blue-400 font-mono">
+                    <span className="text-xs font-bold text-[#0055ff] dark:text-blue-400 font-mono">
                       {linkedItem.id}
                     </span>
                     <div className="flex items-center gap-1.5">
@@ -308,7 +308,7 @@ export function NotificationDetailSheet({
                     {linkedItem.title}
                   </h5>
 
-                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-blue-100 dark:border-white/[0.06] text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-blue-100 dark:border-white/[0.06] text-xs font-medium text-slate-500 dark:text-slate-400">
                     <span>Due: {linkedItem.dueDate}</span>
                     <span className="text-[#0055ff] dark:text-blue-400 font-bold flex items-center gap-0.5">
                       View item details ›
@@ -317,10 +317,10 @@ export function NotificationDetailSheet({
                 </div>
               ) : (
                 <div className="p-3 rounded-xl border border-slate-100 dark:border-white/[0.06] bg-slate-50 dark:bg-[#181d33] flex items-center justify-between">
-                  <span className="text-[12px] font-bold text-[#0055ff] font-mono">
+                  <span className="text-xs font-bold text-[#0055ff] font-mono">
                     {notification.itemId}
                   </span>
-                  <span className="text-[11px] text-slate-400">
+                  <span className="text-xs text-slate-400">
                     Linked to field coordination
                   </span>
                 </div>
@@ -329,7 +329,7 @@ export function NotificationDetailSheet({
           )}
         </div>
 
-        {/* Action Footer */}
+        {/* Action Footer - uniform 36px (h-9) buttons */}
         <footer className="shrink-0 p-3.5 border-t border-slate-100 dark:border-white/[0.08] bg-slate-50/60 dark:bg-[#0e111d] flex items-center gap-2">
           {/* Toggle Read/Unread */}
           <button
@@ -337,11 +337,11 @@ export function NotificationDetailSheet({
             onClick={() => {
               onToggleRead?.(notification.id)
             }}
-            className="px-3 py-2.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-[#181c2f] hover:bg-slate-100 text-slate-700 dark:text-slate-200 text-[12px] font-bold transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+            className="h-9 px-3.5 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-[#181c2f] hover:bg-slate-100 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
           >
             <svg
-              width="13"
-              height="13"
+              width="14"
+              height="14"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -369,16 +369,16 @@ export function NotificationDetailSheet({
                 onClose()
                 onOpenItem?.(linkedItem)
               }}
-              className="flex-1 py-2.5 px-4 rounded-full bg-[#0055ff] hover:bg-blue-600 text-white text-[12.5px] font-bold shadow-md shadow-blue-500/20 active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-1"
+              className="h-9 flex-1 px-4 rounded-full bg-[#0055ff] hover:bg-blue-600 text-white text-xs font-semibold shadow-xs shadow-blue-500/20 active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-1"
             >
               <span>Open Work Item</span>
-              <span className="text-[14px] leading-none">›</span>
+              <span className="text-sm leading-none">›</span>
             </button>
           ) : (
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2.5 px-4 rounded-full bg-[#0055ff] hover:bg-blue-600 text-white text-[12.5px] font-bold shadow-md shadow-blue-500/20 active:scale-98 transition-all cursor-pointer"
+              className="h-9 flex-1 px-4 rounded-full bg-[#0055ff] hover:bg-blue-600 text-white text-xs font-semibold shadow-xs shadow-blue-500/20 active:scale-98 transition-all cursor-pointer"
             >
               Done
             </button>
@@ -391,7 +391,7 @@ export function NotificationDetailSheet({
               onDelete?.(notification.id)
               onClose()
             }}
-            className="w-9 h-9 rounded-full border border-rose-200/80 dark:border-rose-500/25 bg-rose-50/60 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-100 flex items-center justify-center transition-colors active:scale-95 cursor-pointer shrink-0"
+            className="h-9 w-9 rounded-full border border-rose-200/80 dark:border-rose-500/25 bg-rose-50/60 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-100 flex items-center justify-center transition-colors active:scale-95 cursor-pointer shrink-0"
             title="Delete notification"
             aria-label="Delete notification"
           >

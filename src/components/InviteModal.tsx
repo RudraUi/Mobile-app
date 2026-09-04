@@ -1,5 +1,6 @@
 import { useState, useRef } from "react"
 import type { KeyboardEvent, ChangeEvent } from "react"
+import { CustomKeyboard } from "./CustomKeyboard"
 
 interface InviteModalProps {
   isOpen: boolean
@@ -10,6 +11,7 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
   const [emailInput, setEmailInput] = useState("")
   const [emailsList, setEmailsList] = useState<string[]>([])
   const [isSuccess, setIsSuccess] = useState(false)
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   if (!isOpen) return null
@@ -48,6 +50,14 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
     setEmailsList((prev) => prev.filter((em) => em !== emailToRemove))
   }
 
+  const handleCommitCurrentInput = () => {
+    const val = emailInput.trim()
+    if (val && val.includes("@")) {
+      setEmailsList((prev) => Array.from(new Set([...prev, val])))
+      setEmailInput("")
+    }
+  }
+
   const handleSend = () => {
     let finalEmails = [...emailsList]
     if (emailInput.trim() && emailInput.includes("@")) {
@@ -61,6 +71,7 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
       setIsSuccess(false)
       setEmailsList([])
       setEmailInput("")
+      setIsKeyboardOpen(false)
       onClose()
     }, 1200)
   }
@@ -70,17 +81,28 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
 
   return (
     <div
-      onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-4 select-none animate-fade-in"
+      onClick={() => {
+        setIsKeyboardOpen(false)
+        onClose()
+      }}
+      className="fixed inset-0 z-50 flex flex-col justify-end bg-black/45 backdrop-blur-xs select-none animate-fade-in"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[340px] bg-white rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.22)] overflow-hidden flex flex-col animate-slide-up border border-slate-100"
+        className="relative z-10 mx-auto flex w-full max-w-[430px] flex-col overflow-hidden rounded-t-[28px] border-t border-slate-200 dark:border-white/10 bg-white dark:bg-[#121524] shadow-[0_-12px_40px_rgba(0,0,0,0.25)] animate-slide-up max-h-[92vh]"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100">
+        {/* Grab Handle */}
+        <div className="shrink-0 pt-2.5 pb-1">
+          <div
+            className="mx-auto h-1 w-9 rounded-full bg-slate-300 dark:bg-white/20"
+            aria-hidden="true"
+          />
+        </div>
+
+        {/* Header with proper padding */}
+        <div className="flex items-center justify-between px-5 pt-2 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-blue-50 text-[#0055ff] flex items-center justify-center shadow-2xs">
+            <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-500/15 text-[#0055ff] dark:text-blue-400 flex items-center justify-center shadow-2xs shrink-0">
               <svg
                 width="15"
                 height="15"
@@ -97,26 +119,30 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
               </svg>
             </div>
             <div>
-              <h3 className="text-[14.5px] font-bold text-slate-900 leading-tight">
+              <h3 className="text-[13.5px] font-bold text-slate-900 dark:text-white leading-tight">
                 Invite Collaborators
               </h3>
-              <p className="text-[10.5px] text-slate-400 font-medium">
+              <p className="text-[10px] text-slate-400 font-medium">
                 Stalwart Workspace
               </p>
             </div>
           </div>
           <button
             type="button"
-            onClick={onClose}
-            className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+            onClick={() => {
+              setIsKeyboardOpen(false)
+              onClose()
+            }}
+            className="w-7 h-7 rounded-full bg-slate-100/90 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/15 text-slate-400 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            aria-label="Close invite modal"
           >
             <svg
-              width="12"
-              height="12"
+              width="11"
+              height="11"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="2.4"
+              strokeWidth="2.5"
               strokeLinecap="round"
             >
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -125,12 +151,12 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
           </button>
         </div>
 
-        {/* Modal Body */}
-        <div className="p-4 space-y-3">
+        {/* Sheet Body with balanced padding */}
+        <div className="px-5 py-4 space-y-3 max-h-[50vh] overflow-y-auto no-scrollbar">
           {/* Multiple Email Input Container */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[9.5px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 Email Addresses
               </label>
               <span className="text-[9.5px] text-slate-400 font-medium">
@@ -139,14 +165,17 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
             </div>
 
             <div
-              onClick={() => inputRef.current?.focus()}
-              className="min-h-[86px] max-h-[140px] overflow-y-auto p-2 rounded-2xl bg-slate-50 border border-slate-200/90 focus-within:border-[#0055ff] focus-within:bg-white transition-all flex flex-wrap gap-1.5 items-start cursor-text"
+              onClick={() => {
+                inputRef.current?.focus()
+                setIsKeyboardOpen(true)
+              }}
+              className="min-h-[86px] max-h-[140px] overflow-y-auto p-2.5 rounded-2xl bg-slate-50/80 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 focus-within:border-[#0055ff] focus-within:bg-white dark:focus-within:bg-[#161a2b] transition-all flex flex-wrap gap-1.5 items-start cursor-text"
             >
               {/* Email Chips */}
               {emailsList.map((em) => (
                 <span
                   key={em}
-                  className="inline-flex items-center gap-1 bg-blue-50 text-[#0055ff] border border-blue-200/80 px-2.5 py-1 rounded-full text-[11px] font-bold animate-scale-in"
+                  className="inline-flex items-center gap-1 bg-blue-50 dark:bg-blue-500/15 text-[#0055ff] dark:text-blue-400 border border-blue-200/80 dark:border-blue-500/30 px-2.5 py-1 rounded-full text-[11px] font-semibold animate-scale-in"
                 >
                   <span className="truncate max-w-[150px]">{em}</span>
                   <button
@@ -155,7 +184,7 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
                       e.stopPropagation()
                       removeEmail(em)
                     }}
-                    className="hover:text-red-500 text-[11px] font-bold cursor-pointer leading-none"
+                    className="hover:text-red-500 text-[11px] font-bold cursor-pointer leading-none ml-0.5"
                   >
                     ✕
                   </button>
@@ -167,6 +196,7 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
                 ref={inputRef}
                 type="text"
                 value={emailInput}
+                onFocus={() => setIsKeyboardOpen(true)}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 placeholder={
@@ -174,18 +204,21 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
                     ? "alex@site.com john@eng.com"
                     : "Add more..."
                 }
-                className="flex-1 min-w-[130px] bg-transparent text-[12px] text-slate-800 placeholder:text-slate-400 outline-none py-1 px-1 font-medium"
+                className="flex-1 min-w-[130px] bg-transparent text-[11.5px] text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none py-1 px-1 font-medium"
               />
             </div>
           </div>
         </div>
 
-        {/* Rounded Action Footer */}
-        <div className="p-3.5 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between gap-2.5">
+        {/* Compact Modern Footer */}
+        <div className={`px-5 pt-3 ${isKeyboardOpen ? "pb-2" : "pb-6"} border-t border-slate-100 dark:border-white/[0.06] bg-slate-50/50 dark:bg-[#161a2b]/50 flex items-center justify-between gap-3`}>
           <button
             type="button"
-            onClick={onClose}
-            className="px-4 py-2.5 rounded-full text-slate-500 hover:text-slate-800 hover:bg-slate-100 text-[12.5px] font-bold transition-colors cursor-pointer"
+            onClick={() => {
+              setIsKeyboardOpen(false)
+              onClose()
+            }}
+            className="px-3.5 py-1.5 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 text-[11px] font-semibold transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -193,12 +226,12 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
             type="button"
             onClick={handleSend}
             disabled={totalInvites === 0}
-            className={`flex-1 py-2.5 px-5 rounded-full text-[13px] font-bold transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 h-8 px-4 rounded-full text-[11.5px] font-semibold transition-all flex items-center justify-center gap-1.5 ${
               isSuccess
                 ? "bg-emerald-600 text-white"
                 : totalInvites > 0
-                  ? "bg-[#0055ff] hover:bg-blue-600 active:scale-98 text-white shadow-md shadow-blue-500/25 cursor-pointer"
-                  : "bg-slate-200/80 text-slate-400 cursor-not-allowed"
+                  ? "bg-[#0055ff] hover:bg-blue-600 active:scale-95 text-white shadow-xs shadow-blue-500/25 cursor-pointer"
+                  : "bg-slate-200/80 dark:bg-white/10 text-slate-400 cursor-not-allowed"
             }`}
           >
             {isSuccess ? (
@@ -212,6 +245,45 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
             )}
           </button>
         </div>
+
+        {/* Simulated iOS Keyboard from bottom when typing */}
+        {isKeyboardOpen && (
+          <div
+            className="w-full shrink-0 border-t border-slate-200/80 dark:border-white/10 animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <CustomKeyboard
+              type="alpha"
+              actionLabel="Add"
+              onKeyPress={(char) => {
+                setEmailInput((prev) => {
+                  const updated = prev + char
+                  if (char === " ") {
+                    const trimmed = prev.trim()
+                    if (trimmed && trimmed.includes("@")) {
+                      setEmailsList((list) => Array.from(new Set([...list, trimmed])))
+                      return ""
+                    }
+                  }
+                  return updated
+                })
+              }}
+              onBackspace={() => {
+                setEmailInput((prev) => {
+                  if (prev.length > 0) return prev.slice(0, -1)
+                  if (emailsList.length > 0) {
+                    setEmailsList((list) => list.slice(0, -1))
+                  }
+                  return ""
+                })
+              }}
+              onSubmit={() => {
+                handleCommitCurrentInput()
+                setIsKeyboardOpen(false)
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   )

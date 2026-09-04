@@ -22,6 +22,7 @@ export function SearchModal({
   onItemClick,
 }: SearchModalProps) {
   const [query, setQuery] = useState("")
+  const [recentList, setRecentList] = useState<string[]>(recentSearches)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -164,7 +165,7 @@ export function SearchModal({
           </button>
 
           {/* Search Input Box */}
-          <div className="flex-1 flex items-center gap-2 bg-slate-100/90 rounded-full px-3 py-1.5 border border-slate-200/80 focus-within:border-[#0055ff] focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100/80 transition-all">
+          <div className="flex-1 flex items-center gap-2 bg-slate-100/90 rounded-full px-3.5 py-1.5 border border-slate-200/80 focus-within:border-[#0055ff] focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100/80 transition-all">
             <svg
               width="13"
               height="13"
@@ -195,15 +196,6 @@ export function SearchModal({
               </button>
             )}
           </div>
-
-          {/* Cancel */}
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-[12px] font-bold text-[#0055ff] hover:opacity-80 transition-opacity px-1 cursor-pointer shrink-0"
-          >
-            Cancel
-          </button>
         </div>
       </div>
 
@@ -212,35 +204,62 @@ export function SearchModal({
         {/* Default View (No Query Typed) */}
         {!query.trim() ? (
           <div className="space-y-4 pt-1">
-            {/* Recent Searches */}
-            <div>
-              <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
-                Recent Searches
-              </span>
-              <div className="flex flex-wrap gap-1">
-                {recentSearches.map((s) => (
+            {/* Recent Searches - Clean, polished native styling */}
+            {recentList.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                    Recent Searches
+                  </span>
                   <button
                     type="button"
-                    key={s}
-                    onClick={() => setQuery(s)}
-                    className="flex items-center gap-1 px-2.5 py-[3px] rounded-full bg-slate-100/90 hover:bg-slate-200 text-slate-600 text-[10px] font-semibold transition-all cursor-pointer active:scale-95"
+                    onClick={() => setRecentList([])}
+                    className="text-[11px] font-medium text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                   >
-                    <svg
-                      width="9"
-                      height="9"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#94a3b8"
-                      strokeWidth="2.4"
-                    >
-                      <circle cx="12" cy="12" r="10" />
-                      <polyline points="12 6 12 12 16 14" />
-                    </svg>
-                    <span>{s}</span>
+                    Clear All
                   </button>
-                ))}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {recentList.map((s) => (
+                    <div
+                      key={s}
+                      className="h-7 inline-flex items-center gap-1.5 pl-2.5 pr-1.5 rounded-full bg-slate-100 hover:bg-slate-200/80 border border-slate-200/60 text-slate-700 text-[11.5px] font-medium transition-all group cursor-pointer active:scale-95"
+                      onClick={() => setQuery(s)}
+                    >
+                      <svg
+                        width="11"
+                        height="11"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-slate-400 shrink-0"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                      <span>{s}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setRecentList((prev) => prev.filter((item) => item !== s))
+                        }}
+                        className="w-4 h-4 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-300/60 transition-colors cursor-pointer ml-0.5"
+                        aria-label={`Remove ${s}`}
+                      >
+                        <svg width="8" height="8" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" fill="none">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Quick Recent Items (Clean minimal list) */}
             <div className="pt-2">
