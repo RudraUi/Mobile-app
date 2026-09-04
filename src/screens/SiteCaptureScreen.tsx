@@ -1,5 +1,18 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import camera360Img from "../assets/360camera.png"
+import {
+  ARRIVE_TOLERANCE,
+  CAPTURE_ZONES,
+  distanceBetween,
+  ORIGIN,
+  PlanCanvas,
+  pointAtProgress,
+  ROUTE_METRES,
+  stepToward,
+  toMetres,
+  type Pt,
+  type SavedRange,
+} from "../components/CapturePlan"
 
 interface SiteCaptureScreenProps {
   onBack: () => void
@@ -7,7 +20,24 @@ interface SiteCaptureScreenProps {
   onOpenCaptures?: () => void
 }
 
-type CaptureStep = "pairing" | "live_view" | "split_view" | "recording" | "media_sync" // WiFi check & Insta360 discovery/connecting/connected // Fullscreen 360 live camera view with floating minimap // 360 live feed on top + CAD drawing on bottom // Live walk active // Camera media list, Sync Local & Sync Cloud
+/**
+ * pairing  — find and connect the 360 camera
+ * plan     — the drawing full-screen, pick a sheet, review the route
+ * capture  — split view: live 360 on top, the same drawing below
+ * media_sync — download / upload what was captured
+ */
+type CaptureStep = "pairing" | "plan" | "capture" | "media_sync"
+
+/** Where the walk stands within the capture step. */
+type WalkState = "idle" | "recording" | "paused" | "complete"
+
+interface CaptureSegment {
+  id: string
+  from: number
+  to: number
+  metres: number
+  nodes: number
+}
 
 type PairingPhase = "welcome" | "searching" | "found" | "connecting" | "connected"
 
@@ -46,15 +76,20 @@ export function SiteCaptureScreen({
   // CAD Drawing & Split screen state
   const [selectedPlanId, setSelectedPlanId] = useState("L03-STR")
   const [isPlanDropdownOpen, setIsPlanDropdownOpen] = useState(false)
-  const [isLocationSynced, setIsLocationSynced] = useState(false)
-  const [userStandingPos, setUserStandingPos] = useState({ x: 38, y: 72 })
 
-  // Recording State & Blue path progress
-  const [isRecording, setIsRecording] = useState(false)
+  // Walk state, live segment progress and banked segments
+  const [walkState, setWalkState] = useState<WalkState>("idle")
   const [recordSeconds, setRecordSeconds] = useState(0)
-  const [walkProgress, setWalkProgress] = useState(0) // 0 to 100%
-  const [keyframesCount, setKeyframesCount] = useState(0)
-  const [distanceMeters, setDistanceMeters] = useState(0)
+  const [walkProgress, setWalkProgress] = useState(0) // 0 to 100 along the route
+  const [segments, setSegments] = useState<CaptureSegment[]>([])
+  const [walkerPos, setWalkerPos] = useState<Pt>({ x: 100, y: 480 })
+  const [isGuiding, setIsGuiding] = useState(false)
+  /** How much of the split the live 360 feed takes, 0.18 - 0.78. */
+  const [splitRatio, setSplitRatio] = useState(0.42)
+  const splitRef = useRef<HTMLDivElement>(null)
+  const splitDragRef = useRef(false)
+  const [justArrived, setJustArrived] = useState(false)
+  const isRecording = walkState === "recording"
 
   // Media Sync State
   const [syncLocalProgress, setSyncLocalProgress] = useState<number | null>(
@@ -65,7 +100,6 @@ export function SiteCaptureScreen({
   )
   const [isSyncLocalDone, setIsSyncLocalDone] = useState(false)
   const [isSyncCloudDone, setIsSyncCloudDone] = useState(false)
-  const [isPoorInternet, setIsPoorInternet] = useState(false)
 
   // Step 1: Auto-search and find device after 1.4 seconds
   useEffect(() => {
@@ -95,7 +129,7 @@ export function SiteCaptureScreen({
     }
   }, [step, pairingPhase])
 
-  // Recording timer & path walk progress effect
+  // Recording: run the clock and walk the operator along the planned route
   useEffect(() => {
     let timer: any
     let walkTimer: any
@@ -107,12 +141,12 @@ export function SiteCaptureScreen({
       walkTimer = setInterval(() => {
         setWalkProgress((p) => {
           if (p >= 100) return 100
-          const next = p + 2.5
-          setDistanceMeters(Number((next * 0.58).toFixed(1)))
-          setKeyframesCount(Math.floor(next / 5.5))
+          const next = Math.min(100, p + 1.6)
+          setWalkerPos(pointAtProgress(next))
+          if (next >= 100) setWalkState("complete")
           return next
         })
-      }, 600)
+      }, 420)
     }
     return () => {
       clearInterval(timer)
@@ -121,6 +155,143 @@ export function SiteCaptureScreen({
   }, [isRecording])
 
   // Handle local sync transfer
+  /* ----- derived walk figures -------------------------------------------
+     The anchor is the spot the operator has to be standing on before the
+     next control does anything: the route origin for a fresh capture, the
+     pause point for a resume. */
+  const anchorPoint: Pt | null = walkState === "complete"
+    ? null
+    : walkState === "paused"
+      ? pointAtProgress(walkProgress)
+      : ORIGIN
+  const distanceToAnchor = anchorPoint
+    ? distanceBetween(walkerPos, anchorPoint)
+    : 0
+  const isAtAnchor = anchorPoint ? distanceToAnchor <= ARRIVE_TOLERANCE : true
+  const metresToAnchor = toMetres(distanceToAnchor)
+
+  const liveMetres = (walkProgress / 100) * ROUTE_METRES
+  const savedMetres = segments.reduce((sum, seg) => sum + seg.metres, 0)
+  const totalMetres = savedMetres + liveMetres
+  const liveNodes = Math.floor(liveMetres / 3.5)
+  const totalNodes =
+    segments.reduce((sum, seg) => sum + seg.nodes, 0) + liveNodes
+  const savedRanges: SavedRange[] = segments.map((seg) => ({
+    from: seg.from,
+    to: seg.to,
+  }))
+
+  /* One line of plain-language guidance for whatever the walk is doing. */
+  let guidance: { tone: "ok" | "warn" | "rec"; title: string; detail: string }
+  if (walkState === "recording") {
+    guidance = {
+      tone: "rec",
+      title: "Recording walk",
+      detail: `${liveMetres.toFixed(1)} m · ${liveNodes} nodes captured`,
+    }
+  } else if (walkState === "complete") {
+    guidance = {
+      tone: "ok",
+      title: "Route complete",
+      detail: `${liveMetres.toFixed(1)} m · ${liveNodes} nodes ready to sync`,
+    }
+  } else if (!isAtAnchor) {
+    guidance = {
+      tone: "warn",
+      title: walkState === "paused"
+        ? "Return to the pause point"
+        : "Walk to the start point",
+      detail: `${metresToAnchor.toFixed(1)} m away · follow the amber line`,
+    }
+  } else if (walkState === "paused") {
+    guidance = {
+      tone: "ok",
+      title: "Paused on the route",
+      detail: `${liveMetres.toFixed(1)} m captured · resume when ready`,
+    }
+  } else {
+    guidance = {
+      tone: "ok",
+      title: "You are on the start point",
+      detail: `${ROUTE_METRES.toFixed(0)} m planned route ahead`,
+    }
+  }
+
+  /* ----- walk controls --------------------------------------------------- */
+
+  const bankSegment = () => {
+    if (walkProgress <= 0) return null
+    const segment: CaptureSegment = {
+      id: `SEG-${segments.length + 1}`,
+      from: 0,
+      to: walkProgress,
+      metres: Number(liveMetres.toFixed(1)),
+      nodes: liveNodes,
+    }
+    setSegments((current) => [...current, segment])
+    return segment
+  }
+
+  const resetToOrigin = () => {
+    setWalkProgress(0)
+    setRecordSeconds(0)
+    setWalkState("idle")
+    setIsGuiding(false)
+  }
+
+  /* Dragging the divider re-balances the 360 feed against the drawing. */
+  const setSplitFromClientY = (clientY: number) => {
+    const rect = splitRef.current?.getBoundingClientRect()
+    if (!rect || rect.height === 0) return
+    const ratio = (clientY - rect.top) / rect.height
+    setSplitRatio(Math.min(0.78, Math.max(0.18, ratio)))
+  }
+
+  const startCapture = () => {
+    setRecordSeconds(0)
+    setWalkState("recording")
+    setIsGuiding(false)
+  }
+
+  const pauseCapture = () => {
+    setWalkState("paused")
+    setIsGuiding(false)
+  }
+
+  const resumeCapture = () => setWalkState("recording")
+
+  const discardCapture = () => resetToOrigin()
+
+  const saveAndStartFresh = () => {
+    bankSegment()
+    resetToOrigin()
+  }
+
+  /* Guidance: walk the operator back to whichever point they have to stand
+     on — the route origin before a fresh capture, the pause point before a
+     resume. Reaching it flips the dock over to the start/resume control. */
+  useEffect(() => {
+    if (!isGuiding || !anchorPoint) return
+    const timer = setInterval(() => {
+      setWalkerPos((current) => {
+        const next = stepToward(current, anchorPoint, 6)
+        if (distanceBetween(next, anchorPoint) <= ARRIVE_TOLERANCE) {
+          setIsGuiding(false)
+          setJustArrived(true)
+        }
+        return next
+      })
+    }, 90)
+    return () => clearInterval(timer)
+  }, [isGuiding, anchorPoint])
+
+  // Let the "arrived" flash fade on its own
+  useEffect(() => {
+    if (!justArrived) return
+    const timer = setTimeout(() => setJustArrived(false), 1800)
+    return () => clearTimeout(timer)
+  }, [justArrived])
+
   const handleSyncLocal = () => {
     setSyncLocalProgress(0)
     const interval = setInterval(() => {
@@ -137,7 +308,6 @@ export function SiteCaptureScreen({
 
   // Handle cloud sync transfer
   const handleSyncCloud = () => {
-    if (isPoorInternet) return
     setSyncCloudProgress(0)
     const interval = setInterval(() => {
       setSyncCloudProgress((prev) => {
@@ -546,10 +716,10 @@ export function SiteCaptureScreen({
             <div className="pb-2 animate-fade-in">
               <button
                 type="button"
-                onClick={() => setStep("live_view")}
+                onClick={() => setStep("plan")}
                 className="flex h-10.5 w-full items-center justify-center rounded-full bg-blue-600 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95"
               >
-                Launch Live 360° View
+                Open capture plan
               </button>
             </div>
           )}
@@ -557,20 +727,206 @@ export function SiteCaptureScreen({
       )}
 
       {/* ========================================================================= */}
-      {/* STEP 2 & 3: LIVE 360 VIEW WITH FLOATING MINIMAP & SPLIT DRAWING VIEW */}
+      {/* STEP 2: FULL DRAWING — PICK THE SHEET, REVIEW THE ROUTE, THEN START */}
       {/* ========================================================================= */}
-      {(step === "live_view" ||
-        step === "split_view" ||
-        step === "recording") && (
-        <div className="relative flex flex-1 flex-col overflow-hidden bg-white">
+      {step === "plan" && (
+        <div className="relative flex flex-1 overflow-hidden bg-white animate-fade-in">
+          {/* The drawing covers the whole screen */}
+          <PlanCanvas
+            className="h-full w-full"
+            fit="cover"
+            progress={0}
+            userPos={walkerPos}
+            anchor={ORIGIN}
+            showGuide
+            savedRanges={[]}
+            onPick={(point) => setWalkerPos(point)}
+          />
+
+          {/* Floating top bar — back, sheet picker and Start, over the plan */}
+          <div className="pointer-events-none absolute left-2.5 right-2.5 top-2.5 z-40 flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setStep("pairing")}
+              className="pointer-events-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-700 shadow-sm backdrop-blur-xs transition-colors hover:bg-white active:scale-95"
+              aria-label="Back to camera"
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+            </button>
+
+            <div className="pointer-events-auto relative min-w-0 flex-1">
+              <button
+                type="button"
+                onClick={() => setIsPlanDropdownOpen(!isPlanDropdownOpen)}
+                className={`flex h-9 w-full items-center justify-between gap-2 rounded-full border px-3 text-left shadow-sm backdrop-blur-xs transition-colors ${
+                  isPlanDropdownOpen
+                    ? "border-blue-300 bg-blue-50"
+                    : "border-slate-200 bg-white/95 hover:bg-white"
+                }`}
+                aria-expanded={isPlanDropdownOpen}
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-[12px] font-bold leading-tight text-slate-900">
+                    {selectedPlan.name}
+                  </span>
+                  <span className="block truncate text-[9px] font-medium leading-tight text-slate-400">
+                    {ROUTE_METRES.toFixed(0)} m · {CAPTURE_ZONES.length} zones
+                  </span>
+                </span>
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={`shrink-0 text-slate-400 transition-transform duration-200 ${
+                    isPlanDropdownOpen ? "rotate-180" : ""
+                  }`}
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+
+              {isPlanDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-30"
+                    onClick={() => setIsPlanDropdownOpen(false)}
+                  />
+                  <div className="absolute left-0 right-0 top-full z-40 mt-1.5 rounded-xl border border-slate-200 bg-white p-1 shadow-[0_12px_32px_rgba(15,23,42,0.18)] animate-slide-up origin-top">
+                    {DRAWING_PLANS.map((plan) => (
+                      <button
+                        key={plan.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedPlanId(plan.id)
+                          setIsPlanDropdownOpen(false)
+                        }}
+                        className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left transition-colors ${
+                          selectedPlanId === plan.id
+                            ? "bg-blue-50 text-blue-600"
+                            : "text-slate-700 hover:bg-slate-50"
+                        }`}
+                      >
+                        <span
+                          className={`text-[12px] ${
+                            selectedPlanId === plan.id
+                              ? "font-bold"
+                              : "font-semibold"
+                          }`}
+                        >
+                          {plan.name}
+                        </span>
+                        <span className="text-[9.5px] font-mono text-slate-400">
+                          {plan.code}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setStep("capture")
+                setIsPlanDropdownOpen(false)
+              }}
+              className="pointer-events-auto flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-blue-600 px-4 text-white shadow-md transition-colors hover:bg-blue-700 active:scale-95"
+            >
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M4 7h3l1.5-2h7L17 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+              <span className="text-[12.5px] font-semibold">Start</span>
+            </button>
+          </div>
+
+          {/* Floating legend and camera state, out of the way at the bottom */}
+          <div className="pointer-events-none absolute bottom-2.5 left-2.5 z-40 flex flex-col gap-1 rounded-lg border border-slate-200 bg-white/90 px-2 py-1.5 shadow-sm backdrop-blur-xs">
+            <span className="flex items-center gap-1.5">
+              <span className="h-0.5 w-4 shrink-0 rounded-full bg-[#eab308]" />
+              <span className="text-[9.5px] font-semibold text-slate-600">
+                Planned route
+              </span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-xs border border-[#0055ff]/40 bg-[#0055ff]/10" />
+              <span className="text-[9.5px] font-semibold text-slate-600">
+                Capture zone
+              </span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-blue-600" />
+              <span className="text-[9.5px] font-semibold text-slate-600">
+                You
+              </span>
+            </span>
+          </div>
+
+          <div className="pointer-events-none absolute right-2.5 top-14 z-40 flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/90 px-2.5 py-1 shadow-sm backdrop-blur-xs">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-semibold text-slate-600">
+              {telemetry.model} · {telemetry.battery}%
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* STEP 3: SPLIT CAPTURE — LIVE 360 ON TOP, THE SAME PLAN BELOW */}
+      {/* ========================================================================= */}
+      {step === "capture" && (
+        <div
+          ref={splitRef}
+          className="relative flex flex-1 flex-col overflow-hidden bg-white"
+          onMouseMove={(event) => {
+            if (splitDragRef.current) setSplitFromClientY(event.clientY)
+          }}
+          onMouseUp={() => {
+            splitDragRef.current = false
+          }}
+          onMouseLeave={() => {
+            splitDragRef.current = false
+          }}
+          onTouchMove={(event) => {
+            if (splitDragRef.current) {
+              setSplitFromClientY(event.touches[0].clientY)
+            }
+          }}
+          onTouchEnd={() => {
+            splitDragRef.current = false
+          }}
+        >
           {/* Top Half: 360 Camera Feed Canvas */}
           <div
-            className={
-              "relative flex-1 overflow-hidden transition-all duration-300 " +
-              (step === "live_view"
-                ? "h-full"
-                : "h-[45%] shrink-0 border-b border-slate-100")
-            }
+            className="relative shrink-0 overflow-hidden"
+            style={{ height: `${splitRatio * 100}%` }}
             onMouseDown={(e) => {
               setIsDraggingPan(true)
               setDragStartX(e.clientX)
@@ -613,9 +969,9 @@ export function SiteCaptureScreen({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setStep("pairing")}
+                  onClick={() => setStep("plan")}
                   className="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full bg-black/40 backdrop-blur-md text-white border border-white/20 shadow-md hover:bg-black/60 active:scale-95 transition-all"
-                  aria-label="Back to camera list"
+                  aria-label="Back to capture plan"
                 >
                   <svg
                     width="15"
@@ -646,235 +1002,111 @@ export function SiteCaptureScreen({
                   <span>{telemetry.battery}% 🔋</span>
                 </div>
 
-                {/* Split / Full toggle button - Transparent Floating Circular */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (step === "live_view") {
-                      setStep("split_view")
-                    } else {
-                      setStep("live_view")
-                    }
-                  }}
-                  className="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full bg-black/40 backdrop-blur-md text-white border border-white/20 shadow-md hover:bg-black/60 active:scale-95 transition-all"
-                  aria-label={
-                    step === "live_view"
-                      ? "Split Drawing View"
-                      : "Full 360 View"
-                  }
-                  title={
-                    step === "live_view"
-                      ? "Split Drawing View"
-                      : "Full 360 View"
-                  }
-                >
-                  {step === "live_view" ? (
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <rect width="18" height="18" x="3" y="3" rx="2" />
-                      <path d="M3 12h18" />
-                    </svg>
-                  ) : (
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <polyline points="15 3 21 3 21 9" />
-                      <polyline points="9 21 3 21 3 15" />
-                      <line x1="21" y1="3" x2="14" y2="10" />
-                      <line x1="3" y1="21" x2="10" y2="14" />
-                    </svg>
-                  )}
-                </button>
+                {/* Live recording chip, replacing the old view toggle */}
+                {walkState === "recording" && (
+                  <div className="flex items-center gap-1.5 rounded-full bg-red-600/90 backdrop-blur-md px-2.5 py-1 text-[11px] font-bold text-white shadow-sm">
+                    <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                    <span>REC {formatTime(recordSeconds)}</span>
+                  </div>
+                )}
+                {walkState === "paused" && (
+                  <div className="flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md px-2.5 py-1 text-[11px] font-bold text-white border border-white/20 shadow-sm">
+                    <span>PAUSED</span>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* ================================================================= */}
-            {/* USER REQUEST: FLOATING MINIMAP INSIDE FULL 360 VIEW WITH LIVE PATH */}
-            {/* ================================================================= */}
-            {step === "live_view" && (
-              <div
-                onClick={() => setStep("split_view")}
-                className="absolute right-3 bottom-14 z-20 w-36 h-24 rounded-xl border border-white/80 bg-white/95 p-1.5 shadow-lg backdrop-blur-xs cursor-pointer transition-all hover:scale-105 active:scale-95 animate-fade-in"
-                title="Tap to open full drawing split view"
-              >
-                <div className="flex items-center justify-between px-0.5 pb-1">
-                  <span className="text-[8.5px] font-bold text-slate-700 truncate">
-                    {selectedPlan.name}
-                  </span>
-                  <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
-                </div>
-
-                {/* Minimap Blueprint Canvas */}
-                <div className="relative h-[calc(100%-16px)] w-full overflow-hidden rounded-lg bg-[#f8fafc] border border-slate-100">
-                  <svg
-                    className="absolute inset-0 h-full w-full"
-                    viewBox="0 0 400 250"
-                  >
-                    <rect
-                      x="25"
-                      y="25"
-                      width="350"
-                      height="200"
-                      fill="none"
-                      stroke="#94a3b8"
-                      strokeWidth="3"
-                    />
-                    <line
-                      x1="25"
-                      y1="125"
-                      x2="375"
-                      y2="125"
-                      stroke="#cbd5e1"
-                      strokeWidth="2"
-                      strokeDasharray="4 4"
-                    />
-
-                    {/* Columns */}
-                    <rect
-                      x="50"
-                      y="120"
-                      width="10"
-                      height="10"
-                      fill="#3b82f6"
-                    />
-                    <rect
-                      x="140"
-                      y="120"
-                      width="10"
-                      height="10"
-                      fill="#3b82f6"
-                    />
-                    <rect
-                      x="260"
-                      y="120"
-                      width="10"
-                      height="10"
-                      fill="#3b82f6"
-                    />
-                    <rect
-                      x="350"
-                      y="120"
-                      width="10"
-                      height="10"
-                      fill="#3b82f6"
-                    />
-
-                    {/* Planned Yellow Path */}
-                    <path
-                      d="M 60 125 L 140 125 L 260 125 L 340 125 L 340 60"
-                      fill="none"
-                      stroke="#eab308"
-                      strokeWidth="5"
-                      strokeDasharray="8 6"
-                    />
-
-                    {/* Captured Blue Path */}
-                    {isRecording && (
-                      <path
-                        d="M 60 125 L 140 125 L 260 125 L 340 125 L 340 60"
-                        fill="none"
-                        stroke="#2563eb"
-                        strokeWidth="7"
-                        strokeLinecap="round"
-                        strokeDasharray="400"
-                        strokeDashoffset={400 - (walkProgress / 100) * 400}
-                      />
-                    )}
-                  </svg>
-
-                  {/* Minimap User Dot */}
-                  <div
-                    className="absolute z-10 -translate-x-1/2 -translate-y-1/2"
-                    style={{
-                      left: `${
-                        isRecording
-                          ? 15 + (walkProgress / 100) * 70
-                          : userStandingPos.x
-                      }%`,
-                      top: `${isRecording ? 50 : userStandingPos.y}%`,
-                    }}
-                  >
-                    <div className="h-2.5 w-2.5 rounded-full border border-white bg-blue-600 shadow-sm" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Bottom Floating Capture Dock in Full 360 view */}
-            {step === "live_view" && (
-              <div className="absolute bottom-3.5 left-3 right-3 flex items-center justify-center pointer-events-none">
-                {/* Quick Capture Pill */}
-                {!isRecording ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsRecording(true)
-                      setRecordSeconds(0)
-                      setWalkProgress(0)
-                    }}
-                    className="pointer-events-auto flex h-9 items-center gap-2 rounded-full bg-blue-600 px-5 text-[12.5px] font-semibold text-white shadow-md hover:bg-blue-700 active:scale-95"
-                  >
-                    <span className="h-2 w-2 rounded-full bg-white animate-ping" />
-                    <span>Start Capture</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsRecording(false)
-                      setStep("media_sync")
-                    }}
-                    className="pointer-events-auto flex h-9 items-center gap-2 rounded-full bg-slate-900 px-5 text-[12.5px] font-semibold text-white shadow-md hover:bg-slate-800 active:scale-95"
-                  >
-                    <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                    <span>Finish Walk ({formatTime(recordSeconds)})</span>
-                  </button>
-                )}
-              </div>
-            )}
           </div>
 
-          {/* Bottom Half: CAD Drawing View (Split screen mode) */}
-          {(step === "split_view" || step === "recording") && (
-            <div className="relative flex flex-1 flex-col overflow-hidden bg-white">
-              {/* Drawing Header */}
-              <div className="relative z-10 flex h-8 shrink-0 items-center justify-between border-b border-slate-100 bg-white px-3 text-[11px]">
-                <button
-                  type="button"
-                  onClick={() => setIsPlanDropdownOpen(!isPlanDropdownOpen)}
-                  className="flex items-center gap-1 font-bold text-slate-800 hover:text-blue-600"
-                >
-                  <span>{selectedPlan.name}</span>
-                  <svg
-                    width="10"
-                    height="10"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    className="text-slate-400"
-                  >
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
-                </button>
+          {/* Split adjuster — drag to re-balance the feed against the plan */}
+          <div
+            className="relative z-30 flex h-[14px] shrink-0 cursor-row-resize items-center justify-center border-y border-slate-200 bg-slate-100 select-none"
+            onMouseDown={(event) => {
+              splitDragRef.current = true
+              setSplitFromClientY(event.clientY)
+            }}
+            onTouchStart={(event) => {
+              splitDragRef.current = true
+              setSplitFromClientY(event.touches[0].clientY)
+            }}
+            role="separator"
+            aria-label="Resize the camera and drawing panes"
+          >
+            <span className="h-[3px] w-9 rounded-full bg-slate-400" />
 
-                {/* Dropdown Menu */}
-                {isPlanDropdownOpen && (
+            {/* Snap presets */}
+            <div className="absolute right-1.5 flex items-center gap-0.5">
+              <button
+                type="button"
+                onMouseDown={(event) => event.stopPropagation()}
+                onTouchStart={(event) => event.stopPropagation()}
+                onClick={() => setSplitRatio(0.18)}
+                className="flex h-3.5 w-4 cursor-pointer items-center justify-center rounded-xs text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-800"
+                aria-label="Give the drawing most of the screen"
+              >
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m18 15-6-6-6 6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onMouseDown={(event) => event.stopPropagation()}
+                onTouchStart={(event) => event.stopPropagation()}
+                onClick={() => setSplitRatio(0.42)}
+                className="flex h-3.5 w-4 cursor-pointer items-center justify-center rounded-xs text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-800"
+                aria-label="Balance both panes"
+              >
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                  <path d="M5 12h14" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onMouseDown={(event) => event.stopPropagation()}
+                onTouchStart={(event) => event.stopPropagation()}
+                onClick={() => setSplitRatio(0.78)}
+                className="flex h-3.5 w-4 cursor-pointer items-center justify-center rounded-xs text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-800"
+                aria-label="Give the camera most of the screen"
+              >
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Bottom Half: the plan the operator just reviewed, now live */}
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
+            {/* Sheet selector */}
+            <div className="relative z-30 flex h-8 shrink-0 items-center justify-between border-b border-slate-100 bg-white px-3">
+              <button
+                type="button"
+                onClick={() => setIsPlanDropdownOpen(!isPlanDropdownOpen)}
+                className="flex items-center gap-1 text-slate-800 hover:text-blue-600"
+              >
+                <span className="text-[11px] font-bold">
+                  {selectedPlan.name}
+                </span>
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  className="text-slate-400"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+
+              {isPlanDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-30"
+                    onClick={() => setIsPlanDropdownOpen(false)}
+                  />
                   <div className="absolute top-8 left-3 z-40 w-56 rounded-xl border border-slate-200 bg-white p-1 shadow-lg animate-fade-in">
                     {DRAWING_PLANS.map((plan) => (
                       <button
@@ -884,260 +1116,298 @@ export function SiteCaptureScreen({
                           setSelectedPlanId(plan.id)
                           setIsPlanDropdownOpen(false)
                         }}
-                        className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11px] ${
+                        className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left ${
                           selectedPlanId === plan.id
-                            ? "bg-blue-50 font-bold text-blue-600"
+                            ? "bg-blue-50 text-blue-600"
                             : "text-slate-700 hover:bg-slate-50"
                         }`}
                       >
-                        <span>{plan.name}</span>
-                        <span className="text-[9.5px] text-slate-400 font-mono">
+                        <span
+                          className={`text-[11px] ${
+                            selectedPlanId === plan.id
+                              ? "font-bold"
+                              : "font-medium"
+                          }`}
+                        >
+                          {plan.name}
+                        </span>
+                        <span className="text-[9.5px] font-mono text-slate-400">
                           {plan.code}
                         </span>
                       </button>
                     ))}
                   </div>
-                )}
+                </>
+              )}
 
-                <span className="text-[10px] text-slate-400">Grid C-4</span>
-              </div>
+              <span className="text-[10px] tabular-nums text-slate-400">
+                {Math.round(walkProgress)}% of route
+              </span>
+            </div>
 
-              {/* Drawing Canvas */}
-              <div
-                className="relative flex-1 overflow-hidden bg-[#fafbfc] cursor-crosshair"
-                onClick={(e) => {
-                  if (!isRecording) {
-                    const rect = e.currentTarget.getBoundingClientRect()
-                    const x = ((e.clientX - rect.left) / rect.width) * 100
-                    const y = ((e.clientY - rect.top) / rect.height) * 100
-                    setUserStandingPos({ x, y })
-                    setIsLocationSynced(true)
-                  }
+            {/* Guidance banner */}
+            <div
+              className={`flex shrink-0 items-center gap-2 border-b px-3 py-1.5 transition-colors ${
+                guidance.tone === "warn"
+                  ? "border-amber-100 bg-amber-50"
+                  : guidance.tone === "rec"
+                    ? "border-red-100 bg-red-50"
+                    : "border-emerald-100 bg-emerald-50"
+              }`}
+            >
+              <span
+                className={`h-2 w-2 shrink-0 rounded-full ${
+                  guidance.tone === "warn"
+                    ? "bg-amber-500"
+                    : guidance.tone === "rec"
+                      ? "bg-red-500 animate-pulse"
+                      : "bg-emerald-500"
+                }`}
+              />
+              <span className="min-w-0 flex-1">
+                <span
+                  className={`block truncate text-[11.5px] font-bold ${
+                    guidance.tone === "warn"
+                      ? "text-amber-800"
+                      : guidance.tone === "rec"
+                        ? "text-red-700"
+                        : "text-emerald-800"
+                  }`}
+                >
+                  {guidance.title}
+                  {walkState === "recording" && ` · ${formatTime(recordSeconds)}`}
+                </span>
+                <span
+                  className={`block truncate text-[10px] ${
+                    guidance.tone === "warn"
+                      ? "text-amber-700/80"
+                      : guidance.tone === "rec"
+                        ? "text-red-600/80"
+                        : "text-emerald-700/80"
+                  }`}
+                >
+                  {guidance.detail}
+                </span>
+              </span>
+              {justArrived && (
+                <span className="shrink-0 rounded-full bg-emerald-600 px-2 py-0.5 text-[9.5px] font-bold text-white animate-scale-in">
+                  Arrived
+                </span>
+              )}
+            </div>
+
+            {/* The plan itself */}
+            <PlanCanvas
+              className="flex-1"
+              progress={walkProgress}
+              userPos={walkerPos}
+              anchor={anchorPoint}
+              showGuide={!isRecording}
+              isRecording={isRecording}
+              savedRanges={savedRanges}
+              onPick={isRecording
+                ? undefined
+                : (point) => {
+                  setWalkerPos(point)
+                  setIsGuiding(false)
                 }}
-              >
-                {/* Subtle Grid */}
-                <svg
-                  className="absolute inset-0 h-full w-full opacity-40"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <defs>
-                    <pattern
-                      id="grid-cad-clean"
-                      width="20"
-                      height="20"
-                      patternUnits="userSpaceOnUse"
-                    >
-                      <path
-                        d="M 20 0 L 0 0 0 20"
-                        fill="none"
-                        stroke="#e2e8f0"
-                        strokeWidth="0.6"
-                      />
-                    </pattern>
-                  </defs>
-                  <rect
-                    width="100%"
-                    height="100%"
-                    fill="url(#grid-cad-clean)"
-                  />
-                </svg>
+            />
 
-                {/* Structural Walls & Columns */}
-                <svg
-                  className="absolute inset-0 h-full w-full pointer-events-none"
-                  viewBox="0 0 400 250"
-                >
-                  <rect
-                    x="25"
-                    y="25"
-                    width="350"
-                    height="200"
-                    fill="none"
-                    stroke="#94a3b8"
-                    strokeWidth="1.5"
-                  />
-                  <line
-                    x1="25"
-                    y1="90"
-                    x2="375"
-                    y2="90"
-                    stroke="#cbd5e1"
-                    strokeWidth="1"
-                    strokeDasharray="3 3"
-                  />
-                  <line
-                    x1="25"
-                    y1="160"
-                    x2="375"
-                    y2="160"
-                    stroke="#cbd5e1"
-                    strokeWidth="1"
-                    strokeDasharray="3 3"
-                  />
-                  <line
-                    x1="140"
-                    y1="25"
-                    x2="140"
-                    y2="225"
-                    stroke="#cbd5e1"
-                    strokeWidth="1"
-                    strokeDasharray="3 3"
-                  />
-                  <line
-                    x1="260"
-                    y1="25"
-                    x2="260"
-                    y2="225"
-                    stroke="#cbd5e1"
-                    strokeWidth="1"
-                    strokeDasharray="3 3"
-                  />
-
-                  {/* Columns */}
-                  {[
-                    [50, 45],
-                    [140, 45],
-                    [260, 45],
-                    [350, 45],
-                    [50, 125],
-                    [140, 125],
-                    [260, 125],
-                    [350, 125],
-                    [50, 205],
-                    [140, 205],
-                    [260, 205],
-                    [350, 205],
-                  ].map(([cx, cy], idx) => (
-                    <rect
-                      key={idx}
-                      x={cx - 4}
-                      y={cy - 4}
-                      width="8"
-                      height="8"
-                      fill="#3b82f6"
-                      opacity="0.8"
-                    />
-                  ))}
-
-                  {/* Planned Walk Route (Yellow Dashed Line) */}
-                  <path
-                    d="M 60 125 L 140 125 L 260 125 L 340 125 L 340 60 L 260 60"
-                    fill="none"
-                    stroke="#eab308"
-                    strokeWidth="3"
-                    strokeDasharray="5 4"
-                  />
-
-                  {/* Captured Live Route (Solid Vivid Blue Line) */}
-                  {isRecording && (
-                    <path
-                      d="M 60 125 L 140 125 L 260 125 L 340 125 L 340 60 L 260 60"
-                      fill="none"
-                      stroke="#2563eb"
-                      strokeWidth="4"
-                      strokeLinecap="round"
-                      strokeDasharray="400"
-                      strokeDashoffset={400 - (walkProgress / 100) * 400}
-                    />
-                  )}
-                </svg>
-
-                {/* User Current Position Dot */}
-                <div
-                  className="absolute z-20 -translate-x-1/2 -translate-y-1/2 transition-all duration-300"
-                  style={{
-                    left: `${
-                      isRecording
-                        ? 15 + (walkProgress / 100) * 70
-                        : userStandingPos.x
-                    }%`,
-                    top: `${isRecording ? 50 : userStandingPos.y}%`,
-                  }}
-                >
-                  <div className="relative flex h-6 w-6 items-center justify-center">
-                    <div className="h-3.5 w-3.5 rounded-full border-2 border-white bg-blue-600 shadow-sm" />
-                    <div className="absolute h-6 w-6 rounded-full bg-blue-500/20 animate-ping" />
-                  </div>
-                </div>
-
-                {/* Simple Sync guidance pill */}
-                {!isRecording && (
-                  <div className="absolute top-2 left-3 right-3 flex items-center justify-between rounded-full bg-white/95 px-3 py-1 text-[11px] shadow-sm border border-slate-200">
-                    <span className="text-slate-600">
-                      {isLocationSynced
-                        ? "Position synced"
-                        : "Tap drawing to set start position"}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsLocationSynced(true)
-                        setUserStandingPos({ x: 15, y: 50 })
-                      }}
-                      className="text-[11px] font-bold text-blue-600 hover:text-blue-700"
-                    >
-                      {isLocationSynced ? "✓ Synced" : "Sync Origin"}
-                    </button>
-                  </div>
-                )}
+            {/* Banked segments */}
+            {segments.length > 0 && (
+              <div className="flex shrink-0 items-center gap-1.5 overflow-x-auto border-t border-slate-100 bg-slate-50/70 px-3 py-1.5 no-scrollbar">
+                <span className="shrink-0 text-[9.5px] font-bold uppercase tracking-wider text-slate-400">
+                  Saved
+                </span>
+                {segments.map((segment) => (
+                  <span
+                    key={segment.id}
+                    className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700"
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    {segment.id} · {segment.metres} m
+                  </span>
+                ))}
               </div>
+            )}
 
-              {/* Bottom Dock */}
-              <div className="border-t border-slate-100 bg-white px-3 py-2">
-                {!isRecording ? (
-                  <div className="flex items-center justify-between">
-                    <div className="text-[11px] text-slate-500">
-                      <span className="font-semibold text-slate-800">
-                        64m planned route
+            {/* Dock */}
+            <div className="shrink-0 border-t border-slate-100 bg-white px-3 py-2">
+              {walkState === "recording"
+                ? (
+                  <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1 text-[11px]">
+                      <span className="font-semibold tabular-nums text-slate-800">
+                        {liveMetres.toFixed(1)} m
                       </span>
+                      <span className="text-slate-400"> · </span>
+                      <span className="text-slate-500">{liveNodes} nodes</span>
                     </div>
-
-                    {/* Simple Blue Rounded Button */}
                     <button
                       type="button"
-                      onClick={() => {
-                        setIsRecording(true)
-                        setRecordSeconds(0)
-                        setWalkProgress(0)
-                      }}
-                      className="flex h-8.5 items-center gap-1.5 rounded-full bg-blue-600 px-4 text-[12px] font-semibold text-white shadow-sm transition-all hover:bg-blue-700 active:scale-95"
+                      onClick={pauseCapture}
+                      className="flex h-8.5 shrink-0 items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3.5 text-amber-700 transition-colors hover:bg-amber-100 active:scale-95"
                     >
-                      <span>Start Capture</span>
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <rect x="6" y="5" width="4" height="14" rx="1" />
+                        <rect x="14" y="5" width="4" height="14" rx="1" />
+                      </svg>
+                      <span className="text-[12px] font-semibold">Pause</span>
                     </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-[11px]">
-                      <span className="flex items-center gap-1 font-bold text-red-600">
-                        <span className="h-2 w-2 rounded-full bg-red-600 animate-pulse" />
-                        {formatTime(recordSeconds)}
-                      </span>
-                      <span className="text-slate-400">·</span>
-                      <span className="font-semibold text-slate-800">
-                        {distanceMeters} m
-                      </span>
-                      <span className="text-slate-400">·</span>
-                      <span className="text-slate-500">
-                        {keyframesCount} nodes
-                      </span>
-                    </div>
-
-                    {/* Simple Rounded Finish Button */}
                     <button
                       type="button"
                       onClick={() => {
-                        setIsRecording(false)
+                        bankSegment()
+                        setWalkState("complete")
                         setStep("media_sync")
                       }}
-                      className="flex h-8 items-center rounded-full bg-slate-900 px-3.5 text-[11.5px] font-semibold text-white hover:bg-slate-800 active:scale-95"
+                      className="flex h-8.5 shrink-0 items-center rounded-full bg-slate-900 px-3.5 text-white transition-colors hover:bg-slate-800 active:scale-95"
                     >
-                      Finish Walk
+                      <span className="text-[12px] font-semibold">Finish</span>
                     </button>
                   </div>
+                )
+                : walkState === "complete"
+                ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={saveAndStartFresh}
+                      className="flex h-9 flex-1 items-center justify-center rounded-full border border-slate-200 text-slate-700 transition-colors hover:bg-slate-50 active:scale-95"
+                    >
+                      <span className="text-[12.5px] font-semibold">
+                        Save &amp; walk again
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        bankSegment()
+                        setStep("media_sync")
+                      }}
+                      className="flex h-9 flex-1 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm transition-colors hover:bg-blue-700 active:scale-95"
+                    >
+                      <span className="text-[12.5px] font-semibold">
+                        Finish &amp; sync
+                      </span>
+                    </button>
+                  </div>
+                )
+                : walkState === "paused"
+                ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={discardCapture}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 active:scale-95"
+                      aria-label="Discard this capture and start from the origin"
+                      title="Discard and start fresh from the origin"
+                    >
+                      <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.9"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M4 7h16M9.5 7V5.5A1.5 1.5 0 0 1 11 4h2a1.5 1.5 0 0 1 1.5 1.5V7" />
+                        <path d="M6.5 7 7.5 20h9L17.5 7" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={saveAndStartFresh}
+                      className="flex h-9 shrink-0 items-center justify-center rounded-full border border-slate-200 px-3 text-slate-700 transition-colors hover:bg-slate-50 active:scale-95"
+                    >
+                      <span className="text-[12px] font-semibold">
+                        Save &amp; new
+                      </span>
+                    </button>
+                    {isAtAnchor
+                      ? (
+                        <button
+                          type="button"
+                          onClick={resumeCapture}
+                          className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full bg-blue-600 text-white shadow-sm transition-colors hover:bg-blue-700 active:scale-95"
+                        >
+                          <span className="h-2 w-2 rounded-full bg-white" />
+                          <span className="text-[12.5px] font-semibold">
+                            Resume
+                          </span>
+                        </button>
+                      )
+                      : (
+                        <button
+                          type="button"
+                          onClick={() => setIsGuiding(true)}
+                          disabled={isGuiding}
+                          className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full bg-amber-500 text-white shadow-sm transition-colors hover:bg-amber-600 active:scale-95 disabled:opacity-70"
+                        >
+                          <span className="text-[12.5px] font-semibold">
+                            {isGuiding ? "Guiding back..." : "Guide me back"}
+                          </span>
+                        </button>
+                      )}
+                  </div>
+                )
+                : (
+                  <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1 text-[11px]">
+                      <span className="font-semibold text-slate-800">
+                        {ROUTE_METRES.toFixed(0)} m route
+                      </span>
+                      <span className="text-slate-400"> · </span>
+                      <span className="text-slate-500">{CAPTURE_ZONES.length} zones</span>
+                    </div>
+                    {isAtAnchor
+                      ? (
+                        <button
+                          type="button"
+                          onClick={startCapture}
+                          className="flex h-9 shrink-0 items-center gap-2 rounded-full bg-blue-600 px-5 text-white shadow-sm transition-colors hover:bg-blue-700 active:scale-95"
+                        >
+                          <span className="h-2 w-2 rounded-full bg-white animate-ping" />
+                          <span className="text-[12.5px] font-semibold">
+                            Start Capture
+                          </span>
+                        </button>
+                      )
+                      : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setWalkerPos({ ...ORIGIN })}
+                            className="shrink-0 px-1 text-slate-500 transition-colors hover:text-slate-800"
+                          >
+                            <span className="text-[11px] font-semibold underline">
+                              I&apos;m here
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsGuiding(true)}
+                            disabled={isGuiding}
+                            className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-amber-500 px-4 text-white shadow-sm transition-colors hover:bg-amber-600 active:scale-95 disabled:opacity-70"
+                          >
+                            <span className="text-[12.5px] font-semibold">
+                              {isGuiding ? "Guiding..." : "Guide me there"}
+                            </span>
+                          </button>
+                        </>
+                      )}
+                  </div>
                 )}
-              </div>
             </div>
-          )}
+          </div>
         </div>
       )}
 
@@ -1169,8 +1439,8 @@ export function SiteCaptureScreen({
               Walk Capture Complete
             </h2>
             <p className="mt-1 text-[12px] text-slate-500">
-              {distanceMeters || 24.6}m covered · {keyframesCount || 7}{" "}
-              Panoramas · 2.4 GB
+              {totalMetres.toFixed(1)}m covered · {totalNodes} panoramas ·{" "}
+              {segments.length || 1} segment{segments.length === 1 ? "" : "s"}
             </p>
 
             {/* Flat divided action rows */}
@@ -1238,26 +1508,6 @@ export function SiteCaptureScreen({
               </div>
             </div>
 
-            {/* Poor Internet indicator & toggle */}
-            <div className="mt-3.5 flex w-full max-w-xs items-center justify-between">
-              <span className="text-[11px] text-slate-400 text-left">
-                {isPoorInternet ? (
-                  <span className="flex items-center gap-1 font-semibold text-amber-600">
-                    <span>⚠️ Poor signal (24 kbps) · Cloud paused</span>
-                  </span>
-                ) : (
-                  <span>Network: High Speed 5G</span>
-                )}
-              </span>
-
-              <button
-                type="button"
-                onClick={() => setIsPoorInternet(!isPoorInternet)}
-                className="text-[10.5px] font-medium text-slate-500 hover:text-slate-800 underline"
-              >
-                {isPoorInternet ? "Test Good Signal" : "Test Poor Signal"}
-              </button>
-            </div>
           </div>
 
           {/* Bottom actions: review what was just synced, or finish */}
@@ -1290,8 +1540,8 @@ export function SiteCaptureScreen({
                   onComplete({
                     id: `WALK-${Math.floor(Math.random() * 900) + 100}`,
                     title: `360° Walk: ${selectedPlan.name}`,
-                    distance: `${distanceMeters || 54.8}m`,
-                    keyframes: keyframesCount || 18,
+                    distance: `${totalMetres.toFixed(1)}m`,
+                    keyframes: totalNodes,
                   })
                 }
                 onBack()

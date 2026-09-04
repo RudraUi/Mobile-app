@@ -275,48 +275,61 @@ export function AppHeader({
       <StatusBar />
 
       <div className="flex h-[46px] items-center justify-between px-[16px] pt-1 pb-1 mb-3">
-        {/* Project Selector Button with Anchored Dropdown */}
-        <div className="relative">
+        {/* Left Side: Profile Avatar + Project Selector */}
+        <div className="flex items-center gap-[9px] min-w-0">
+          {/* Profile Avatar */}
           <button
             type="button"
-            onClick={handleToggleProject}
-            className="flex min-w-0 items-center gap-[9px] cursor-pointer hover:opacity-90 active:scale-98 transition-all group"
-            aria-label="Select workspace project"
+            onClick={onProfileClick}
+            className="h-[34px] w-[34px] overflow-hidden rounded-full bg-[#7fb5dc] shadow-xs cursor-pointer hover:opacity-90 active:scale-95 transition-all shrink-0 border border-white/20"
+            aria-label="Open profile"
           >
-            <span
-              className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[10px] border border-white/30 text-[16px] font-bold text-white shadow-xs"
-              style={{ backgroundColor: effectiveBadgeBg }}
-            >
-              {effectiveBadge}
-            </span>
-            <span className="text-[18px] font-bold tracking-[-0.3px]">
-              {effectiveName}
-            </span>
-            <div
-              className="transition-transform duration-200"
-              style={{
-                transform: isDropdownVisible
-                  ? "rotate(180deg)"
-                  : "rotate(0deg)",
-              }}
-            >
-              <svg
-                width="12"
-                height="8"
-                viewBox="0 0 12 8"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="m2 2 4 4 4-4"
-                  stroke="white"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
+            <img
+              src={
+                userAvatar ||
+                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop"
+              }
+              alt="User profile"
+              className="h-full w-full object-cover"
+            />
           </button>
+
+          {/* Project Selector Button with Anchored Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={handleToggleProject}
+              className="flex min-w-0 items-center gap-[6px] cursor-pointer hover:opacity-90 active:scale-98 transition-all group"
+              aria-label="Select workspace project"
+            >
+              <span className="text-[18px] font-bold tracking-[-0.3px]">
+                {effectiveName}
+              </span>
+              <div
+                className="transition-transform duration-200"
+                style={{
+                  transform: isDropdownVisible
+                    ? "rotate(180deg)"
+                    : "rotate(0deg)",
+                }}
+              >
+                <svg
+                  width="12"
+                  height="8"
+                  viewBox="0 0 12 8"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="m2 2 4 4 4-4"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+            </button>
 
           {/* Anchored Tooltip Popover directly under the project button */}
           {isDropdownVisible && (
@@ -411,9 +424,10 @@ export function AppHeader({
             </>
           )}
         </div>
+      </div>
 
-        {/* Right side: Search, Filter, Invite, Profile */}
-        <div className="flex items-center gap-[7px]">
+      {/* Right side: Search, Filter, Invite */}
+      <div className="flex items-center gap-[7px]">
           {/* Search Icon Button */}
           <button
             type="button"
@@ -508,23 +522,6 @@ export function AppHeader({
               <line x1="20" y1="8" x2="20" y2="14" />
               <line x1="23" y1="11" x2="17" y2="11" />
             </svg>
-          </button>
-
-          {/* Profile Avatar (DP) */}
-          <button
-            type="button"
-            onClick={onProfileClick}
-            className="h-[34px] w-[34px] overflow-hidden rounded-full bg-[#7fb5dc] shadow-xs cursor-pointer hover:opacity-90 active:scale-95 transition-all shrink-0"
-            aria-label="Open profile"
-          >
-            <img
-              src={
-                userAvatar ||
-                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop"
-              }
-              alt="User profile"
-              className="h-full w-full object-cover"
-            />
           </button>
         </div>
       </div>

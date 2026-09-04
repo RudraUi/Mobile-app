@@ -1,5 +1,4 @@
 import { useState, useRef } from "react"
-import { mockCaptureFiles } from "../data/captureFiles"
 import { BackButton } from "../components/BackButton"
 
 export interface UserProfileData {
@@ -20,7 +19,7 @@ interface ProfileScreenProps {
   onUpdateProfile: (updated: Partial<UserProfileData>) => void
   onBack: () => void
   onSignOut: () => void
-  onOpenCaptures: () => void
+  onOpenCaptures?: () => void
 }
 
 export function ProfileScreen({
@@ -28,7 +27,6 @@ export function ProfileScreen({
   onUpdateProfile,
   onBack,
   onSignOut,
-  onOpenCaptures,
 }: ProfileScreenProps) {
   const [formData, setFormData] = useState<UserProfileData>(profile)
   const [savedToast, setSavedToast] = useState(false)
@@ -230,59 +228,6 @@ export function ProfileScreen({
           </div>
         </div>
 
-        {/* Captured Files / Storage */}
-        <div className="space-y-4">
-          <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block px-1">
-            Storage
-          </span>
-
-          <div className="divide-y divide-slate-100 bg-slate-50/60 rounded-2xl border border-slate-100/80 px-4">
-            <button
-              type="button"
-              onClick={onOpenCaptures}
-              className="w-full py-3 flex items-center gap-3 text-left cursor-pointer"
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#0055ff] shadow-2xs">
-                <svg
-                  width="17"
-                  height="17"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.9"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.2l2 2.5h7.8A2.5 2.5 0 0 1 21 10v7.5a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5Z" />
-                </svg>
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="text-[13px] font-semibold text-slate-800">
-                  Captures
-                </div>
-                <div className="text-[11px] text-slate-400">
-                  Panoramas, scans &amp; site photos
-                </div>
-              </div>
-              <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-[#0055ff] tabular-nums">
-                {mockCaptureFiles.length}
-              </span>
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="shrink-0 text-slate-300"
-              >
-                <path d="m9 18 6-6-6-6" />
-              </svg>
-            </button>
-          </div>
-        </div>
 
         {/* Preferences Section (Clean Rows) */}
         <div className="space-y-4">

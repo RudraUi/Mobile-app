@@ -20,8 +20,11 @@ import {
 } from "./screens/CreateItemScreen"
 import { SiteCaptureScreen } from "./screens/SiteCaptureScreen"
 import { CapturesScreen } from "./screens/CapturesScreen"
+import { DataLibraryScreen } from "./screens/DataLibraryScreen"
+import type { DataCategoryId } from "./data/dataLibrary"
 import { NavigateScreen } from "./screens/NavigateScreen"
 import { ProfileScreen, type UserProfileData } from "./screens/ProfileScreen"
+import { SideDrawer } from "./components/SideDrawer"
 import { InviteModal } from "./components/InviteModal"
 import { QuickCreateSheet } from "./components/QuickCreateSheet"
 import { projectsList, type Project } from "./data/projectsData"
@@ -29,7 +32,7 @@ import type { Item, ItemType, Status } from "./data/mockData"
 import { mockItems } from "./data/mockData"
 import type { MainTab } from "./components/BottomNav"
 
-type Screen = "login" | "otp" | "success" | "logged_out" | MainTab | "list" | "detail" | "create" | "sitecapture" | "captures" | "navigate" | "profile" | "walkthrough"
+type Screen = "login" | "otp" | "success" | "logged_out" | MainTab | "list" | "detail" | "create" | "sitecapture" | "captures" | "navigate" | "profile" | "walkthrough" | "data"
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true)
@@ -42,8 +45,10 @@ export default function App() {
   const [markupFilter, setMarkupFilter] = useState("all")
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
   const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false)
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [createType, setCreateType] = useState<ItemType>("task")
   const [capturesOrigin, setCapturesOrigin] = useState<Screen>("profile")
+  const [dataCategory, setDataCategory] = useState<DataCategoryId | null>(null)
   const [selectedProject, setSelectedProject] = useState<Project>(
     projectsList[0],
   )
@@ -113,6 +118,11 @@ export default function App() {
   const openCaptures = useCallback((from: Screen) => {
     setCapturesOrigin(from)
     setScreen("captures")
+  }, [])
+
+  const openDataCategory = useCallback((id: DataCategoryId) => {
+    setDataCategory(id)
+    setScreen("data")
   }, [])
 
   const handleSiteCapture = useCallback(() => {
@@ -205,7 +215,7 @@ export default function App() {
     markupFilter,
     onFilterChange: setMarkupFilter,
     onInviteClick: () => setIsInviteModalOpen(true),
-    onProfileClick: () => setScreen("profile"),
+    onProfileClick: () => setIsDrawerOpen(true),
     userAvatar: profile.avatar,
     selectedProject,
     onSelectProject: setSelectedProject,
@@ -331,6 +341,14 @@ export default function App() {
             />
           )}
 
+          {screen === "data" && dataCategory && (
+            <DataLibraryScreen
+              categoryId={dataCategory}
+              projectName={selectedProject.name}
+              onBack={() => setScreen(activeTab)}
+            />
+          )}
+
           {screen === "captures" && (
             <CapturesScreen
               onBack={() => setScreen(capturesOrigin)}
@@ -346,10 +364,37 @@ export default function App() {
               }
               onBack={() => setScreen(activeTab)}
               onSignOut={() => setScreen("logged_out")}
-              onOpenCaptures={() => openCaptures("profile")}
             />
           )}
         </div>
+
+        {/* Left Side Navigation Drawer */}
+        <SideDrawer
+          isOpen={isDrawerOpen}
+          onClose={() => setIsDrawerOpen(false)}
+          profile={profile}
+          onOpenProfile={() => {
+            setIsDrawerOpen(false)
+            setScreen("profile")
+          }}
+          projects={projectsList}
+          selectedProject={selectedProject}
+          onSelectProject={(p) => {
+            setSelectedProject(p)
+            setIsDrawerOpen(false)
+          }}
+          activeDataCategory={screen === "data" ? dataCategory : null}
+          onOpenDataCategory={(id) => {
+            setIsDrawerOpen(false)
+            /* Survey Data is where site captures live. */
+            if (id === "survey") openCaptures(activeTab)
+            else openDataCategory(id)
+          }}
+          onSignOut={() => {
+            setIsDrawerOpen(false)
+            setScreen("logged_out")
+          }}
+        />
 
         {/* Create bottom sheet, launched from the bottom-nav + button */}
         <QuickCreateSheet
