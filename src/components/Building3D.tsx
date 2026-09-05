@@ -27,6 +27,8 @@ export interface WorldPin {
   position: V3
   /** Floor index the pin belongs to, for level isolation. */
   floor: number
+  /** Surface normal of the wall the pin is attached to (defaults to front wall [0, 0, -1]) */
+  normal?: V3
 }
 
 /** Screen-space result handed back for each pin every frame. */
@@ -35,6 +37,7 @@ export interface ProjectedPin {
   x: number
   y: number
   depth: number
+  scale: number
   visible: boolean
 }
 
@@ -58,20 +61,20 @@ export interface Building3DProps {
   className?: string
   /** "orbit" flies around the massing; "walk" puts you inside a storey. */
   mode?: "orbit" | "walk"
-  onWalkChange?: (position: {
-    x: number
-    z: number
-    yaw: number
-  }) => void
+  onWalkChange?: (position: { x: number; z: number; yaw: number }) => void
+  /** When true and idle in orbit mode, smoothly rotates the building. Defaults to true. */
+  autoRotate?: boolean
 }
 
 /** Imperative camera controls for the on-screen buttons. */
 export interface Building3DHandle {
   zoomBy: (delta: number) => void
   reset: () => void
+  pauseAutoRotate?: () => void
   /** First-person step, in metres, relative to where you are facing. */
   walkMove: (forward: number, strafe: number) => void
   setWalkInput: (forward: number, strafe: number) => void
+  getWalkPosition?: () => { x: number; z: number; yaw: number; pitch: number }
 }
 
 /* ── Geometry ─────────────────────────────────────────────────────── */
@@ -331,7 +334,32 @@ function buildInterior(): Face[] {
 // Shared immutable geometry; multiple viewers cannot reset each other's walls.
 const INTERIOR_FACES = buildInterior()
 export const INTERIOR_BLOCKERS: readonly Blocker[] = interiorBlockers
-const DEFAULT_WALK = { x: -2, z: 2.5, yaw: Math.PI, pitch: 0 }
+/**
+ * First-person camera state, in interior metres. `lift`/`vy` are the jump arc,
+ * `travelled` drives the head bob, and `zoom` chases `zoomTarget` so the wheel
+ * and the double-tap gesture ease the lens instead of snapping it.
+ */
+const DEFAULT_WALK = {
+  x: -2,
+  z: 2.5,
+  yaw: Math.PI,
+  pitch: 0,
+  lift: 0,
+  vy: 0,
+  travelled: 0,
+  zoom: 1,
+  zoomTarget: 1,
+}
+
+const WALK_SPEED = 1.9
+const SPRINT_SPEED = 3.4
+const JUMP_SPEED = 3.1
+const GRAVITY = 9.8
+/** Keep the eye under the slab at the top of a jump. */
+const MAX_LIFT = CEIL_H - EYE_H - 0.2
+const MAX_ZOOM = 2.6
+/** The lens the double-tap and the zoom button settle on. */
+const TAP_ZOOM = 2.1
 
 /** Slide along a wall rather than sticking to it. */
 function resolveWalk(x: number, z: number, px: number, pz: number) {
@@ -425,7 +453,7 @@ function compile(faces: Face[]): Compiled {
   return { count, verts, floor, fill, fillDim, stroke, strokeDim }
 }
 
-const DEFAULT_CAMERA = { yaw: -0.62, pitch: 0.34, dist: 24, panX: 0, panY: 0 }
+const DEFAULT_CAMERA = { yaw: 0, pitch: 0, dist: 24, panX: 0, panY: 0 }
 
 export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
   function Building3D(
@@ -438,6 +466,7 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       className = "",
       mode = "orbit",
       onWalkChange,
+      autoRotate = true,
     },
     ref,
   ) {
@@ -468,6 +497,46 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
     const keys = useRef(new Set<string>())
     const lastStep = useRef<number | null>(null)
     const interior = useRef<Compiled | null>(null)
+    // Walk mode: the finger that looks, and the finger that walks. The second
+    // finger to land becomes a floating pad anchored where it touched down,
+    // so there is no joystick painted on the screen to hunt for.
+    const lookPointer = useRef<number | null>(null)
+    const walkStick = useRef<{ id: number; x: number; y: number } | null>(null)
+    const tapStart = useRef<{
+      id: number
+      x: number
+      y: number
+      time: number
+      moved: boolean
+    } | null>(null)
+    const lastTapTime = useRef(0)
+    const lookLockedRef = useRef(false)
+    const [lookLocked, setLookLocked] = useState(false)
+    const [coarsePointer] = useState(
+      () =>
+        typeof window !== "undefined" &&
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(pointer: coarse)").matches,
+    )
+
+    // Auto-rotation idle tracking
+    const lastInteraction = useRef(-10000)
+    const lastOrbitTime = useRef<number | null>(null)
+    const idleTimer = useRef<number | null>(null)
+
+    const resetIdle = () => {
+      lastInteraction.current = performance.now()
+      lastOrbitTime.current = null
+      if (idleTimer.current !== null) {
+        clearTimeout(idleTimer.current)
+        idleTimer.current = null
+      }
+      idleTimer.current = window.setTimeout(() => {
+        if (!interacting.current && pointers.current.size === 0) {
+          scheduleDraw()
+        }
+      }, 5000)
+    }
 
     // Latest props, read inside the imperative draw loop without re-binding it.
     const latest = useRef({
@@ -477,6 +546,7 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       onCameraChange,
       mode,
       onWalkChange,
+      autoRotate,
     })
     latest.current = {
       activeFloor,
@@ -485,6 +555,7 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       onCameraChange,
       mode,
       onWalkChange,
+      autoRotate,
     }
 
     if (model.current === null) setModel(floors)
@@ -513,6 +584,7 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       frameRef.current = requestAnimationFrame((time) => {
         frameRef.current = null
         const held = keys.current
+        const wk = walk.current
         const forward =
           walkInput.current.forward +
           Number(held.has("w") || held.has("arrowup")) -
@@ -523,21 +595,71 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
           Number(held.has("a"))
         const turn =
           Number(held.has("arrowleft")) - Number(held.has("arrowright"))
-        const moving =
-          latest.current.mode === "walk" &&
-          (forward !== 0 || strafe !== 0 || turn !== 0)
+        const isWalk = latest.current.mode === "walk"
+        const walking = isWalk && (forward !== 0 || strafe !== 0 || turn !== 0)
+        const airborne = isWalk && (wk.vy !== 0 || wk.lift > 0)
+        const zooming = isWalk && Math.abs(wk.zoomTarget - wk.zoom) > 0.002
+        const moving = walking || airborne || zooming
         if (moving) {
           const dt =
             lastStep.current === null
               ? 0
               : Math.min((time - lastStep.current) / 1000, 0.05)
-          const length = Math.max(1, Math.hypot(forward, strafe))
-          walk.current.yaw += turn * dt * 1.4
-          moveWalk((forward / length) * dt * 1.8, (strafe / length) * dt * 1.8)
+          if (walking) {
+            const speed = held.has("shift") ? SPRINT_SPEED : WALK_SPEED
+            // Only normalise inputs that exceed full deflection, so a partly
+            // pushed touch pad still walks slower than a held key.
+            const length = Math.max(1, Math.hypot(forward, strafe))
+            wk.yaw += turn * dt * 1.4
+            moveWalk(
+              (forward / length) * dt * speed,
+              (strafe / length) * dt * speed,
+            )
+          }
+          if (airborne) {
+            wk.vy -= GRAVITY * dt
+            wk.lift += wk.vy * dt
+            if (wk.lift >= MAX_LIFT) {
+              wk.lift = MAX_LIFT
+              if (wk.vy > 0) wk.vy = 0
+            }
+            if (wk.lift <= 0) {
+              wk.lift = 0
+              wk.vy = 0
+            }
+          }
+          if (zooming)
+            wk.zoom += (wk.zoomTarget - wk.zoom) * Math.min(1, dt * 14)
+          else wk.zoom = wk.zoomTarget
           lastStep.current = time
         } else lastStep.current = null
+
+        // Auto-rotate turntable when user is idle in orbit mode and autoRotate is explicitly enabled
+        const shouldAutoRotate =
+          Boolean(latest.current.autoRotate) &&
+          !isWalk &&
+          !interacting.current &&
+          pointers.current.size === 0 &&
+          !document.hidden &&
+          time - lastInteraction.current > 5000
+
+        if (shouldAutoRotate) {
+          const dt =
+            lastOrbitTime.current === null
+              ? 0.016
+              : Math.min((time - lastOrbitTime.current) / 1000, 0.05)
+          // Smooth continuous turntable rotation (~8.5 degrees/second)
+          camera.current.yaw += 0.15 * dt
+          // Keep rotation at front elevation eye level (not tilted from below)
+          camera.current.pitch +=
+            (0 - camera.current.pitch) * Math.min(1, 4 * dt)
+          lastOrbitTime.current = time
+        } else {
+          lastOrbitTime.current = null
+        }
+
         draw()
-        if (moving) scheduleDraw()
+        if (moving || shouldAutoRotate) scheduleDraw()
       })
     }
 
@@ -557,6 +679,7 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
         steps
       for (let i = 0; i < steps; i++) {
         const next = resolveWalk(wc.x + dx, wc.z + dz, wc.x, wc.z)
+        wc.travelled += Math.hypot(next.x - wc.x, next.z - wc.z)
         wc.x = next.x
         wc.z = next.z
       }
@@ -564,15 +687,52 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
 
     function draw() {
       if (latest.current.mode === "walk") {
-        indoorRenderer.current?.draw(walk.current, EYE_H)
+        // A couple of centimetres of sway per stride is what stops a smooth
+        // glide from reading as a floating camera.
+        const eye =
+          EYE_H +
+          walk.current.lift +
+          Math.sin(walk.current.travelled * 4.6) * 0.021
+        indoorRenderer.current?.draw(walk.current, eye, walk.current.zoom)
+        const canvas = walkCanvasRef.current || canvasRef.current
+        const w = canvas?.clientWidth || 390
+        const h = canvas?.clientHeight || 600
+        const focal = Math.min(w, h) * 0.78 * walk.current.zoom
+        const cosY = Math.cos(walk.current.yaw)
+        const sinY = Math.sin(walk.current.yaw)
+        const cosP = Math.cos(walk.current.pitch)
+        const sinP = Math.sin(walk.current.pitch)
+
         latest.current.onProjectPins?.(
-          latest.current.pins.map((pin) => ({
-            id: pin.id,
-            x: 0,
-            y: 0,
-            depth: 0,
-            visible: false,
-          })),
+          latest.current.pins.map((pin) => {
+            const rx = pin.position[0] - walk.current.x
+            const ry = pin.position[1] - eye
+            const rz = pin.position[2] - walk.current.z
+
+            const x1 = rx * cosY + rz * sinY
+            const z1 = -rx * sinY + rz * cosY
+            const y2 = ry * cosP - z1 * sinP
+            const z2 = ry * sinP + z1 * cosP
+
+            const inFront = z2 > 0.25
+            const px = inFront ? w / 2 + (x1 * focal) / z2 : -999
+            const py = inFront ? h / 2 - (y2 * focal) / z2 : -999
+            const scale = inFront ? Math.max(0.4, Math.min(1.6, 2.5 / z2)) : 1
+
+            return {
+              id: pin.id,
+              x: px,
+              y: py,
+              depth: z2,
+              scale,
+              visible:
+                inFront &&
+                px >= -30 &&
+                px <= w + 30 &&
+                py >= -30 &&
+                py <= h + 30,
+            }
+          }),
         )
         latest.current.onWalkChange?.(walk.current)
         latest.current.onCameraChange?.(
@@ -604,7 +764,7 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       const cosP = Math.cos(oc.pitch),
         sinP = Math.sin(oc.pitch)
       const cx = w / 2 + oc.panX,
-        cyc = h * 0.58 + oc.panY
+        cyc = h * 0.52 + oc.panY
       const centreY = (floors * FLOOR_H) / 2,
         dist = oc.dist
       const focal = Math.min(w, h) * 1.15
@@ -724,6 +884,8 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       /* Project the pins through the same camera. */
       const report = latest.current.onProjectPins
       if (report) {
+        const refFocal = 450
+        const refDist = DEFAULT_CAMERA.dist
         report(
           latest.current.pins.map((pin) => {
             const x = pin.position[0]
@@ -735,12 +897,25 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
             const z2 = y * sinP + z1 * cosP + dist
             const px = cx + (x1 * focal) / z2
             const py = cyc - (y2 * focal) / z2
+            const rawScale = (focal / refFocal) * (refDist / Math.max(z2, 0.5))
+            const pinScale = Math.max(0.35, Math.min(1.85, rawScale))
+
+            // Check if the wall the pin is attached to is facing towards the camera
+            const nx = pin.normal ? pin.normal[0] : 0
+            const ny = pin.normal ? pin.normal[1] : 0
+            const nz = pin.normal ? pin.normal[2] : -1
+            const n_z1 = -nx * sinY + nz * cosY
+            const n_z2 = ny * sinP + n_z1 * cosP
+            const isFacingCamera = n_z2 < -0.2
+
             return {
               id: pin.id,
               x: px,
               y: py,
               depth: z2,
+              scale: pinScale,
               visible:
+                isFacingCamera &&
                 z2 > 0.4 &&
                 px > -40 &&
                 px < w + 40 &&
@@ -763,10 +938,25 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       walkInput.current = { forward: 0, strafe: 0 }
       keys.current.clear()
       lastStep.current = null
+      walkStick.current = null
+      lookPointer.current = null
+      tapStart.current = null
     }
 
+    const [isTransitioning, setIsTransitioning] = useState(false)
+    const prevMode = useRef(mode)
+
     useEffect(() => {
-      if (mode !== "walk" || !walkCanvasRef.current || !interior.current) return
+      if (prevMode.current !== mode) {
+        prevMode.current = mode
+        setIsTransitioning(true)
+        const t = setTimeout(() => setIsTransitioning(false), 500)
+        return () => clearTimeout(t)
+      }
+    }, [mode])
+
+    useEffect(() => {
+      if (!walkCanvasRef.current || !interior.current) return
       const canvas = walkCanvasRef.current
       const init = () => {
         indoorRenderer.current?.dispose()
@@ -791,7 +981,7 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
         indoorRenderer.current?.dispose()
         indoorRenderer.current = null
       }
-    }, [mode])
+    }, [])
 
     useEffect(() => {
       stopWalking()
@@ -802,6 +992,8 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       if (mode === "walk") {
         walk.current = { ...DEFAULT_WALK }
         walkCanvasRef.current?.focus({ preventScroll: true })
+      } else if (document.pointerLockElement === walkCanvasRef.current) {
+        document.exitPointerLock()
       }
       scheduleDraw()
     }, [mode, activeFloor])
@@ -821,14 +1013,84 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
         return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
       }
 
+      /** Turn the head. Pixel deltas, damped for the locked mouse. */
+      const look = (dx: number, dy: number, sensitivity = 1) => {
+        walk.current.yaw += dx * 0.006 * sensitivity
+        walk.current.pitch = Math.max(
+          -1.15,
+          Math.min(1.15, walk.current.pitch + dy * 0.005 * sensitivity),
+        )
+      }
+
+      /** Displacement of the floating touch pad, as a walk vector. */
+      const applyStick = (dx: number, dy: number) => {
+        const dead = 11
+        const span = 62
+        const length = Math.hypot(dx, dy)
+        if (length < dead) {
+          walkInput.current = { forward: 0, strafe: 0 }
+          return
+        }
+        const scale = Math.min(1, (length - dead) / span) / length
+        walkInput.current = { forward: -dy * scale, strafe: dx * scale }
+      }
+
+      /** Double tap, and the mouse wheel, step the lens in and back out. */
+      const stepZoom = () => {
+        if (latest.current.mode === "walk") {
+          walk.current.zoomTarget =
+            walk.current.zoomTarget > 1.05 ? 1 : TAP_ZOOM
+        } else {
+          camera.current.dist =
+            camera.current.dist <= 14
+              ? DEFAULT_CAMERA.dist
+              : Math.max(12, camera.current.dist - 8)
+        }
+        resetIdle()
+        scheduleDraw()
+      }
+
+      /**
+       * Free mouse look, the way an engine does it. Pointer lock is refused in
+       * some embeds, so every drag path below keeps working without it.
+       */
+      const requestLook = () => {
+        if (
+          latest.current.mode !== "walk" ||
+          document.pointerLockElement === walkCanvas
+        )
+          return
+        try {
+          const result =
+            walkCanvas.requestPointerLock?.() as Promise<void> | undefined
+          if (result && typeof result.catch === "function")
+            result.catch(() => {})
+        } catch {
+          /* Locking is optional; drag to look instead. */
+        }
+      }
+
       const onDown = (e: PointerEvent) => {
         const target = e.currentTarget as HTMLCanvasElement
         target.setPointerCapture(e.pointerId)
-        if (latest.current.mode === "walk")
-          target.focus({ preventScroll: true })
+        const isWalk = latest.current.mode === "walk"
+        if (isWalk) target.focus({ preventScroll: true })
         pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
         interacting.current = true
-        if (pointers.current.size === 2) {
+        resetIdle()
+        if (pointers.current.size === 1)
+          tapStart.current = {
+            id: e.pointerId,
+            x: e.clientX,
+            y: e.clientY,
+            time: e.timeStamp,
+            moved: false,
+          }
+        if (isWalk) {
+          if (lookPointer.current === null) lookPointer.current = e.pointerId
+          else if (!walkStick.current)
+            walkStick.current = { id: e.pointerId, x: e.clientX, y: e.clientY }
+        } else if (pointers.current.size === 2) {
           pinchStart.current = { gap: gapOf(), dist: camera.current.dist }
           lastMid.current = midpoint()
         }
@@ -839,14 +1101,22 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
         const prev = pointers.current.get(e.pointerId)
         if (!prev) return
         pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+        resetIdle()
+
+        const start = tapStart.current
+        if (
+          start &&
+          start.id === e.pointerId &&
+          Math.hypot(e.clientX - start.x, e.clientY - start.y) > 9
+        )
+          start.moved = true
 
         if (latest.current.mode === "walk") {
-          if (pointers.current.keys().next().value === e.pointerId) {
-            walk.current.yaw += (e.clientX - prev.x) * 0.006
-            walk.current.pitch = Math.max(
-              -1.15,
-              Math.min(1.15, walk.current.pitch + (e.clientY - prev.y) * 0.005),
-            )
+          const stick = walkStick.current
+          if (stick && stick.id === e.pointerId) {
+            applyStick(e.clientX - stick.x, e.clientY - stick.y)
+          } else if (lookPointer.current === e.pointerId) {
+            look(e.clientX - prev.x, e.clientY - prev.y)
           }
         } else if (pointers.current.size === 2 && pinchStart.current) {
           // Pinch to zoom, and drag the midpoint to pan.
@@ -864,8 +1134,8 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
         } else if (pointers.current.size === 1) {
           camera.current.yaw += (e.clientX - prev.x) * 0.009
           camera.current.pitch = Math.max(
-            -0.15,
-            Math.min(1.25, camera.current.pitch + (e.clientY - prev.y) * 0.006),
+            -0.65,
+            Math.min(0.65, camera.current.pitch + (e.clientY - prev.y) * 0.006),
           )
         }
         scheduleDraw()
@@ -873,10 +1143,38 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
 
       const onUp = (e: PointerEvent) => {
         pointers.current.delete(e.pointerId)
+        if (walkStick.current?.id === e.pointerId) {
+          walkStick.current = null
+          walkInput.current = { forward: 0, strafe: 0 }
+        }
+        if (lookPointer.current === e.pointerId) {
+          lookPointer.current = null
+          // Hand the look role to whichever finger is still down, so lifting
+          // the first one does not strand the gesture.
+          for (const id of pointers.current.keys())
+            if (walkStick.current?.id !== id) {
+              lookPointer.current = id
+              break
+            }
+        }
+        const start = tapStart.current
+        if (start && start.id === e.pointerId) {
+          tapStart.current = null
+          if (!start.moved && e.timeStamp - start.time < 300) {
+            if (e.timeStamp - lastTapTime.current < 330) {
+              lastTapTime.current = 0
+              stepZoom()
+            } else {
+              lastTapTime.current = e.timeStamp
+              if (e.pointerType === "mouse") requestLook()
+            }
+          }
+        }
         if (pointers.current.size < 2) {
           pinchStart.current = null
           lastMid.current = null
         }
+        resetIdle()
         if (pointers.current.size === 0) {
           // Gesture over — redraw once at full resolution.
           interacting.current = false
@@ -886,39 +1184,79 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
 
       const onWheel = (e: WheelEvent) => {
         e.preventDefault()
-        if (latest.current.mode === "walk") return
-        camera.current.dist = Math.max(
-          12,
-          Math.min(52, camera.current.dist + e.deltaY * 0.035),
-        )
+        if (latest.current.mode === "walk") {
+          walk.current.zoomTarget = Math.max(
+            1,
+            Math.min(
+              MAX_ZOOM,
+              walk.current.zoomTarget * (1 - e.deltaY * 0.0012),
+            ),
+          )
+        } else {
+          camera.current.dist = Math.max(
+            12,
+            Math.min(52, camera.current.dist + e.deltaY * 0.035),
+          )
+        }
+        resetIdle()
         scheduleDraw()
       }
 
+      const onMouseMove = (e: MouseEvent) => {
+        if (!lookLockedRef.current || latest.current.mode !== "walk") return
+        look(e.movementX, e.movementY, 0.55)
+        resetIdle()
+        scheduleDraw()
+      }
+
+      const onLockChange = () => {
+        const locked = document.pointerLockElement === walkCanvas
+        lookLockedRef.current = locked
+        setLookLocked(locked)
+        // Escape leaves the lock without a keyup for whatever was held.
+        if (!locked) keys.current.clear()
+      }
+
+      const MOVEMENT_KEYS = [
+        "w",
+        "a",
+        "s",
+        "d",
+        "arrowup",
+        "arrowdown",
+        "arrowleft",
+        "arrowright",
+        "shift",
+        " ",
+      ]
+
       const onKeyDown = (e: KeyboardEvent) => {
         if (
-          e.target !== walkCanvas ||
           latest.current.mode !== "walk" ||
           e.altKey ||
           e.ctrlKey ||
           e.metaKey
         )
           return
-        const key = e.key.toLowerCase()
+        // Keys belong to the view only while nothing else has focus: any panel
+        // or field opened over the viewport keeps its own typing.
+        const target = e.target as HTMLElement | null
         if (
-          ![
-            "w",
-            "a",
-            "s",
-            "d",
-            "arrowup",
-            "arrowdown",
-            "arrowleft",
-            "arrowright",
-          ].includes(key)
+          target &&
+          target !== document.body &&
+          target !== walkCanvas &&
+          !walkCanvas.contains(target)
         )
           return
+        const key = e.key.toLowerCase()
+        if (!MOVEMENT_KEYS.includes(key)) return
         e.preventDefault()
-        keys.current.add(key)
+        if (key === " ") {
+          // Jump from the floor only; holding the bar does not hover.
+          if (walk.current.lift === 0 && walk.current.vy === 0)
+            walk.current.vy = JUMP_SPEED
+        } else keys.current.add(key)
+        resetIdle()
         scheduleDraw()
       }
       const onKeyUp = (e: KeyboardEvent) => {
@@ -935,6 +1273,8 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       window.addEventListener("keydown", onKeyDown)
       window.addEventListener("keyup", onKeyUp)
       window.addEventListener("blur", onBlur)
+      window.addEventListener("mousemove", onMouseMove)
+      document.addEventListener("pointerlockchange", onLockChange)
       walkCanvas.addEventListener("blur", stopWalking)
       document.addEventListener("visibilitychange", onVisibility)
       for (const surface of [canvas, walkCanvas]) {
@@ -956,6 +1296,8 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
         window.removeEventListener("keydown", onKeyDown)
         window.removeEventListener("keyup", onKeyUp)
         window.removeEventListener("blur", onBlur)
+        window.removeEventListener("mousemove", onMouseMove)
+        document.removeEventListener("pointerlockchange", onLockChange)
         walkCanvas.removeEventListener("blur", stopWalking)
         document.removeEventListener("visibilitychange", onVisibility)
         for (const surface of [canvas, walkCanvas]) {
@@ -967,6 +1309,12 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
           surface.removeEventListener("wheel", onWheel)
         }
         observer.disconnect()
+        if (document.pointerLockElement === walkCanvas)
+          document.exitPointerLock()
+        if (idleTimer.current !== null) {
+          clearTimeout(idleTimer.current)
+          idleTimer.current = null
+        }
         if (frameRef.current !== null) {
           cancelAnimationFrame(frameRef.current)
           // Must clear the handle too: StrictMode runs cleanup between its two
@@ -981,14 +1329,24 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
     useEffect(() => {
       scheduleDraw()
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeFloor, pins])
+    }, [activeFloor, pins, autoRotate])
 
     useImperativeHandle(ref, () => ({
       zoomBy(delta: number) {
-        camera.current.dist = Math.max(
-          12,
-          Math.min(52, camera.current.dist + delta),
-        )
+        if (latest.current.mode === "walk") {
+          // Indoors there is nothing to dolly towards, so the buttons drive
+          // the same lens the wheel and the double-tap do.
+          walk.current.zoomTarget = Math.max(
+            1,
+            Math.min(MAX_ZOOM, walk.current.zoomTarget - delta * 0.06),
+          )
+        } else {
+          camera.current.dist = Math.max(
+            12,
+            Math.min(52, camera.current.dist + delta),
+          )
+        }
+        resetIdle()
         scheduleDraw()
       },
       reset() {
@@ -996,6 +1354,11 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
         if (latest.current.mode === "walk") walk.current = { ...DEFAULT_WALK }
         else camera.current = { ...DEFAULT_CAMERA }
         interacting.current = false
+        resetIdle()
+        scheduleDraw()
+      },
+      pauseAutoRotate() {
+        resetIdle()
         scheduleDraw()
       },
       walkMove(forward, strafe) {
@@ -1007,27 +1370,57 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
         walkInput.current = { forward, strafe }
         scheduleDraw()
       },
+      getWalkPosition() {
+        return { ...walk.current }
+      },
     }))
 
     return (
-      <>
+      <div className="relative w-full h-full overflow-hidden">
+        {/* Exterior 3D Model Canvas */}
         <canvas
           ref={canvasRef}
-          className={`h-full w-full touch-none ${
-            mode === "walk" ? "invisible" : ""
+          className={`h-full w-full touch-none transition-all duration-500 ease-out will-change-transform will-change-opacity ${
+            mode === "walk"
+              ? "opacity-0 scale-105 pointer-events-none"
+              : "opacity-100 scale-100 pointer-events-auto"
           } ${className}`}
           aria-label="Interactive 3D building model"
           aria-hidden={mode === "walk"}
         />
+
+        {/* Interior Walk Canvas */}
         <canvas
           ref={walkCanvasRef}
-          className={`absolute inset-0 h-full w-full touch-none outline-none ${
-            mode === "walk" ? "" : "hidden"
+          className={`absolute inset-0 h-full w-full touch-none outline-none transition-all duration-500 ease-out will-change-transform will-change-opacity ${
+            mode === "walk"
+              ? "opacity-100 scale-100 pointer-events-auto"
+              : "opacity-0 scale-95 pointer-events-none"
           } ${className}`}
           tabIndex={mode === "walk" ? 0 : -1}
-          aria-label="First-person building interior. Drag to look; use W A S D or arrow keys to move."
+          aria-label="First-person building interior. Click to take mouse look, or drag to look. Move with W A S D or the arrow keys, jump with the space bar."
           aria-hidden={mode !== "walk"}
         />
+
+        {/* Control legend: what this view answers to, in the idiom of the
+            device holding it. */}
+        {mode === "walk" && !walkUnavailable && (
+          <div className="pointer-events-none absolute bottom-3.5 left-3.5 z-20 max-w-[50%] rounded-lg border border-white/10 bg-slate-900/70 px-2 py-1 text-[8.5px] leading-[1.35] font-semibold tracking-wide text-white/90 backdrop-blur-sm">
+            {coarsePointer
+              ? "Drag to look · second finger walks · double-tap to zoom"
+              : lookLocked
+                ? "Mouse look on · W A S D walk · Space jump · Shift run · Esc releases"
+                : "Click to look · W A S D walk · Space jump · Shift run · wheel zooms"}
+          </div>
+        )}
+
+        {/* Smooth ambient light pulse during transition */}
+        <div
+          className={`absolute inset-0 pointer-events-none transition-opacity duration-500 ease-out ${
+            isTransitioning ? "opacity-15 bg-[#0055ff]" : "opacity-0"
+          }`}
+        />
+
         {mode === "walk" && walkUnavailable && (
           <div
             role="status"
@@ -1037,7 +1430,7 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
             building.
           </div>
         )}
-      </>
+      </div>
     )
   },
 )
@@ -1048,18 +1441,12 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
  * and do not stack on top of each other.
  */
 export function pinPosition(floor: number, slot: number): V3 {
-  const hw = FLOOR_W / 2 + 0.1
-  const hd = FLOOR_D / 2 + 0.1
-  const ring: [number, number][] = [
-    [-hw * 0.55, -hd],
-    [hw * 0.62, -hd],
-    [hw, hd * 0.3],
-    [hw * 0.3, hd],
-    [-hw * 0.7, hd],
-    [-hw, -hd * 0.35],
-  ]
-  const [x, z] = ring[slot % ring.length]
-  return [x, floor * FLOOR_H + FLOOR_H * 0.62, z]
+  const hw = FLOOR_W / 2 - 0.4
+  const hd = FLOOR_D / 2 + 0.08
+  // Natural bay offsets across the front wall facade so markups stick to the front wall
+  const facadeOffsets = [-0.62, 0.48, -0.22, 0.65, -0.45, 0.2]
+  const x = hw * facadeOffsets[slot % facadeOffsets.length]
+  return [x, floor * FLOOR_H + FLOOR_H * 0.62, -hd]
 }
 
 export const FLOOR_HEIGHT = FLOOR_H

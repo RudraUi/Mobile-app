@@ -148,13 +148,14 @@ function Panel3D({
     id: item.id,
     position: pinPosition(floors[i], i * 2),
     floor: floors[i],
+    normal: [0, 0, -1],
   }))
 
   const place = (projected: ProjectedPin[]) => {
     for (const pin of projected) {
       const el = pinRefs.current[pin.id]
       if (!el) continue
-      el.style.transform = `translate3d(${pin.x}px, ${pin.y}px, 0)`
+      el.style.transform = `translate3d(${pin.x}px, ${pin.y}px, 0) scale(${pin.scale.toFixed(3)})`
       el.style.visibility = pin.visible ? "visible" : "hidden"
       el.style.zIndex = String(Math.round(1000 - pin.depth * 10))
     }
@@ -178,21 +179,21 @@ function Panel3D({
               ref={(el) => {
                 pinRefs.current[item.id] = el
               }}
-              className="absolute left-0 top-0 pointer-events-none will-change-transform"
-              style={{ visibility: "hidden" }}
+              className="absolute left-0 top-0 pointer-events-none will-change-transform origin-top-left"
+              style={{ visibility: "hidden", transformOrigin: "0 0" }}
             >
               <div className="flex flex-col items-center -translate-x-1/2 -translate-y-full">
-                <span className="mb-0.5 px-1 py-0.2 rounded bg-white/95 border border-slate-200 text-[7.5px] font-bold text-[#0055ff] tabular-nums">
+                <span className="mb-0.5 px-1 py-[0.5px] rounded-[3px] bg-white/95 border border-slate-200 text-[6.5px] font-bold text-[#0055ff] tabular-nums leading-tight">
                   +{(floors[i] * FLOOR_HEIGHT).toFixed(1)}m
                 </span>
                 <button
                   type="button"
                   onClick={() => onItemClick(item)}
                   aria-label={`Open ${item.title}`}
-                  className="pointer-events-auto w-6 h-6 rounded-[12px_12px_12px_0] -rotate-45 flex items-center justify-center shadow-md shadow-black/30 cursor-pointer active:scale-95"
+                  className="pointer-events-auto relative w-4.5 h-4.5 rounded-[9px_9px_9px_0] -rotate-45 flex items-center justify-center shadow-sm shadow-black/30 cursor-pointer active:scale-95 before:absolute before:-inset-2 before:content-['']"
                   style={{ backgroundColor: color }}
                 >
-                  <span className="rotate-45 text-white font-bold text-[9px]">
+                  <span className="rotate-45 text-white font-bold text-[8px]">
                     {item.type === "issue"
                       ? "!"
                       : item.type === "rfi"

@@ -341,16 +341,38 @@ export function CreateItemScreen({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dateInputRef = useRef<HTMLInputElement>(null)
 
+  const [isCreated, setIsCreated] = useState(false)
+  const [isExiting, setIsExiting] = useState(false)
+
   const priority = priorities[priorityIndex]
   const canSubmit = title.trim().length > 0
 
+  const handleDismiss = useCallback(() => {
+    if (isExiting || isCreated) return
+    setIsExiting(true)
+    setTimeout(() => {
+      onBack()
+    }, 320)
+  }, [isExiting, isCreated, onBack])
+
   const handleCreate = () => {
-    if (!canSubmit) return
+    if (!canSubmit || isCreated || isExiting) return
+    setIsCreated(true)
+
+    // Tactile haptic vibration for mobile vibe
+    try {
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate([35, 50, 40, 70])
+      }
+    } catch {
+      // ignore
+    }
+
     const assignees: Assignee[] = availableMembers
       .filter((member) => selectedAssignees.includes(member.id))
       .map(({ id, name, initials, color }) => ({ id, name, initials, color }))
 
-    onSubmit({
+    const draft: CreateItemDraft = {
       type: selectedType,
       title: title.trim(),
       description: description.trim(),
@@ -360,7 +382,16 @@ export function CreateItemScreen({
       status,
       tags: selectedTags,
       photos: attachedPhotos,
-    })
+    }
+
+    // Step 1: User enjoys the button success celebration vibe (220ms)
+    // Step 2: Smooth downward drawer motion (380ms)
+    setTimeout(() => {
+      setIsExiting(true)
+      setTimeout(() => {
+        onSubmit(draft)
+      }, 380)
+    }, 220)
   }
 
   const toggleAssignee = (id: string) => {
@@ -521,7 +552,11 @@ export function CreateItemScreen({
 
   return (
     <div
-      className="absolute inset-0 z-50 flex flex-col justify-end bg-slate-950/40 backdrop-blur-[2px] animate-fade-in"
+      className={`absolute inset-0 z-50 flex flex-col justify-end transition-all duration-380 ease-out ${
+        isExiting
+          ? "bg-slate-950/0 backdrop-blur-none pointer-events-none"
+          : "bg-slate-950/40 backdrop-blur-[2px] animate-fade-in"
+      }`}
       role="dialog"
       aria-modal="true"
       aria-label={
@@ -538,7 +573,7 @@ export function CreateItemScreen({
           } else if (activePropertySheet) {
             setActivePropertySheet(null)
           } else {
-            onBack()
+            handleDismiss()
           }
         }}
         className="absolute inset-0 cursor-default"
@@ -549,9 +584,9 @@ export function CreateItemScreen({
 
       {activePropertySheet === null && (
         <section
-          className={`relative z-10 flex w-full flex-col overflow-hidden rounded-t-[28px] border-t border-slate-200 bg-white shadow-[0_-12px_32px_rgba(15,23,42,0.16)] transition-all duration-300 ease-out ${
-            activeField ? "max-h-[50%]" : "max-h-[62%]"
-          }`}
+          className={`relative z-10 flex w-full flex-col overflow-hidden rounded-t-[28px] border-t border-slate-200 bg-white shadow-[0_-12px_32px_rgba(15,23,42,0.16)] transition-all duration-380 ease-[cubic-bezier(0.32,1,0.23,1)] ${
+            isExiting ? "translate-y-[115%]" : "translate-y-0 animate-slide-up"
+          } ${activeField ? "max-h-[50%]" : "max-h-[62%]"}`}
           onClick={(event) => event.stopPropagation()}
         >
           <header className="relative shrink-0 border-b border-slate-200 bg-white px-4 pb-3 pt-2.5">
@@ -597,7 +632,7 @@ export function CreateItemScreen({
               {/* Circle close button at top right */}
               <button
                 type="button"
-                onClick={onBack}
+                onClick={handleDismiss}
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 active:scale-95"
                 aria-label="Close"
               >
@@ -930,19 +965,59 @@ export function CreateItemScreen({
 
                 {/* Normal Create Button */}
                 <span className="flex-1" />
-                <button
-                  type="button"
-                  onClick={handleCreate}
-                  disabled={!canSubmit}
-                  className={
-                    "flex h-8 items-center justify-center rounded-full px-4 text-[12.5px] font-semibold transition-all active:scale-95 " +
-                    (canSubmit
-                      ? "bg-blue-600 text-white hover:bg-blue-700"
-                      : "cursor-not-allowed bg-slate-100 text-slate-400")
-                  }
-                >
-                  Create
-                </button>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={handleCreate}
+                    disabled={!canSubmit || isCreated || isExiting}
+                    className={
+                      "relative overflow-hidden flex h-8 items-center justify-center rounded-full px-4 text-[12.5px] font-semibold transition-all duration-300 active:scale-95 " +
+                      (isCreated
+                        ? "bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white shadow-[0_0_22px_rgba(16,185,129,0.7)] scale-105"
+                        : canSubmit
+                          ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+                          : "cursor-not-allowed bg-slate-100 text-slate-400")
+                    }
+                  >
+                    {isCreated ? (
+                      <span className="flex items-center gap-1.5 animate-scale-in">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span>Created!</span>
+                      </span>
+                    ) : (
+                      <span>Create</span>
+                    )}
+                  </button>
+
+                  {/* Vibe celebration sparkles around button */}
+                  {isCreated && (
+                    <>
+                      <span className="pointer-events-none absolute -top-3 -left-3 text-[14px] text-amber-400 animate-vibe-sparkle-1">
+                        ✨
+                      </span>
+                      <span className="pointer-events-none absolute -top-4 right-1 text-[13px] text-emerald-400 animate-vibe-sparkle-2">
+                        ✦
+                      </span>
+                      <span className="pointer-events-none absolute -bottom-3 left-2 text-[12px] text-sky-400 animate-vibe-sparkle-3">
+                        🎉
+                      </span>
+                      <span className="pointer-events-none absolute -bottom-3 -right-2 text-[13px] text-purple-400 animate-vibe-sparkle-4">
+                        ⭐
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -952,7 +1027,9 @@ export function CreateItemScreen({
       {/* Interactive Mobile Keyboard when typing */}
       {activePropertySheet === null && activeField !== null && (
         <div
-          className="relative z-20 w-full shrink-0 animate-slide-up"
+          className={`relative z-20 w-full shrink-0 transition-transform duration-300 ease-in ${
+            isExiting ? "translate-y-[115%]" : "animate-slide-up"
+          }`}
           onClick={(event) => event.stopPropagation()}
         >
           <CustomKeyboard
@@ -980,7 +1057,9 @@ export function CreateItemScreen({
       {activePropertySheet !== null && (
         <section
           className={
-            "relative z-10 flex w-full flex-col overflow-hidden rounded-t-[28px] border-t border-slate-200 bg-white shadow-[0_-12px_32px_rgba(15,23,42,0.18)] animate-slide-up " +
+            "relative z-10 flex w-full flex-col overflow-hidden rounded-t-[28px] border-t border-slate-200 bg-white shadow-[0_-12px_32px_rgba(15,23,42,0.18)] transition-all duration-380 ease-[cubic-bezier(0.32,1,0.23,1)] " +
+            (isExiting ? "translate-y-[115%]" : "animate-slide-up") +
+            " " +
             (activePropertySheet === "attachments"
               ? "max-h-[86%] min-h-[460px]"
               : activePropertySheet === "date"

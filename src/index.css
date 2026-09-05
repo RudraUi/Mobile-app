@@ -1019,6 +1019,141 @@ select {
   animation: splashSlideUp 0.65s cubic-bezier(0.76, 0, 0.24, 1) forwards;
 }
 
+/* ------------------------------------------------------------------
+   Amazing Vibe Animation & Fluid Drawer Motions
+   ------------------------------------------------------------------ */
+@keyframes vibePopIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-26px) scale(0.92);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(3px) scale(1.02);
+  }
+  85% {
+    transform: translateY(-1px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes vibePopOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-24px) scale(0.94);
+  }
+}
+
+@keyframes vibeShockwave {
+  0% {
+    transform: scale(0.2);
+    opacity: 0.95;
+  }
+  50% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(3.6);
+    opacity: 0;
+  }
+}
+
+@keyframes vibeSparkle1 {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4) rotate(0deg);
+  }
+  40% {
+    opacity: 1;
+    transform: translate(-24px, -34px) scale(1.35) rotate(35deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-38px, -68px) scale(0.4) rotate(90deg);
+  }
+}
+
+@keyframes vibeSparkle2 {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4) rotate(0deg);
+  }
+  40% {
+    opacity: 1;
+    transform: translate(24px, -36px) scale(1.35) rotate(-35deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(40px, -72px) scale(0.4) rotate(-90deg);
+  }
+}
+
+@keyframes vibeSparkle3 {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4) rotate(0deg);
+  }
+  40% {
+    opacity: 1;
+    transform: translate(-10px, -46px) scale(1.4) rotate(20deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-18px, -86px) scale(0.35) rotate(140deg);
+  }
+}
+
+@keyframes vibeSparkle4 {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4) rotate(0deg);
+  }
+  40% {
+    opacity: 1;
+    transform: translate(14px, -42px) scale(1.4) rotate(-25deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(22px, -80px) scale(0.35) rotate(-130deg);
+  }
+}
+
+.animate-vibe-pop-in {
+  animation: vibePopIn 0.44s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-vibe-pop-out {
+  animation: vibePopOut 0.32s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.animate-vibe-shockwave {
+  animation: vibeShockwave 0.85s cubic-bezier(0.1, 0.9, 0.2, 1) both;
+}
+
+.animate-vibe-sparkle-1 {
+  animation: vibeSparkle1 0.72s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+.animate-vibe-sparkle-2 {
+  animation: vibeSparkle2 0.76s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+.animate-vibe-sparkle-3 {
+  animation: vibeSparkle3 0.8s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+.animate-vibe-sparkle-4 {
+  animation: vibeSparkle4 0.74s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+
 @keyframes splashCircularFade {
   0% {
     clip-path: circle(120% at 50% 50%);

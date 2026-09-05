@@ -45,6 +45,7 @@ import {
 import { SideDrawer } from "./components/SideDrawer"
 import { InviteModal } from "./components/InviteModal"
 import { QuickCreateSheet } from "./components/QuickCreateSheet"
+import { VibeCelebrationToast } from "./components/VibeCelebrationToast"
 import { projectsList, type Project } from "./data/projectsData"
 import type { Item, ItemType, Status } from "./data/mockData"
 import { mockItems } from "./data/mockData"
@@ -116,6 +117,9 @@ export default function App() {
   const [prevScreen, setPrevScreen] = useState<Screen>("home")
   const [tickets, setTickets] = useState<SupportTicket[]>(mockTickets)
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null)
+  const [vibeCelebrationItem, setVibeCelebrationItem] = useState<Item | null>(
+    null,
+  )
   const [helpTab, setHelpTab] = useState<"faq" | "tickets" | "contact">("faq")
   const [legalDoc, setLegalDoc] = useState<"terms" | "privacy">("terms")
   // Derived during render, not in an effect: the keyed screen div starts its
@@ -129,6 +133,23 @@ export default function App() {
     previousScreenRef.current = screen
   }
   const transition = transitionRef.current
+
+  // The create sheet floats over the tab it was opened from, so it has to keep
+  // that tab's stage key: a new key remounts the tab underneath and wipes live
+  // view state — the 3D first-person position and heading among it — so closing
+  // the sheet would drop you back out of walk mode.
+  const stageKey = screen === "create" ? activeTab : screen
+  const previousStageKeyRef = useRef(stageKey)
+  const stageAnimationRef = useRef("animate-screen-in")
+  if (previousStageKeyRef.current !== stageKey) {
+    previousStageKeyRef.current = stageKey
+    stageAnimationRef.current =
+      transition === "push"
+        ? "animate-screen-push"
+        : transition === "pop"
+          ? "animate-screen-pop"
+          : "animate-screen-in"
+  }
 
   const [profile, setProfile] = useState<UserProfileData>(() => {
     const savedFont =
@@ -250,11 +271,25 @@ export default function App() {
 
   const handleCreateClick = useCallback(() => setIsQuickCreateOpen(true), [])
 
-  const handleSelectCreateType = useCallback((type: ItemType) => {
-    setIsQuickCreateOpen(false)
-    setCreateType(type)
-    setScreen("create")
-  }, [])
+  const handleOpenCreateItem = useCallback(
+    (type: ItemType = "task") => {
+      setIsQuickCreateOpen(false)
+      setCreateType(type)
+      setPrevScreen(screen === "create" ? activeTab : screen)
+      setScreen("create")
+    },
+    [screen, activeTab],
+  )
+
+  const handleSelectCreateType = useCallback(
+    (type: ItemType) => {
+      setIsQuickCreateOpen(false)
+      setCreateType(type)
+      setPrevScreen(screen === "create" ? activeTab : screen)
+      setScreen("create")
+    },
+    [screen, activeTab],
+  )
 
   const openCaptures = useCallback((from: Screen) => {
     setCapturesOrigin(from)
@@ -337,10 +372,23 @@ export default function App() {
         category: "Structural",
       }
       setItems((prev) => [newItem, ...prev])
-      setActiveTab("home")
-      setScreen("home")
+      setVibeCelebrationItem(newItem)
+      const destination =
+        prevScreen && prevScreen !== "create" ? prevScreen : activeTab
+      setScreen(destination)
+      if (
+        destination === "home" ||
+        destination === "map" ||
+        destination === "drawing" ||
+        destination === "bim" ||
+        destination === "drone" ||
+        destination === "walkthrough" ||
+        destination === "splitview"
+      ) {
+        setActiveTab(destination)
+      }
     },
-    [selectedProject],
+    [selectedProject, prevScreen, activeTab],
   )
 
   const currentSelectedItem = selectedItem
@@ -383,6 +431,7 @@ export default function App() {
     items,
     onItemClick: handleItemClick,
     onCreateClick: handleCreateClick,
+    onOpenCreateItem: handleOpenCreateItem,
     activeTab,
     onTabChange: handleTabChange,
     markupFilter,
@@ -433,14 +482,8 @@ export default function App() {
 
         <div className="screen-stage relative flex h-full flex-col">
           <div
-            key={screen}
-            className={`flex h-full flex-col ${
-              transition === "push"
-                ? "animate-screen-push"
-                : transition === "pop"
-                  ? "animate-screen-pop"
-                  : "animate-screen-in"
-            }`}
+            key={stageKey}
+            className={`flex h-full flex-col ${stageAnimationRef.current}`}
           >
             {screen === "login" && (
               <LoginScreen
@@ -522,7 +565,7 @@ export default function App() {
             {screen === "create" && (
               <CreateItemScreen
                 initialType={createType}
-                onBack={() => setScreen(activeTab)}
+                onBack={() => setScreen(prevScreen || activeTab)}
                 onSubmit={handleCreateSubmit}
               />
             )}
@@ -701,6 +744,19 @@ export default function App() {
           isOpen={isInviteModalOpen}
           onClose={() => setIsInviteModalOpen(false)}
         />
+
+        {/* Amazing Vibe Animation & Celebration Toast after creating an item */}
+        {vibeCelebrationItem && (
+          <VibeCelebrationToast
+            item={vibeCelebrationItem}
+            onDismiss={() => setVibeCelebrationItem(null)}
+            onViewItem={() => {
+              const itemToView = vibeCelebrationItem
+              setVibeCelebrationItem(null)
+              handleItemClick(itemToView)
+            }}
+          />
+        )}
       </div>
     </div>
   )

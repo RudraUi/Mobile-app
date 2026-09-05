@@ -3,20 +3,18 @@ import type { Item } from "../data/mockData"
 import { typeColors, typeIcons } from "../data/mockData"
 
 interface MapViewProps {
-  items: Item[]
+  items?: Item[]
   onPinClick?: (item: Item) => void
   targetItem?: Item | null
   showNavPath?: boolean
   navProgress?: number
-  currentPos?: { x: number y: number }
+  currentPos?: { x: number; y: number }
   interactive?: boolean
   onMapTap?: (x: number, y: number) => void
 }
 
-const CURRENT_POS = { x: 225, y: 450 }
-
 export function MapView({
-  items,
+  items = [],
   onPinClick,
   targetItem,
   showNavPath = false,
@@ -25,13 +23,11 @@ export function MapView({
   interactive = true,
   onMapTap,
 }: MapViewProps) {
-  const pos = currentPos ?? CURRENT_POS
-
   const handleSvgClick = (e: MouseEvent<SVGSVGElement>) => {
     if (!onMapTap) return
     const rect = e.currentTarget.getBoundingClientRect()
-    const scaleX = 390 / rect.width
-    const scaleY = 860 / rect.height
+    const scaleX = 400 / rect.width
+    const scaleY = 560 / rect.height
     const x = (e.clientX - rect.left) * scaleX
     const y = (e.clientY - rect.top) * scaleY
     onMapTap(Math.round(x), Math.round(y))
@@ -39,634 +35,450 @@ export function MapView({
 
   return (
     <svg
-      viewBox="0 0 390 860"
-      className="w-full h-full"
-      style={{ background: "#f6f7f9" }}
+      viewBox="0 0 400 560"
+      className="w-full h-full select-none"
+      style={{ background: "#f8fafc" }}
       onClick={handleSvgClick}
     >
-      {/* Subtle dot grid */}
       <defs>
-        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-          <circle cx="0" cy="0" r="0.8" fill="#d8dce6" />
+        {/* Subtle dot background grid */}
+        <pattern id="bg-blueprint-grid" width="16" height="16" patternUnits="userSpaceOnUse">
+          <circle cx="0" cy="0" r="0.75" fill="#e2e8f0" />
         </pattern>
+
+        {/* Lift Lobby Core 45deg Diagonal Hatch Pattern */}
+        <pattern
+          id="lift-core-hatch"
+          width="8"
+          height="8"
+          patternTransform="rotate(45 0 0)"
+          patternUnits="userSpaceOnUse"
+        >
+          <line x1="0" y1="0" x2="0" y2="8" stroke="#dbeafe" strokeWidth="1.2" />
+        </pattern>
+
+        {/* Pin Drop Shadow */}
         <filter id="pin-shadow" x="-40%" y="-40%" width="180%" height="180%">
-          <feDropShadow
-            dx="0"
-            dy="2"
-            stdDeviation="3"
-            floodColor="#000"
-            floodOpacity="0.15"
-          />
+          <feDropShadow dx="0" dy="2" stdDeviation="2.5" floodColor="#000000" floodOpacity="0.18" />
         </filter>
       </defs>
-      <rect width="390" height="860" fill="url(#grid)" />
 
-      {/* ── Floor plan ── */}
-      {/* Outer building shell */}
-      <rect
-        x="28"
-        y="80"
-        width="334"
-        height="752"
-        rx="3"
-        fill="white"
-        stroke="#c4c9d8"
-        strokeWidth="2.5"
-      />
+      {/* Blueprint Grid Background */}
+      <rect width="400" height="560" fill="url(#bg-blueprint-grid)" />
 
-      {/* Vertical spine wall */}
-      <line
-        x1="174"
-        y1="80"
-        x2="174"
-        y2="832"
-        stroke="#c4c9d8"
-        strokeWidth="1.8"
-      />
+      {/* ── Structural Grid Lines (Dashed) ── */}
+      {/* Vertical Columns: A (84), B (180), C (240), D (336) */}
+      <line x1="84" y1="64" x2="84" y2="486" stroke="#cbd5e1" strokeWidth="1.2" strokeDasharray="4 3" />
+      <line x1="180" y1="64" x2="180" y2="486" stroke="#cbd5e1" strokeWidth="1.2" strokeDasharray="4 3" />
+      <line x1="240" y1="64" x2="240" y2="486" stroke="#cbd5e1" strokeWidth="1.2" strokeDasharray="4 3" />
+      <line x1="336" y1="64" x2="336" y2="486" stroke="#cbd5e1" strokeWidth="1.2" strokeDasharray="4 3" />
 
-      {/* Horizontal floor dividers */}
-      <line
-        x1="28"
-        y1="260"
-        x2="362"
-        y2="260"
-        stroke="#c4c9d8"
-        strokeWidth="1.8"
-      />
-      <line
-        x1="28"
-        y1="460"
-        x2="362"
-        y2="460"
-        stroke="#c4c9d8"
-        strokeWidth="1.8"
-      />
-      <line
-        x1="28"
-        y1="640"
-        x2="362"
-        y2="640"
-        stroke="#c4c9d8"
-        strokeWidth="1.8"
-      />
+      {/* Horizontal Rows: 1 (108), 2 (208), 3 (308), 4 (408) */}
+      <line x1="45" y1="108" x2="375" y2="108" stroke="#cbd5e1" strokeWidth="1.2" strokeDasharray="4 3" />
+      <line x1="45" y1="208" x2="375" y2="208" stroke="#cbd5e1" strokeWidth="1.2" strokeDasharray="4 3" />
+      <line x1="45" y1="308" x2="375" y2="308" stroke="#cbd5e1" strokeWidth="1.2" strokeDasharray="4 3" />
+      <line x1="45" y1="408" x2="375" y2="408" stroke="#cbd5e1" strokeWidth="1.2" strokeDasharray="4 3" />
 
-      {/* Door breaks in walls */}
-      <rect x="174" y="328" width="32" height="3" fill="white" />
-      <path
-        d="M174 328 Q190 312 206 328"
-        fill="none"
-        stroke="#b0b8cc"
-        strokeWidth="1"
-      />
-      <rect x="174" y="520" width="32" height="3" fill="white" />
-      <path
-        d="M174 520 Q190 504 206 520"
-        fill="none"
-        stroke="#b0b8cc"
-        strokeWidth="1"
-      />
-      <rect x="174" y="706" width="32" height="3" fill="white" />
-      <path
-        d="M174 706 Q190 690 206 706"
-        fill="none"
-        stroke="#b0b8cc"
-        strokeWidth="1"
-      />
-
-      {/* Door in outer wall (bottom) */}
-      <rect x="175" y="829" width="44" height="3" fill="white" />
-      <path
-        d="M175 832 Q197 808 219 832"
-        fill="none"
-        stroke="#b0b8cc"
-        strokeWidth="1"
-      />
-
-      {/* ── Room A (top-left): Kitchen / Utility ── */}
-      {/* Counter L-shape */}
-      <rect
-        x="34"
-        y="86"
-        width="80"
-        height="18"
-        rx="1"
-        fill="#eef0f5"
-        stroke="#c4c9d8"
-        strokeWidth="1"
-      />
-      <rect
-        x="34"
-        y="86"
-        width="18"
-        height="60"
-        rx="1"
-        fill="#eef0f5"
-        stroke="#c4c9d8"
-        strokeWidth="1"
-      />
-      {/* Sink */}
-      <rect
-        x="52"
-        y="89"
-        width="22"
-        height="12"
-        rx="2"
-        fill="none"
-        stroke="#b0b8cc"
-        strokeWidth="1"
-      />
-      <circle cx="63" cy="95" r="2" fill="#b0b8cc" />
-      {/* Hatch on counter */}
-      {[0, 6, 12, 18, 24, 30, 36, 42, 48, 54, 60, 66, 72].map((x) => (
-        <line
-          key={x}
-          x1={34 + x}
-          y1="86"
-          x2={34 + x}
-          y2="104"
-          stroke="#d4d8e4"
-          strokeWidth="0.5"
-        />
-      ))}
-
-      {/* ── Room B (top-right): Bathroom ── */}
-      <rect
-        x="190"
-        y="86"
-        width="90"
-        height="90"
-        rx="1"
-        fill="#f3f4f8"
-        stroke="#c4c9d8"
-        strokeWidth="1"
-      />
-      {/* Toilet */}
-      <ellipse
-        cx="230"
-        cy="100"
-        rx="14"
-        ry="10"
-        fill="none"
-        stroke="#b0b8cc"
-        strokeWidth="1"
-      />
-      <rect
-        x="218"
-        y="88"
-        width="24"
-        height="10"
-        rx="2"
-        fill="none"
-        stroke="#b0b8cc"
-        strokeWidth="1"
-      />
-      {/* Bathtub */}
-      <rect
-        x="196"
-        y="122"
-        width="78"
-        height="50"
-        rx="8"
-        fill="none"
-        stroke="#b0b8cc"
-        strokeWidth="1"
-      />
-      <ellipse
-        cx="235"
-        cy="147"
-        rx="26"
-        ry="16"
-        fill="none"
-        stroke="#c4c9d8"
-        strokeWidth="0.8"
-        strokeDasharray="2 2"
-      />
-
-      {/* Stair block (top-right corner) */}
-      <rect
-        x="288"
-        y="86"
-        width="68"
-        height="100"
-        fill="#eef0f5"
-        stroke="#c4c9d8"
-        strokeWidth="1"
-      />
-      {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((y) => (
-        <line
-          key={y}
-          x1="288"
-          y1={86 + y}
-          x2="356"
-          y2={86 + y}
-          stroke="#c4c9d8"
-          strokeWidth="0.7"
-        />
-      ))}
-      <text
-        x="322"
-        y="142"
-        textAnchor="middle"
-        fontSize="8"
-        fill="#9ca3b0"
-        fontFamily="Nunito Sans, sans-serif"
-        letterSpacing="1"
-      >
-        STAIR
-      </text>
-
-      {/* ── Room C (mid-left): Living ── */}
-      {/* Sofa */}
-      <rect
-        x="36"
-        y="282"
-        width="110"
-        height="50"
-        rx="6"
-        fill="#eef0f5"
-        stroke="#c4c9d8"
-        strokeWidth="1"
-      />
-      <rect
-        x="42"
-        y="288"
-        width="98"
-        height="34"
-        rx="4"
-        fill="#e4e7f0"
-        stroke="#c4c9d8"
-        strokeWidth="0.8"
-      />
-      {/* Coffee table */}
-      <rect
-        x="60"
-        y="348"
-        width="60"
-        height="35"
-        rx="3"
-        fill="none"
-        stroke="#c4c9d8"
-        strokeWidth="1"
-      />
-
-      {/* ── Room D (mid-right): Office / Desk ── */}
-      <rect
-        x="192"
-        y="280"
-        width="90"
-        height="50"
-        rx="2"
-        fill="none"
-        stroke="#c4c9d8"
-        strokeWidth="1"
-      />
-      <rect x="196" y="284" width="82" height="40" rx="1" fill="#eef0f5" />
-      {/* Monitor stand */}
-      <line
-        x1="237"
-        y1="284"
-        x2="237"
-        y2="324"
-        stroke="#c4c9d8"
-        strokeWidth="0.8"
-      />
-      {/* Chair */}
-      <circle
-        cx="237"
-        cy="430"
-        r="22"
-        fill="none"
-        stroke="#c4c9d8"
-        strokeWidth="1"
-      />
-      <circle
-        cx="237"
-        cy="430"
-        r="15"
-        fill="#f3f4f8"
-        stroke="#c4c9d8"
-        strokeWidth="0.8"
-      />
-
-      {/* ── Room E (lower-left) ── */}
-      <rect
-        x="36"
-        y="480"
-        width="125"
-        height="145"
-        rx="2"
-        fill="#fafafa"
-        stroke="#d8dce6"
-        strokeWidth="0.8"
-        strokeDasharray="4 3"
-      />
-      <text
-        x="98"
-        y="560"
-        textAnchor="middle"
-        fontSize="9"
-        fill="#b0b8cc"
-        fontFamily="Nunito Sans, sans-serif"
-        letterSpacing="1.5"
-      >
-        ZONE E
-      </text>
-
-      {/* ── Room F (lower-right) ── */}
-      <rect
-        x="184"
-        y="480"
-        width="170"
-        height="145"
-        rx="2"
-        fill="#fafafa"
-        stroke="#d8dce6"
-        strokeWidth="0.8"
-        strokeDasharray="4 3"
-      />
-      {/* Bed */}
-      <rect
-        x="198"
-        y="494"
-        width="70"
-        height="110"
-        rx="4"
-        fill="none"
-        stroke="#c4c9d8"
-        strokeWidth="1"
-      />
-      <rect
-        x="198"
-        y="494"
-        width="70"
-        height="28"
-        rx="4"
-        fill="#eef0f5"
-        stroke="#c4c9d8"
-        strokeWidth="1"
-      />
-      <ellipse
-        cx="233"
-        cy="552"
-        rx="20"
-        ry="26"
-        fill="#f3f4f8"
-        stroke="#c4c9d8"
-        strokeWidth="0.8"
-      />
-
-      {/* ── Bottom rooms ── */}
-      <rect
-        x="36"
-        y="660"
-        width="125"
-        height="162"
-        rx="2"
-        fill="#fafafa"
-        stroke="#d8dce6"
-        strokeWidth="0.8"
-        strokeDasharray="4 3"
-      />
-      <text
-        x="98"
-        y="745"
-        textAnchor="middle"
-        fontSize="9"
-        fill="#b0b8cc"
-        fontFamily="Nunito Sans, sans-serif"
-        letterSpacing="1.5"
-      >
-        ZONE G
-      </text>
-
-      <rect
-        x="184"
-        y="660"
-        width="170"
-        height="162"
-        rx="2"
-        fill="#fafafa"
-        stroke="#d8dce6"
-        strokeWidth="0.8"
-        strokeDasharray="4 3"
-      />
-      <text
-        x="269"
-        y="745"
-        textAnchor="middle"
-        fontSize="9"
-        fill="#b0b8cc"
-        fontFamily="Nunito Sans, sans-serif"
-        letterSpacing="1.5"
-      >
-        ZONE H
-      </text>
-
-      {/* ── Dimension annotations ── */}
-      <line
-        x1="40"
-        y1="72"
-        x2="355"
-        y2="72"
-        stroke="#b0b8cc"
-        strokeWidth="0.7"
-      />
-      <line
-        x1="40"
-        y1="68"
-        x2="40"
-        y2="76"
-        stroke="#b0b8cc"
-        strokeWidth="0.7"
-      />
-      <line
-        x1="355"
-        y1="68"
-        x2="355"
-        y2="76"
-        stroke="#b0b8cc"
-        strokeWidth="0.7"
-      />
-      <text
-        x="197"
-        y="69"
-        textAnchor="middle"
-        fontSize="7.5"
-        fill="#b0b8cc"
-        fontFamily="Nunito Sans, sans-serif"
-        letterSpacing="0.8"
-      >
-        10 000
-      </text>
-
-      <line
-        x1="14"
-        y1="90"
-        x2="14"
-        y2="825"
-        stroke="#b0b8cc"
-        strokeWidth="0.7"
-      />
-      <line
-        x1="10"
-        y1="90"
-        x2="18"
-        y2="90"
-        stroke="#b0b8cc"
-        strokeWidth="0.7"
-      />
-      <line
-        x1="10"
-        y1="825"
-        x2="18"
-        y2="825"
-        stroke="#b0b8cc"
-        strokeWidth="0.7"
-      />
-      <text
-        x="10"
-        y="460"
-        textAnchor="middle"
-        fontSize="7.5"
-        fill="#b0b8cc"
-        fontFamily="Nunito Sans, sans-serif"
-        letterSpacing="0.8"
-        transform="rotate(-90 10 460)"
-      >
-        28 800
-      </text>
-
-      {/* Room labels */}
-      <text
-        x="100"
-        y="215"
-        textAnchor="middle"
-        fontSize="8.5"
-        fill="#c4c9d8"
-        fontFamily="Nunito Sans, sans-serif"
-        fontWeight="600"
-        letterSpacing="1.5"
-      >
-        KITCHEN
-      </text>
-      <text
-        x="268"
-        y="215"
-        textAnchor="middle"
-        fontSize="8.5"
-        fill="#c4c9d8"
-        fontFamily="Nunito Sans, sans-serif"
-        fontWeight="600"
-        letterSpacing="1.5"
-      >
-        BATHROOM
-      </text>
-      <text
-        x="100"
-        y="410"
-        textAnchor="middle"
-        fontSize="8.5"
-        fill="#c4c9d8"
-        fontFamily="Nunito Sans, sans-serif"
-        fontWeight="600"
-        letterSpacing="1.5"
-      >
-        LIVING ROOM
-      </text>
-      <text
-        x="268"
-        y="410"
-        textAnchor="middle"
-        fontSize="8.5"
-        fill="#c4c9d8"
-        fontFamily="Nunito Sans, sans-serif"
-        fontWeight="600"
-        letterSpacing="1.5"
-      >
-        OFFICE
-      </text>
-
-      {/* Navigation path */}
-      {showNavPath && targetItem && (
-        <>
-          <line
-            x1={pos.x}
-            y1={pos.y}
-            x2={targetItem.location.x}
-            y2={targetItem.location.y}
-            stroke="#1a1f36"
-            strokeWidth="1.8"
-            strokeDasharray="7 5"
-            opacity="0.35"
-          />
-          {navProgress > 0 && (
-            <line
-              x1={pos.x}
-              y1={pos.y}
-              x2={pos.x + (targetItem.location.x - pos.x) * navProgress}
-              y2={pos.y + (targetItem.location.y - pos.y) * navProgress}
-              stroke="#0052ff"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            />
-          )}
-        </>
-      )}
-
-      {/* Issue/task pins */}
-      {items.map((item) => (
-        <g
-          key={item.id}
-          transform={`translate(${item.location.x}, ${item.location.y})`}
-          onClick={(e) => {
-            if (!interactive) return
-            e.stopPropagation()
-            onPinClick?.(item)
-          }}
-          style={{ cursor: interactive ? "pointer" : "default" }}
-          filter="url(#pin-shadow)"
-        >
-          <circle r="13" fill="white" />
-          <circle r="11" fill={typeColors[item.type]} opacity="0.14" />
-          <circle r="7" fill={typeColors[item.type]} />
+      {/* ── Grid Identification Bubbles ── */}
+      {/* Top Column Bubbles: A, B, C, D */}
+      {[
+        { label: "A", x: 84 },
+        { label: "B", x: 180 },
+        { label: "C", x: 240 },
+        { label: "D", x: 336 },
+      ].map(({ label, x }) => (
+        <g key={label}>
+          <circle cx={x} cy="52" r="9.5" fill="#ffffff" stroke="#94a3b8" strokeWidth="1.5" />
           <text
-            y="3"
+            x={x}
+            y="55.5"
             textAnchor="middle"
-            fontSize="7"
-            fill="white"
+            fontSize="9"
             fontWeight="bold"
-            fontFamily="Nunito Sans, sans-serif"
+            fill="#64748b"
+            fontFamily="Inter, sans-serif"
           >
-            {typeIcons[item.type]}
+            {label}
           </text>
         </g>
       ))}
 
-      {/* Current position */}
-      <g transform={`translate(${pos.x}, ${pos.y})`}>
-        <circle r="20" fill="#0052ff" opacity="0.08">
-          <animate
-            attributeName="r"
-            values="16;24;16"
-            dur="2.4s"
-            repeatCount="indefinite"
-          />
-          <animate
-            attributeName="opacity"
-            values="0.1;0.03;0.1"
-            dur="2.4s"
-            repeatCount="indefinite"
-          />
-        </circle>
-        <circle
-          r="8"
-          fill="#0052ff"
-          stroke="white"
-          strokeWidth="2.5"
-          filter="url(#pin-shadow)"
+      {/* Left Row Bubbles: 1, 2, 3, 4 */}
+      {[
+        { label: "1", y: 108 },
+        { label: "2", y: 208 },
+        { label: "3", y: 308 },
+        { label: "4", y: 408 },
+      ].map(({ label, y }) => (
+        <g key={label}>
+          <circle cx="34" cy={y} r="9.5" fill="#ffffff" stroke="#94a3b8" strokeWidth="1.5" />
+          <text
+            x="34"
+            y={y + 3.5}
+            textAnchor="middle"
+            fontSize="9"
+            fontWeight="bold"
+            fill="#64748b"
+            fontFamily="Inter, sans-serif"
+          >
+            {label}
+          </text>
+        </g>
+      ))}
+
+      {/* ── Outer Perimeter Building Shell ── */}
+      <rect
+        x="54"
+        y="78"
+        width="312"
+        height="400"
+        fill="#ffffff"
+        stroke="#334155"
+        strokeWidth="4.5"
+        rx="1"
+      />
+
+      {/* ── Room Special Background Fills ── */}
+      {/* Plant 3.06 Room (Light Yellow fill) */}
+      <rect x="241.5" y="221.5" width="123" height="113" fill="#fefce8" />
+
+      {/* Lift Lobby Core (Light Blue Diagonal Hatch Fill) */}
+      <rect x="241.5" y="79.5" width="123" height="139" fill="url(#lift-core-hatch)" />
+
+      {/* ── Lift Lobby Core Features (Lifts & Stairs) ── */}
+      {/* Lift Shaft 1 (Top) */}
+      <rect x="314" y="92" width="46" height="40" fill="#ffffff" stroke="#64748b" strokeWidth="1.8" />
+      <line x1="314" y1="92" x2="360" y2="132" stroke="#94a3b8" strokeWidth="1.2" />
+      <line x1="314" y1="132" x2="360" y2="92" stroke="#94a3b8" strokeWidth="1.2" />
+      {/* Center Blue Square in Lift 1 */}
+      <rect x="333" y="108" width="8" height="8" fill="#3b82f6" rx="1.5" />
+
+      {/* Lift Shaft 2 (Bottom) */}
+      <rect x="314" y="142" width="46" height="40" fill="#ffffff" stroke="#64748b" strokeWidth="1.8" />
+      <line x1="314" y1="142" x2="360" y2="182" stroke="#94a3b8" strokeWidth="1.2" />
+      <line x1="314" y1="182" x2="360" y2="142" stroke="#94a3b8" strokeWidth="1.2" />
+
+      {/* Staircase (Left of Lifts) */}
+      <rect x="250" y="152" width="52" height="66" fill="#ffffff" stroke="#64748b" strokeWidth="1.8" />
+      {[160, 169, 178, 187, 196, 205, 214].map((stepY) => (
+        <line key={stepY} x1="250" y1={stepY} x2="302" y2={stepY} stroke="#64748b" strokeWidth="1.2" />
+      ))}
+
+      {/* ── Walkable Corridor Zone (Light Blue Shaded with Dashed Outline) ── */}
+      <path
+        d="M 183,106 L 358,106 L 358,144 L 243,144 L 243,458 Q 243,466 235,466 L 191,466 Q 183,466 183,458 Z"
+        fill="rgba(239, 246, 255, 0.7)"
+        stroke="#93c5fd"
+        strokeWidth="1.5"
+        strokeDasharray="4 3"
+      />
+
+      {/* Corridor Vertical Label */}
+      <text
+        x="210"
+        y="325"
+        transform="rotate(-90 210 325)"
+        textAnchor="middle"
+        fontSize="8.5"
+        fontWeight="bold"
+        fill="#94a3b8"
+        letterSpacing="3.5px"
+        fontFamily="Inter, sans-serif"
+      >
+        C O R R I D O R
+      </text>
+
+      {/* ── Internal Partition Walls (Dark Charcoal #334155) ── */}
+      {/* Left Vertical Corridor Wall (x = 180) with door openings */}
+      <line x1="180" y1="78" x2="180" y2="106" stroke="#334155" strokeWidth="3" />
+      <line x1="180" y1="142" x2="180" y2="206" stroke="#334155" strokeWidth="3" />
+      <line x1="180" y1="242" x2="180" y2="306" stroke="#334155" strokeWidth="3" />
+      <line x1="180" y1="342" x2="180" y2="406" stroke="#334155" strokeWidth="3" />
+      <line x1="180" y1="442" x2="180" y2="478" stroke="#334155" strokeWidth="3" />
+
+      {/* Right Vertical Corridor Wall (x = 240) with door openings */}
+      <line x1="240" y1="220" x2="240" y2="250" stroke="#334155" strokeWidth="3" />
+      <line x1="240" y1="286" x2="240" y2="360" stroke="#334155" strokeWidth="3" />
+      <line x1="240" y1="396" x2="240" y2="478" stroke="#334155" strokeWidth="3" />
+
+      {/* Left Room Horizontal Dividing Walls (x = 54 to 180) */}
+      {/* Between Office 3.01 and Office 3.02 */}
+      <line x1="54" y1="176" x2="180" y2="176" stroke="#334155" strokeWidth="3" />
+      {/* Between Office 3.02 and Meeting 3.03 */}
+      <line x1="54" y1="274" x2="180" y2="274" stroke="#334155" strokeWidth="3" />
+      {/* Between Meeting 3.03 and Store 3.05 */}
+      <line x1="54" y1="358" x2="180" y2="358" stroke="#334155" strokeWidth="3" />
+
+      {/* Right Room Horizontal Dividing Walls (x = 240 to 366) */}
+      {/* Between Lift Lobby and Plant 3.06 */}
+      <line x1="240" y1="220" x2="366" y2="220" stroke="#334155" strokeWidth="3" />
+      {/* Between Plant 3.06 and Office 3.04 */}
+      <line x1="240" y1="336" x2="366" y2="336" stroke="#334155" strokeWidth="3" />
+
+      {/* ── Door Leaf & Swing Arcs ── */}
+      {/* Office 3.01 Door */}
+      <line x1="180" y1="106" x2="152" y2="128" stroke="#94a3b8" strokeWidth="1.2" />
+      <path d="M 152,128 A 36,36 0 0,0 180,142" fill="none" stroke="#94a3b8" strokeWidth="1.2" />
+
+      {/* Office 3.02 Door */}
+      <line x1="180" y1="206" x2="152" y2="228" stroke="#94a3b8" strokeWidth="1.2" />
+      <path d="M 152,228 A 36,36 0 0,0 180,242" fill="none" stroke="#94a3b8" strokeWidth="1.2" />
+
+      {/* Meeting 3.03 Door */}
+      <line x1="180" y1="306" x2="152" y2="328" stroke="#94a3b8" strokeWidth="1.2" />
+      <path d="M 152,328 A 36,36 0 0,0 180,342" fill="none" stroke="#94a3b8" strokeWidth="1.2" />
+
+      {/* Store 3.05 Door */}
+      <line x1="180" y1="406" x2="152" y2="428" stroke="#94a3b8" strokeWidth="1.2" />
+      <path d="M 152,428 A 36,36 0 0,0 180,442" fill="none" stroke="#94a3b8" strokeWidth="1.2" />
+
+      {/* Plant 3.06 Door */}
+      <line x1="240" y1="286" x2="268" y2="264" stroke="#94a3b8" strokeWidth="1.2" />
+      <path d="M 240,250 A 36,36 0 0,1 268,264" fill="none" stroke="#94a3b8" strokeWidth="1.2" />
+
+      {/* Office 3.04 Door */}
+      <line x1="240" y1="396" x2="268" y2="374" stroke="#94a3b8" strokeWidth="1.2" />
+      <path d="M 240,360 A 36,36 0 0,1 268,374" fill="none" stroke="#94a3b8" strokeWidth="1.2" />
+
+      {/* ── Structural Columns (Solid Bright Blue Squares) ── */}
+      {[
+        // Row 1
+        { x: 84, y: 108 },
+        { x: 180, y: 108 },
+        { x: 240, y: 108 },
+        // Row 2
+        { x: 84, y: 208 },
+        { x: 180, y: 208 },
+        { x: 240, y: 208 },
+        { x: 336, y: 208 },
+        // Row 3
+        { x: 84, y: 308 },
+        { x: 180, y: 308 },
+        { x: 240, y: 308 },
+        { x: 336, y: 308 },
+        // Row 4
+        { x: 84, y: 408 },
+        { x: 180, y: 408 },
+        { x: 240, y: 408 },
+        { x: 336, y: 408 },
+      ].map(({ x, y }, i) => (
+        <rect
+          key={i}
+          x={x - 4.5}
+          y={y - 4.5}
+          width="9"
+          height="9"
+          fill="#3b82f6"
+          rx="1.5"
         />
-        <circle r="2.5" fill="white" />
+      ))}
+
+      {/* ── Badges [A] and [B] ── */}
+      <g>
+        <rect x="186" y="107" width="13" height="10.5" rx="2.5" fill="#0055ff" />
+        <text x="192.5" y="115.2" fill="#ffffff" fontWeight="bold" fontSize="7" textAnchor="middle" fontFamily="Inter, sans-serif">
+          A
+        </text>
       </g>
+      <g>
+        <rect x="246" y="107" width="13" height="10.5" rx="2.5" fill="#0055ff" />
+        <text x="252.5" y="115.2" fill="#ffffff" fontWeight="bold" fontSize="7" textAnchor="middle" fontFamily="Inter, sans-serif">
+          B
+        </text>
+      </g>
+
+      {/* ── Room Typography & Metadata Labels ── */}
+      {/* Office 3.01 */}
+      <text x="117" y="125" textAnchor="middle" fontSize="10.5" fontWeight="bold" fill="#334155" fontFamily="Inter, sans-serif">
+        OFFICE 3.01
+      </text>
+      <text x="117" y="137" textAnchor="middle" fontSize="8" fontWeight="600" fill="#64748b" fontFamily="Inter, sans-serif">
+        42 m²
+      </text>
+
+      {/* Office 3.02 */}
+      <text x="117" y="225" textAnchor="middle" fontSize="10.5" fontWeight="bold" fill="#334155" fontFamily="Inter, sans-serif">
+        OFFICE 3.02
+      </text>
+      <text x="117" y="237" textAnchor="middle" fontSize="8" fontWeight="600" fill="#64748b" fontFamily="Inter, sans-serif">
+        42 m²
+      </text>
+
+      {/* Meeting 3.03 */}
+      <text x="117" y="318" textAnchor="middle" fontSize="10.5" fontWeight="bold" fill="#334155" fontFamily="Inter, sans-serif">
+        MEETING 3.03
+      </text>
+      <text x="117" y="330" textAnchor="middle" fontSize="8" fontWeight="600" fill="#64748b" fontFamily="Inter, sans-serif">
+        35 m²
+      </text>
+
+      {/* Store 3.05 */}
+      <text x="117" y="438" textAnchor="middle" fontSize="10.5" fontWeight="bold" fill="#334155" fontFamily="Inter, sans-serif">
+        STORE 3.05
+      </text>
+      <text x="117" y="450" textAnchor="middle" fontSize="8" fontWeight="600" fill="#64748b" fontFamily="Inter, sans-serif">
+        42 m²
+      </text>
+
+      {/* Lift Lobby Core */}
+      <text x="303" y="152" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#334155" fontFamily="Inter, sans-serif">
+        LIFT LOBBY
+      </text>
+      <text x="303" y="162" textAnchor="middle" fontSize="7.5" fontWeight="bold" fill="#64748b" fontFamily="Inter, sans-serif">
+        CORE
+      </text>
+
+      {/* Plant 3.06 */}
+      <text x="303" y="278" textAnchor="middle" fontSize="10.5" fontWeight="bold" fill="#334155" fontFamily="Inter, sans-serif">
+        PLANT 3.06
+      </text>
+      <text x="303" y="290" textAnchor="middle" fontSize="8" fontWeight="600" fill="#64748b" fontFamily="Inter, sans-serif">
+        48 m²
+      </text>
+
+      {/* Office 3.04 */}
+      <text x="303" y="408" textAnchor="middle" fontSize="10.5" fontWeight="bold" fill="#334155" fontFamily="Inter, sans-serif">
+        OFFICE 3.04
+      </text>
+      <text x="303" y="420" textAnchor="middle" fontSize="8" fontWeight="600" fill="#64748b" fontFamily="Inter, sans-serif">
+        51 m²
+      </text>
+
+      {/* ── Wayfinding Navigation Route ── */}
+      {/* Concentric Amber Target at START */}
+      <g>
+        <circle cx="210" cy="444" r="8.5" fill="none" stroke="#d97706" strokeWidth="1.8" />
+        <circle cx="210" cy="444" r="5" fill="none" stroke="#d97706" strokeWidth="1.3" />
+        <circle cx="210" cy="444" r="2.5" fill="#d97706" />
+        <text
+          x="210"
+          y="458"
+          textAnchor="middle"
+          fontSize="7.5"
+          fontWeight="bold"
+          fill="#3b82f6"
+          fontFamily="Inter, sans-serif"
+          letterSpacing="0.5px"
+        >
+          — START —
+        </text>
+      </g>
+
+      {/* Thick Amber Main Route Line (going up corridor and turning right into Lift Lobby) */}
+      <path
+        d="M 210,435 L 210,126 L 296,126"
+        fill="none"
+        stroke="#f59e0b"
+        strokeWidth="3.8"
+        strokeDasharray="6 3.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+
+      {/* Auxiliary Amber Line to Store 3.05 */}
+      <line
+        x1="204"
+        y1="441"
+        x2="114"
+        y2="422"
+        stroke="#f59e0b"
+        strokeWidth="2"
+        strokeDasharray="4 3"
+      />
+      {/* Blue Waypoint Pin in Store 3.05 */}
+      <circle cx="114" cy="422" r="5" fill="#0055ff" stroke="#ffffff" strokeWidth="1.5" />
+
+      {/* ── Dimension Scale & North Compass (Bottom) ── */}
+      {/* North Compass Rose */}
+      <g>
+        <circle cx="72" cy="510" r="11" fill="#ffffff" stroke="#cbd5e1" strokeWidth="1.5" />
+        <text
+          x="72"
+          y="504"
+          textAnchor="middle"
+          fontSize="7.5"
+          fontWeight="bold"
+          fill="#475569"
+          fontFamily="Inter, sans-serif"
+        >
+          N
+        </text>
+        <polygon points="72,506 68.5,516 75.5,516" fill="#475569" />
+      </g>
+
+      {/* Dimension Line (32.0 m) */}
+      <g>
+        {/* End Ticks */}
+        <line x1="84" y1="504" x2="84" y2="516" stroke="#94a3b8" strokeWidth="1.2" />
+        <line x1="336" y1="504" x2="336" y2="516" stroke="#94a3b8" strokeWidth="1.2" />
+        {/* Dimension Lines with Break in Middle */}
+        <line x1="84" y1="510" x2="190" y2="510" stroke="#cbd5e1" strokeWidth="1.2" />
+        <line x1="230" y1="510" x2="336" y2="510" stroke="#cbd5e1" strokeWidth="1.2" />
+        {/* Dimension Text */}
+        <text
+          x="210"
+          y="513"
+          textAnchor="middle"
+          fontSize="8.5"
+          fontWeight="bold"
+          fill="#64748b"
+          fontFamily="Inter, sans-serif"
+        >
+          32.0 m
+        </text>
+      </g>
+
+      {/* ── Dynamic Issue / Task Pins ── */}
+      {items.map((item, idx) => {
+        const pinPresets = [
+          { x: 145, y: 146 }, // Office 3.01
+          { x: 145, y: 246 }, // Office 3.02
+          { x: 145, y: 338 }, // Meeting 3.03
+          { x: 285, y: 300 }, // Plant 3.06
+          { x: 285, y: 435 }, // Office 3.04
+          { x: 80, y: 442 },  // Store 3.05
+          { x: 210, y: 220 }, // Corridor
+          { x: 280, y: 140 }, // Lift Lobby
+        ]
+        const preset = pinPresets[idx % pinPresets.length]
+        const isValid =
+          item.location &&
+          item.location.x >= 60 &&
+          item.location.x <= 360 &&
+          item.location.y >= 85 &&
+          item.location.y <= 470
+        const px = isValid ? item.location.x : preset.x
+        const py = isValid ? item.location.y : preset.y
+
+        return (
+          <g
+            key={item.id}
+            transform={`translate(${px}, ${py})`}
+            onClick={(e) => {
+              if (!interactive) return
+              e.stopPropagation()
+              onPinClick?.(item)
+            }}
+            style={{ cursor: interactive ? "pointer" : "default" }}
+            filter="url(#pin-shadow)"
+            className="transition-transform hover:scale-115 active:scale-95"
+          >
+            <circle r="12" fill="#ffffff" />
+            <circle r="10" fill={typeColors[item.type] || "#0055ff"} opacity="0.16" />
+            <circle r="6.5" fill={typeColors[item.type] || "#0055ff"} />
+            <text
+              y="2.8"
+              textAnchor="middle"
+              fontSize="6.5"
+              fill="#ffffff"
+              fontWeight="bold"
+              fontFamily="Inter, sans-serif"
+            >
+              {typeIcons[item.type] || "•"}
+            </text>
+          </g>
+        )
+      })}
     </svg>
   )
 }

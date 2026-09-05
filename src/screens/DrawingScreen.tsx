@@ -96,8 +96,21 @@ export function DrawingScreen({
         onSelectProject={onSelectProject}
       />
 
+      {/* Wayfinding Top Banner matching user screenshot */}
+      <div className="bg-[#FFFDF0] border-b border-[#FDE68A]/80 px-4 py-2.5 flex items-center gap-3 shrink-0 shadow-2xs">
+        <div className="w-2.5 h-2.5 rounded-full bg-[#EA580C] shrink-0 shadow-xs" />
+        <div className="min-w-0">
+          <h3 className="text-[12.5px] font-bold text-[#854D0E] leading-snug">
+            Walk to the start point
+          </h3>
+          <p className="text-[11px] font-medium text-[#B45309] leading-snug">
+            10.6 m away · follow the amber line
+          </p>
+        </div>
+      </div>
+
       {/* Main Drawing Viewport */}
-      <div className="flex-1 relative overflow-hidden bg-[#f0f2f5]">
+      <div className="flex-1 relative overflow-hidden bg-[#f8fafc]">
         {/* Drawing Canvas Container */}
         <div
           className="w-full h-full transition-transform duration-200"
@@ -115,83 +128,7 @@ export function DrawingScreen({
           />
         </div>
 
-        {/* Top-Left Level Selector Dropdown */}
-        <div className="absolute top-2.5 left-2.5 z-20 flex flex-col gap-1">
-          {/* Level Dropdown Pill */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setIsLevelDropdownOpen((v) => !v)}
-              className="flex items-center gap-1.5 bg-white/95 hover:bg-white active:scale-95 backdrop-blur-md px-2 py-1 rounded-lg shadow-xs border border-slate-200/80 text-[10px] font-bold text-slate-800 transition-all cursor-pointer"
-            >
-              <div className="w-3.5 h-3.5 rounded bg-blue-50 text-[#0055ff] flex items-center justify-center">
-                <svg
-                  width="9"
-                  height="9"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#0055ff"
-                  strokeWidth="2.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                  <path d="M2 17l10 5 10-5" />
-                  <path d="M2 12l10 5 10-5" />
-                </svg>
-              </div>
-              <span>{currentLevel}</span>
-              <svg
-                width="7"
-                height="4"
-                viewBox="0 0 10 6"
-                fill="none"
-                className={`transition-transform duration-200 ${
-                  isLevelDropdownOpen ? "rotate-180" : ""
-                }`}
-              >
-                <path
-                  d="M1 1L5 5L9 1"
-                  stroke="#64748b"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-
-            {isLevelDropdownOpen && (
-              <div
-                className="fixed inset-0 z-30"
-                onClick={() => setIsLevelDropdownOpen(false)}
-              />
-            )}
-            <FloatingMenu open={isLevelDropdownOpen} widthClassName="w-32">
-              <MenuCaption>Level</MenuCaption>
-              {levels.map((lvl) => (
-                <MenuItem
-                  key={lvl}
-                  selected={currentLevel === lvl}
-                  onClick={() => {
-                    setCurrentLevel(lvl)
-                    setIsLevelDropdownOpen(false)
-                  }}
-                >
-                  {lvl}
-                </MenuItem>
-              ))}
-            </FloatingMenu>
-          </div>
-
-          {/* Sheet & Scale Badge */}
-          <div className="bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-200/80 shadow-xs flex items-center gap-2 text-[10px] text-slate-600 font-semibold w-fit">
-            <span className="text-[#0055ff] font-bold">A-201</span>
-            <span className="text-slate-300">|</span>
-            <span>Scale 1:100</span>
-          </div>
-        </div>
-
-        {/* Top-Right Floating Tool Controls */}
+        {/* Top-Right Floating Controls (Split Screen & Fit view) */}
         <div className="absolute top-3.5 right-3.5 z-20 flex flex-col gap-1.5">
           {/* Split Screen Button */}
           <button
@@ -222,30 +159,13 @@ export function DrawingScreen({
               />
             </svg>
           </button>
-          {/* Zoom In */}
-          <button
-            type="button"
-            onClick={() => setZoomLevel((z) => Math.min(z + 0.2, 2.0))}
-            className="w-8 h-8 rounded-xl bg-white/95 hover:bg-white active:scale-95 backdrop-blur-md text-slate-700 flex items-center justify-center shadow-md shadow-black/10 border border-slate-200/80 transition-all cursor-pointer text-[15px] font-bold"
-            aria-label="Zoom in"
-          >
-            +
-          </button>
-          {/* Zoom Out */}
-          <button
-            type="button"
-            onClick={() => setZoomLevel((z) => Math.max(z - 0.2, 0.8))}
-            className="w-8 h-8 rounded-xl bg-white/95 hover:bg-white active:scale-95 backdrop-blur-md text-slate-700 flex items-center justify-center shadow-md shadow-black/10 border border-slate-200/80 transition-all cursor-pointer text-[15px] font-bold"
-            aria-label="Zoom out"
-          >
-            -
-          </button>
           {/* Reset Zoom / Fit */}
           <button
             type="button"
             onClick={() => setZoomLevel(1)}
             className="w-8 h-8 rounded-xl bg-white/95 hover:bg-white active:scale-95 backdrop-blur-md text-slate-700 flex items-center justify-center shadow-md shadow-black/10 border border-slate-200/80 transition-all cursor-pointer"
             aria-label="Fit view"
+            title="Fit view"
           >
             <svg
               width="13"
@@ -257,6 +177,27 @@ export function DrawingScreen({
             >
               <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
             </svg>
+          </button>
+        </div>
+
+        {/* Bottom-Right Zoom Pill (matching screenshot) */}
+        <div className="absolute bottom-5 right-3.5 z-20 flex flex-col bg-white rounded-xl shadow-md border border-slate-200/90 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setZoomLevel((z) => Math.min(z + 0.2, 2.2))}
+            className="w-8 h-8 flex items-center justify-center text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors text-[16px] font-medium cursor-pointer"
+            aria-label="Zoom in"
+          >
+            +
+          </button>
+          <div className="w-full h-px bg-slate-100" />
+          <button
+            type="button"
+            onClick={() => setZoomLevel((z) => Math.max(z - 0.2, 0.7))}
+            className="w-8 h-8 flex items-center justify-center text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors text-[16px] font-medium cursor-pointer"
+            aria-label="Zoom out"
+          >
+            −
           </button>
         </div>
 

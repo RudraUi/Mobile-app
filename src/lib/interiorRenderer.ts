@@ -107,6 +107,8 @@ export default function createInteriorRenderer(
           pitch: number
         },
         eyeHeight: number,
+        /** Focal multiplier: 1 is the standing lens, above 1 zooms in. */
+        zoom = 1,
       ) {
         const w = canvas.clientWidth,
           h = canvas.clientHeight
@@ -128,7 +130,7 @@ export default function createInteriorRenderer(
           Math.cos(camera.pitch),
           Math.sin(camera.pitch),
         )
-        const focal = Math.min(w, h) * 0.78
+        const focal = Math.min(w, h) * 0.78 * (zoom > 0 ? zoom : 1)
         gl.uniform2f(lens, (2 * focal) / w, (2 * focal) / h)
         gl.drawArrays(gl.TRIANGLES, 0, model.count * 6)
       },
