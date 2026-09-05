@@ -338,7 +338,7 @@ export default function App() {
           />
         )}
 
-        <div key={screen} className="flex flex-col h-full animate-fade-in">
+        <div key={screen} className="flex flex-col h-full animate-screen-in">
           {screen === "login" && (
             <LoginScreen onLogin={handleLogin} onOtp={() => setScreen("otp")} />
           )}

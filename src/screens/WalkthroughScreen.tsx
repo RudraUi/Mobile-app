@@ -79,15 +79,6 @@ export function WalkthroughScreen({
     return "N"
   }
 
-  const captureTimestamps = [
-    "Sep 01 · 10:45 AM (Today)",
-    "Aug 28 · 03:20 PM",
-    "Aug 21 · 09:15 AM",
-    "Aug 14 · 11:00 AM",
-  ]
-
-  const [isDateOpen, setIsDateOpen] = useState(false)
-
   return (
     <div className="flex flex-col h-full bg-[#0F172A] select-none overflow-hidden text-white">
       {/* Standard AppHeader */}
@@ -216,92 +207,7 @@ export function WalkthroughScreen({
           </div>
         </div>
 
-        {/* Top-Left Walkthrough HUD Controls */}
-        <div className="absolute top-3.5 left-3.5 z-20 flex flex-col gap-2">
-          {/* Capture Date Dropdown */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setIsDateOpen((v) => !v)}
-              className="flex items-center gap-1.5 bg-slate-900/90 hover:bg-slate-800 active:scale-95 backdrop-blur-md px-2.5 py-1.5 rounded-xl shadow-lg border border-slate-700/80 text-[11px] font-bold text-white transition-all cursor-pointer"
-            >
-              <div className="w-4 h-4 rounded-md bg-blue-500/20 text-[#0055ff] flex items-center justify-center text-[10px]">
-                🎥
-              </div>
-              <span>{captureDate}</span>
-              <svg
-                width="8"
-                height="5"
-                viewBox="0 0 10 6"
-                fill="none"
-                className={`transition-transform duration-200 ${
-                  isDateOpen ? "rotate-180" : ""
-                }`}
-              >
-                <path
-                  d="M1 1L5 5L9 1"
-                  stroke="#94a3b8"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
 
-            {isDateOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-30"
-                  onClick={() => setIsDateOpen(false)}
-                />
-                <div className="absolute top-full left-0 mt-1.5 w-48 bg-slate-900/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-700 p-1.5 z-40 animate-slide-up text-white">
-                  <div className="px-2 py-0.5 text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                    Capture History
-                  </div>
-                  {captureTimestamps.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => {
-                        setCaptureDate(t)
-                        setIsDateOpen(false)
-                      }}
-                      className={`w-full text-left px-2.5 py-1.5 rounded-xl text-[11px] font-medium transition-colors cursor-pointer ${
-                        captureDate === t
-                          ? "bg-blue-600 text-white font-bold"
-                          : "text-slate-300 hover:bg-slate-800"
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Mode Switcher Chips (360 Photo / BIM Comparison / As-Built) */}
-          <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md p-1 rounded-xl border border-white/10 w-fit">
-            {[
-              { id: "photo", label: "360° Photo" },
-              { id: "split", label: "Split BIM" },
-              { id: "cad", label: "CAD Overlay" },
-            ].map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => setCompareMode(m.id as any)}
-                className={`px-2 py-0.5 rounded-lg text-[9.5px] font-bold transition-all cursor-pointer ${
-                  compareMode === m.id
-                    ? "bg-[#0055ff] text-white shadow-2xs"
-                    : "text-slate-300 hover:text-white"
-                }`}
-              >
-                {m.label}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Top-Right 360 Controls (Split Screen, 360 Orientation & Zoom) */}
         <div className="absolute top-3.5 right-3.5 z-20 flex flex-col gap-1.5">

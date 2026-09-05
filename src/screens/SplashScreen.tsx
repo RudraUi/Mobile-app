@@ -41,7 +41,7 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
         isExiting ? "animate-splash-flash-out" : ""
       }`}
     >
-      {/* Centered Brand Lockup: Logo + SITESYNC */}
+      {/* Centered Brand Lockup: Logo + FIELD APP */}
       <div className="flex flex-col items-center justify-center select-none">
         {/* Animated BIMBOX Wordmark Logo */}
         <div className="animate-splash-wordmark shrink-0 flex items-center justify-center">
@@ -86,7 +86,7 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
           </svg>
         </div>
 
-        {/* Below that: SITESYNC */}
+        {/* Below that: FIELD APP */}
         <div
           className="-mt-0.5 animate-slide-up flex items-center justify-center"
           style={{ animationDelay: "0.35s" }}
@@ -95,7 +95,7 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
             className="text-[13px] font-bold text-[#0055ff] tracking-[0.18em] uppercase"
             style={{ fontFamily: "'Nunito Sans', sans-serif" }}
           >
-            SITESYNC
+            FIELD APP
           </span>
         </div>
       </div>

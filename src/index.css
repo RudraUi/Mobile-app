@@ -1195,3 +1195,59 @@ select {
 .animate-spin-slow {
   animation: spinSlow 1.1s linear infinite;
 }
+
+/* ---- Bottom nav tab switching ---- */
+
+/* Spring pop played on the icon of the tab that was just selected */
+@keyframes navIconPop {
+  0%   { transform: scale(1) translateY(0); }
+  28%  { transform: scale(0.8) translateY(1.5px); }
+  60%  { transform: scale(1.18) translateY(-2.5px); }
+  82%  { transform: scale(0.97) translateY(0.5px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+.animate-nav-icon-pop {
+  animation: navIconPop 0.46s cubic-bezier(0.34, 1.3, 0.5, 1) both;
+}
+
+/* Capsule behind the active icon springs open */
+@keyframes navPillIn {
+  0%   { transform: scale(0.5); opacity: 0; }
+  55%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-nav-pill {
+  animation: navPillIn 0.38s cubic-bezier(0.34, 1.35, 0.5, 1) both;
+}
+
+/* Label + micro dot rise into place under the active tab */
+@keyframes navLabelIn {
+  0%   { transform: translateY(3px); opacity: 0.35; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.animate-nav-label {
+  animation: navLabelIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Screen content settling in after a tab switch */
+@keyframes screenIn {
+  0%   { opacity: 0; transform: translateY(8px) scale(0.99); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.animate-screen-in {
+  animation: screenIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-nav-icon-pop,
+  .animate-nav-pill,
+  .animate-nav-label,
+  .animate-screen-in {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+  }
+}
