@@ -100,7 +100,12 @@ export default function createInteriorRenderer(
     gl.clearColor(0.91, 0.94, 0.97, 1)
     return {
       draw(
-        camera: { x: number z: number yaw: number pitch: number },
+        camera: {
+          x: number
+          z: number
+          yaw: number
+          pitch: number
+        },
         eyeHeight: number,
       ) {
         const w = canvas.clientWidth,

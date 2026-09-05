@@ -58,7 +58,11 @@ export interface Building3DProps {
   className?: string
   /** "orbit" flies around the massing; "walk" puts you inside a storey. */
   mode?: "orbit" | "walk"
-  onWalkChange?: (position: { x: number z: number yaw: number }) => void
+  onWalkChange?: (position: {
+    x: number
+    z: number
+    yaw: number
+  }) => void
 }
 
 /** Imperative camera controls for the on-screen buttons. */
@@ -456,9 +460,9 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       visible: new Uint8Array(0),
     })
     const interacting = useRef(false)
-    const pointers = useRef(new Map<number, { x: number y: number }>())
-    const pinchStart = useRef<{ gap: number dist: number } | null>(null)
-    const lastMid = useRef<{ x: number y: number } | null>(null)
+    const pointers = useRef(new Map<number, { x: number; y: number }>())
+    const pinchStart = useRef<{ gap: number; dist: number } | null>(null)
+    const lastMid = useRef<{ x: number; y: number } | null>(null)
     const walk = useRef({ ...DEFAULT_WALK })
     const walkInput = useRef({ forward: 0, strafe: 0 })
     const keys = useRef(new Set<string>())
