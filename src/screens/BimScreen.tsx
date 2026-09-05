@@ -40,6 +40,12 @@ interface DrawnMarkup {
   points?: { x: number; y: number }[]
   bounds?: { x1: number; y1: number; x2: number; y2: number }
   center: { x: number; y: number }
+  /**
+   * Where the markup actually sits in the model. Drawn in first person it is
+   * pinned to the surface it was drawn over, so it stays on that wall as you
+   * look around instead of riding along with the screen.
+   */
+  world?: V3[]
 }
 
 function generateCloudPath(
@@ -111,13 +117,19 @@ export function BimScreen({
   const [filterPriority, setFilterPriority] = useState<Severity | "all">("all")
 
   const [navMode, setNavMode] = useState<"orbit" | "walk">("orbit")
+  // Indoors, surfaces are lit and given their material treatment by default;
+  // the schematic look stays a tap away for reading the layout.
+  const [realisticMaterials, setRealisticMaterials] = useState(true)
   const [selectedPinItem, setSelectedPinItem] = useState<Item | null>(null)
   const [activeFloor, setActiveFloor] = useState<number | null>(null)
   const [isLevelDropdownOpen, setIsLevelDropdownOpen] = useState(false)
   const levelDropdownRef = useRef<HTMLDivElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const stageRef = useRef<HTMLDivElement>(null)
-  const [compass, setCompass] = useState(0)
+  // Written straight to the DOM like the pins: the heading changes on almost
+  // every frame of a look, and re-rendering this screen that often is what
+  // makes a turn stutter on a phone.
+  const compassRef = useRef<HTMLSpanElement>(null)
   const viewerRef = useRef<Building3DHandle>(null)
   const walkMarker = useRef<SVGGElement>(null)
 
@@ -175,7 +187,7 @@ export function BimScreen({
       points: pts,
       center: { x: centerX, y: centerY },
     }
-    setDrawnMarkup(markup)
+    setDrawnMarkup(anchorMarkup(markup))
     setCurrentDrawingPoints([])
     setPolygonRedoPoints([])
     setCursorPos(null)
@@ -200,7 +212,7 @@ export function BimScreen({
           type: "point",
           center: { x: centerX, y: centerY },
         }
-        setDrawnMarkup(markup)
+        setDrawnMarkup(anchorMarkup(markup))
       }
       if (onOpenCreateItem) {
         onOpenCreateItem(type)
@@ -212,6 +224,86 @@ export function BimScreen({
   )
 
   const [drawnMarkup, setDrawnMarkup] = useState<DrawnMarkup | null>(null)
+
+  // The markup's shape is rewritten from the render loop for the same reason
+  // the pins are: going through state every frame would re-render the screen.
+  const markupLayerRef = useRef<HTMLDivElement>(null)
+  const markupShapeRef = useRef<SVGPolygonElement>(null)
+  const markupCloudRef = useRef<SVGPathElement>(null)
+  const markupPointRef = useRef<SVGGElement>(null)
+  const markupLabelRef = useRef<HTMLDivElement>(null)
+
+  /** Screen points for the markup this frame, or null while it is out of view. */
+  const handleProjectMarkup = useCallback(
+    (points: { x: number; y: number }[] | null) => {
+      const layer = markupLayerRef.current
+      if (!layer) return
+      if (!points || points.length === 0) {
+        layer.style.visibility = "hidden"
+        return
+      }
+      layer.style.visibility = "visible"
+
+      let cx = 0
+      let cy = 0
+      for (const point of points) {
+        cx += point.x
+        cy += point.y
+      }
+      cx /= points.length
+      cy /= points.length
+
+      markupShapeRef.current?.setAttribute(
+        "points",
+        points.map((p) => `${p.x},${p.y}`).join(" "),
+      )
+      markupPointRef.current?.setAttribute(
+        "transform",
+        `translate(${cx} ${cy})`,
+      )
+      if (markupCloudRef.current) {
+        const xs = points.map((p) => p.x)
+        const ys = points.map((p) => p.y)
+        markupCloudRef.current.setAttribute(
+          "d",
+          generateCloudPath(
+            Math.min(...xs),
+            Math.min(...ys),
+            Math.max(...xs),
+            Math.max(...ys),
+          ),
+        )
+      }
+      const label = markupLabelRef.current
+      if (label) {
+        label.style.left = `${cx}px`
+        label.style.top = `${cy - 12}px`
+      }
+    },
+    [],
+  )
+
+  /** Pin a freshly drawn markup to the surface it was drawn over. */
+  const anchorMarkup = useCallback(
+    (markup: DrawnMarkup): DrawnMarkup => {
+      const lift = viewerRef.current?.liftToWorld
+      if (!lift) return markup
+      const source =
+        markup.type === "polygon" && markup.points
+          ? markup.points
+          : markup.type === "cloud" && markup.bounds
+            ? [
+                { x: markup.bounds.x1, y: markup.bounds.y1 },
+                { x: markup.bounds.x2, y: markup.bounds.y1 },
+                { x: markup.bounds.x2, y: markup.bounds.y2 },
+                { x: markup.bounds.x1, y: markup.bounds.y2 },
+              ]
+            : [markup.center]
+      const world = lift(source)
+      return world ? { ...markup, world } : markup
+    },
+    [],
+  )
 
   const toggleFullscreen = useCallback(() => {
     setIsFullscreen((prev) => !prev)
@@ -284,9 +376,9 @@ export function BimScreen({
   }
 
   const handleCameraChange = (yaw: number) => {
-    setCompass((current) =>
-      Math.abs(current - yaw) > 1.5 ? Math.round(yaw) : current,
-    )
+    const next = `${Math.round(yaw)}\u00B0`
+    const el = compassRef.current
+    if (el && el.textContent !== next) el.textContent = next
   }
 
   const filteredItems = items.filter((item) => {
@@ -378,6 +470,9 @@ export function BimScreen({
           floors={FLOOR_COUNT}
           activeFloor={activeFloor}
           mode={navMode}
+          realistic={realisticMaterials}
+          worldMarkup={drawnMarkup?.world ?? null}
+          onProjectMarkup={handleProjectMarkup}
           pins={worldPins}
           ref={viewerRef}
           onProjectPins={handleProjectPins}
@@ -430,10 +525,17 @@ export function BimScreen({
 
         {/* Rendered Persistent Drawn Markup */}
         {drawnMarkup && (
-          <div className="absolute inset-0 pointer-events-none z-15">
+          // Keyed on the mode: leaving first person drops the frame-by-frame
+          // positions and restores the ones the markup was drawn at.
+          <div
+            key={navMode}
+            ref={markupLayerRef}
+            className="absolute inset-0 pointer-events-none z-15"
+          >
             <svg className="w-full h-full">
               {drawnMarkup.type === "cloud" && drawnMarkup.bounds && (
                 <path
+                  ref={markupCloudRef}
                   d={generateCloudPath(
                     drawnMarkup.bounds.x1,
                     drawnMarkup.bounds.y1,
@@ -448,6 +550,7 @@ export function BimScreen({
               )}
               {drawnMarkup.type === "polygon" && drawnMarkup.points && (
                 <polygon
+                  ref={markupShapeRef}
                   points={drawnMarkup.points
                     .map((p) => `${p.x},${p.y}`)
                     .join(" ")}
@@ -458,10 +561,11 @@ export function BimScreen({
                 />
               )}
               {drawnMarkup.type === "point" && (
-                <g>
+                <g
+                  ref={markupPointRef}
+                  transform={`translate(${drawnMarkup.center.x} ${drawnMarkup.center.y})`}
+                >
                   <circle
-                    cx={drawnMarkup.center.x}
-                    cy={drawnMarkup.center.y}
                     r="16"
                     fill="rgba(239, 68, 68, 0.22)"
                     stroke="#EF4444"
@@ -469,18 +573,14 @@ export function BimScreen({
                     strokeDasharray="4 2"
                     className="animate-pulse"
                   />
-                  <circle
-                    cx={drawnMarkup.center.x}
-                    cy={drawnMarkup.center.y}
-                    r="6"
-                    fill="#EF4444"
-                  />
+                  <circle r="6" fill="#EF4444" />
                 </g>
               )}
             </svg>
 
             {/* Floating Tag over Markup */}
             <div
+              ref={markupLabelRef}
               className="absolute pointer-events-auto -translate-x-1/2 -translate-y-full flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-md text-white px-2.5 py-1 rounded-full text-[10px] font-bold shadow-xl border border-white/20"
               style={{
                 left: drawnMarkup.center.x,
@@ -525,7 +625,7 @@ export function BimScreen({
                   type: "point",
                   center: { x, y },
                 }
-                setDrawnMarkup(markup)
+                setDrawnMarkup(anchorMarkup(markup))
                 setIsDrawing(false)
                 setActiveMarkupTool(null)
                 setIsMarkupMenuOpen(false)
@@ -594,7 +694,7 @@ export function BimScreen({
                     y: (finalY1 + finalY2) / 2,
                   },
                 }
-                setDrawnMarkup(markup)
+                setDrawnMarkup(anchorMarkup(markup))
                 setCloudDragBox(null)
                 setActiveMarkupTool(null)
                 setIsMarkupMenuOpen(false)
@@ -1189,8 +1289,11 @@ export function BimScreen({
             <span className="text-[8px] font-extrabold leading-none tracking-tight">
               {navMode === "walk" ? "START" : "FRONT"}
             </span>
-            <span className="text-[7.5px] font-bold leading-none tabular-nums text-slate-400 mt-0.5">
-              {compass}&deg;
+            <span
+              ref={compassRef}
+              className="text-[7.5px] font-bold leading-none tabular-nums text-slate-400 mt-0.5"
+            >
+              0&deg;
             </span>
           </button>
           {/* Zoom: the lens indoors, the dolly outside */}
@@ -1213,6 +1316,45 @@ export function BimScreen({
               -
             </button>
           </>
+          {/* Material Toggle — realistic surfaces vs. the flat schematic */}
+          {navMode === "walk" && (
+            <button
+              type="button"
+              onClick={() => setRealisticMaterials((on) => !on)}
+              className={`w-8 h-8 rounded-xl backdrop-blur-md flex items-center justify-center shadow-md border transition-all cursor-pointer ${
+                realisticMaterials
+                  ? "bg-[#0055ff] text-white border-[#0055ff] shadow-blue-500/25"
+                  : "bg-white/95 hover:bg-slate-50 active:scale-95 text-[#0055ff] border-slate-200 shadow-slate-900/10"
+              }`}
+              title={
+                realisticMaterials
+                  ? "Realistic materials on — switch to schematic"
+                  : "Schematic view — switch to realistic materials"
+              }
+              aria-label="Realistic materials"
+              aria-pressed={realisticMaterials}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.9"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="8.5" />
+                <path
+                  d="M12 3.5a8.5 8.5 0 0 1 0 17z"
+                  fill="currentColor"
+                  stroke="none"
+                />
+                <path d="M3.9 9.4h16.2M3.9 14.6h16.2" strokeWidth="1.1" />
+              </svg>
+            </button>
+          )}
+
           {/* Mode Switcher (Orbit / Walk) */}
           <button
             type="button"

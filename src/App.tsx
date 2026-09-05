@@ -748,6 +748,7 @@ export default function App() {
         {/* Amazing Vibe Animation & Celebration Toast after creating an item */}
         {vibeCelebrationItem && (
           <VibeCelebrationToast
+            isDark={isDark}
             item={vibeCelebrationItem}
             onDismiss={() => setVibeCelebrationItem(null)}
             onViewItem={() => {

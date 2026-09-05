@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import type { ReactNode } from "react"
 import type { Assignee, ItemType, Severity, Status } from "../data/mockData"
 import { CustomKeyboard } from "../components/CustomKeyboard"

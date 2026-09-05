@@ -23,7 +23,7 @@ interface SplitViewScreenProps {
 
 type PanelType = "drawing" | "3d" | "map" | "drone" | "walkthrough"
 
-const PANEL_OPTIONS: { id: PanelType label: string }[] = [
+const PANEL_OPTIONS: { id: PanelType; label: string }[] = [
   { id: "drawing", label: "Drawing" },
   { id: "3d", label: "3D BIM" },
   { id: "map", label: "Map" },
@@ -210,6 +210,234 @@ function Panel3D({
   )
 }
 
+/* ── Drawing panel: pan and zoom ──────────────────────────────────
+   The plan drives the SVG's own viewBox rather than a CSS transform, so it
+   stays vector-sharp however far in you go, and the pins keep their true
+   positions instead of being scaled bitmaps.
+   ──────────────────────────────────────────────────────────────── */
+
+const PLAN_W = 400
+const PLAN_H = 560
+const MIN_ZOOM = 1
+const MAX_ZOOM = 6
+
+interface PlanView {
+  x: number
+  y: number
+  zoom: number
+}
+
+const clamp = (value: number, low: number, high: number) =>
+  Math.max(low, Math.min(high, value))
+
+/** Keep the window inside the sheet, whatever the gesture asked for. */
+function settle(zoom: number, x: number, y: number): PlanView {
+  const z = clamp(zoom, MIN_ZOOM, MAX_ZOOM)
+  return {
+    zoom: z,
+    x: clamp(x, 0, PLAN_W - PLAN_W / z),
+    y: clamp(y, 0, PLAN_H - PLAN_H / z),
+  }
+}
+
+/**
+ * Plan units per pixel, and where the sheet's top-left corner actually sits.
+ * The SVG letterboxes itself inside the panel, so neither follows from the
+ * element's own box.
+ */
+function fitted(view: PlanView, rect: DOMRect) {
+  const scale = Math.min(
+    rect.width / (PLAN_W / view.zoom),
+    rect.height / (PLAN_H / view.zoom),
+  )
+  return {
+    scale,
+    left: rect.left + (rect.width - (PLAN_W / view.zoom) * scale) / 2,
+    top: rect.top + (rect.height - (PLAN_H / view.zoom) * scale) / 2,
+  }
+}
+
+function DrawingPanel({
+  items,
+  onItemClick,
+}: {
+  items: Item[]
+  onItemClick: (item: Item) => void
+}) {
+  const [view, setView] = useState<PlanView>({ x: 0, y: 0, zoom: 1 })
+  const surfaceRef = useRef<HTMLDivElement>(null)
+  const pointers = useRef(new Map<number, { x: number; y: number }>())
+  const pinch = useRef<{ gap: number; zoom: number } | null>(null)
+  const dragged = useRef(false)
+  const tapAt = useRef(0)
+
+  /** Zoom about a screen point, so whatever is under the fingers stays put. */
+  const zoomAbout = useCallback(
+    (nextZoom: number, clientX: number, clientY: number) => {
+      const rect = surfaceRef.current?.getBoundingClientRect()
+      if (!rect) return
+      setView((current) => {
+        const { scale, left, top } = fitted(current, rect)
+        const planX = current.x + (clientX - left) / scale
+        const planY = current.y + (clientY - top) / scale
+        const zoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM)
+        const after = fitted({ ...current, zoom }, rect)
+        return settle(
+          zoom,
+          planX - (clientX - after.left) / after.scale,
+          planY - (clientY - after.top) / after.scale,
+        )
+      })
+    },
+    [],
+  )
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId)
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (pointers.current.size === 2) {
+      const [a, b] = [...pointers.current.values()]
+      pinch.current = { gap: Math.hypot(a.x - b.x, a.y - b.y), zoom: view.zoom }
+    }
+  }
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const previous = pointers.current.get(e.pointerId)
+    if (!previous) return
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    const rect = surfaceRef.current?.getBoundingClientRect()
+    if (!rect) return
+
+    if (pointers.current.size === 2 && pinch.current) {
+      const [a, b] = [...pointers.current.values()]
+      const gap = Math.hypot(a.x - b.x, a.y - b.y)
+      dragged.current = true
+      zoomAbout(
+        (pinch.current.zoom * gap) / (pinch.current.gap || 1),
+        (a.x + b.x) / 2,
+        (a.y + b.y) / 2,
+      )
+      return
+    }
+    if (pointers.current.size !== 1) return
+    const dx = e.clientX - previous.x
+    const dy = e.clientY - previous.y
+    if (Math.hypot(dx, dy) > 0.5) dragged.current = true
+    setView((current) => {
+      const { scale } = fitted(current, rect)
+      return settle(current.zoom, current.x - dx / scale, current.y - dy / scale)
+    })
+  }
+
+  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    pointers.current.delete(e.pointerId)
+    if (pointers.current.size < 2) pinch.current = null
+    if (dragged.current) return
+    // A clean double tap zooms in on the spot, and steps back out at the top.
+    if (e.timeStamp - tapAt.current < 320) {
+      tapAt.current = 0
+      if (view.zoom >= MAX_ZOOM - 0.01) setView({ x: 0, y: 0, zoom: 1 })
+      else zoomAbout(view.zoom * 2, e.clientX, e.clientY)
+    } else tapAt.current = e.timeStamp
+  }
+
+  const onWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    zoomAbout(view.zoom * (1 - e.deltaY * 0.0015), e.clientX, e.clientY)
+  }
+
+  const step = (factor: number) => {
+    const rect = surfaceRef.current?.getBoundingClientRect()
+    if (!rect) return
+    zoomAbout(
+      view.zoom * factor,
+      rect.left + rect.width / 2,
+      rect.top + rect.height / 2,
+    )
+  }
+
+  const viewBox = `${view.x} ${view.y} ${PLAN_W / view.zoom} ${PLAN_H / view.zoom}`
+
+  return (
+    <div className="w-full h-full bg-[#f0f2f5] relative overflow-hidden">
+      <div
+        ref={surfaceRef}
+        className="w-full h-full touch-none"
+        style={{ cursor: view.zoom > 1 ? "grab" : "default" }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        onLostPointerCapture={onPointerUp}
+        onWheel={onWheel}
+        onClickCapture={(e) => {
+          // A pan that ends over a pin must not open it.
+          if (!dragged.current) return
+          dragged.current = false
+          e.stopPropagation()
+          e.preventDefault()
+        }}
+      >
+        <MapView
+          items={items}
+          onPinClick={onItemClick}
+          viewBox={viewBox}
+          pinScale={1 / view.zoom}
+        />
+      </div>
+
+      {/* Zoom controls, for when a pinch is not to hand */}
+      <div className="absolute bottom-3 right-3 z-30 flex flex-col gap-1">
+        <button
+          type="button"
+          aria-label="Zoom in"
+          onClick={() => step(1.6)}
+          className="w-7 h-7 rounded-lg bg-white/95 hover:bg-white active:scale-95 backdrop-blur-md text-slate-700 flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.1)] border border-slate-200 text-[14px] font-bold leading-none cursor-pointer"
+        >
+          +
+        </button>
+        <button
+          type="button"
+          aria-label="Zoom out"
+          onClick={() => step(1 / 1.6)}
+          className="w-7 h-7 rounded-lg bg-white/95 hover:bg-white active:scale-95 backdrop-blur-md text-slate-700 flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.1)] border border-slate-200 text-[14px] font-bold leading-none cursor-pointer"
+        >
+          -
+        </button>
+        <button
+          type="button"
+          aria-label="Fit drawing to panel"
+          title="Fit to panel"
+          onClick={() => setView({ x: 0, y: 0, zoom: 1 })}
+          className={`w-7 h-7 rounded-lg backdrop-blur-md flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.1)] border transition-colors cursor-pointer ${
+            view.zoom > 1.01
+              ? "bg-[#0055ff] text-white border-[#0055ff]"
+              : "bg-white/95 text-slate-400 border-slate-200"
+          }`}
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M4 9V5.5A1.5 1.5 0 0 1 5.5 4H9M15 4h3.5A1.5 1.5 0 0 1 20 5.5V9M20 15v3.5a1.5 1.5 0 0 1-1.5 1.5H15M9 20H5.5A1.5 1.5 0 0 1 4 18.5V15" />
+          </svg>
+        </button>
+      </div>
+
+      {view.zoom > 1.01 && (
+        <div className="absolute bottom-3 left-3 z-30 rounded-md bg-slate-900/70 px-1.5 py-0.5 text-[9px] font-bold tabular-nums text-white/90 backdrop-blur-sm pointer-events-none">
+          {Math.round(view.zoom * 100)}%
+        </div>
+      )}
+    </div>
+  )
+}
+
 function PanelContent({
   type,
   items,
@@ -220,11 +448,7 @@ function PanelContent({
   onItemClick: (item: Item) => void
 }) {
   if (type === "drawing") {
-    return (
-      <div className="w-full h-full bg-[#f0f2f5]">
-        <MapView items={items} onPinClick={onItemClick} />
-      </div>
-    )
+    return <DrawingPanel items={items} onItemClick={onItemClick} />
   }
 
   if (type === "map") {
@@ -464,7 +688,7 @@ function PanelContent({
   )
 }
 
-function MiniToggle({ on, onToggle }: { on: boolean onToggle: () => void }) {
+function MiniToggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
   return (
     <button
       type="button"

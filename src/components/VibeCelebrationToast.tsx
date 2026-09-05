@@ -5,12 +5,18 @@ interface VibeCelebrationToastProps {
   item: Item
   onDismiss: () => void
   onViewItem: () => void
+  /**
+   * The app themes itself through `data-theme`, which Tailwind's `dark:`
+   * variant does not follow here, so the surface is chosen explicitly.
+   */
+  isDark?: boolean
 }
 
 export function VibeCelebrationToast({
   item,
   onDismiss,
   onViewItem,
+  isDark = false,
 }: VibeCelebrationToastProps) {
   const [isClosing, setIsClosing] = useState(false)
 
@@ -78,44 +84,50 @@ export function VibeCelebrationToast({
   return (
     <>
       {/* 1. Screen-level Vibe Shockwave Ripple radiating from bottom center */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex items-center justify-center overflow-hidden h-64">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex items-center justify-center overflow-hidden h-40">
         <div
-          className="w-48 h-48 rounded-full border-2 border-emerald-400/50 bg-emerald-400/15 animate-vibe-shockwave"
+          className="w-32 h-32 rounded-full border-2 border-emerald-400/50 bg-emerald-400/15 animate-vibe-shockwave"
           style={{ borderColor: theme.glow }}
         />
       </div>
 
       {/* 2. Floating Vibe Celebration Capsule */}
       <div
-        className={`fixed top-3 inset-x-3.5 z-50 select-none ${
+        className={`absolute top-3 inset-x-3 z-50 select-none ${
           isClosing ? "animate-vibe-pop-out" : "animate-vibe-pop-in"
         }`}
       >
         <div
-          className="relative overflow-hidden rounded-2xl border border-white/20 bg-slate-950/85 backdrop-blur-xl p-3 shadow-[0_20px_45px_rgba(0,0,0,0.45)]"
+          className={`relative overflow-hidden rounded-2xl border p-2 shadow-[0_12px_30px_rgba(15,23,42,0.16)] ${
+            isDark
+              ? "border-white/15 bg-[#151829]"
+              : "border-slate-200/80 bg-white"
+          }`}
           style={{
-            boxShadow: `0 18px 40px rgba(0,0,0,0.4), 0 0 28px ${theme.glow}`,
+            boxShadow: `0 10px 26px rgba(15,23,42,0.16), 0 0 18px ${theme.glow}`,
           }}
         >
           {/* Top subtle iridescent glow bar */}
-          <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+          <div
+            className={`absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent to-transparent ${
+              isDark ? "via-white/50" : "via-slate-300/70"
+            }`}
+          />
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {/* Pulsing type icon circle */}
-            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/20">
-              <span
-                className={`h-2.5 w-2.5 rounded-full ${theme.bg} shadow-[0_0_10px_currentColor]`}
-              />
+            <div
+              className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${theme.bg}`}
+            >
               <svg
-                width="14"
-                height="14"
+                width="13"
+                height="13"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="white"
                 strokeWidth="3"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="absolute"
               >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
@@ -123,31 +135,51 @@ export function VibeCelebrationToast({
 
             {/* Content info */}
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
-                  <span>✨ Created!</span>
+              <div className="flex items-center gap-1">
+                <span
+                  className={`text-[9px] font-bold uppercase tracking-wider ${
+                    isDark ? "text-emerald-400" : "text-emerald-600"
+                  }`}
+                >
+                  ✨ Created!
                 </span>
-                <span className="text-white/40 text-[10px]">·</span>
-                <span className={`text-[10.5px] font-semibold ${theme.text}`}>
+                <span
+                  className={`text-[9px] ${isDark ? "text-white/40" : "text-slate-300"}`}
+                >
+                  ·
+                </span>
+                <span
+                  className={`text-[9px] font-semibold ${
+                    isDark ? "text-white/60" : "text-slate-400"
+                  }`}
+                >
                   #{item.id}
                 </span>
               </div>
-              <p className="truncate text-[13px] font-semibold text-white leading-tight mt-0.5">
+              <p
+                className={`truncate text-[11.5px] font-semibold leading-tight ${
+                  isDark ? "text-white" : "text-slate-900"
+                }`}
+              >
                 {item.title || `${theme.label} recorded`}
               </p>
             </div>
 
             {/* Quick View Button */}
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1 shrink-0">
               <button
                 type="button"
                 onClick={onViewItem}
-                className="flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[11.5px] font-semibold text-white transition-all hover:bg-white/25 active:scale-95 border border-white/15"
+                className={`flex items-center gap-0.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold transition-all active:scale-95 ${
+                  isDark
+                    ? "border-white/15 bg-white/15 text-white hover:bg-white/25"
+                    : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
               >
                 <span>View</span>
                 <svg
-                  width="11"
-                  height="11"
+                  width="10"
+                  height="10"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -162,12 +194,16 @@ export function VibeCelebrationToast({
               <button
                 type="button"
                 onClick={handleClose}
-                className="flex h-7 w-7 items-center justify-center rounded-full text-white/50 hover:bg-white/10 hover:text-white"
+                className={`flex h-5 w-5 items-center justify-center rounded-full ${
+                  isDark
+                    ? "text-white/50 hover:bg-white/10 hover:text-white"
+                    : "text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                }`}
                 aria-label="Dismiss notification"
               >
                 <svg
-                  width="13"
-                  height="13"
+                  width="11"
+                  height="11"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -182,16 +218,16 @@ export function VibeCelebrationToast({
           </div>
 
           {/* Sparkle Confetti Particles */}
-          <span className="pointer-events-none absolute -top-1 left-12 text-[13px] text-amber-300 animate-vibe-sparkle-1">
+          <span className="pointer-events-none absolute -top-1 left-9 text-[13px] text-amber-300 animate-vibe-sparkle-1">
             ✦
           </span>
-          <span className="pointer-events-none absolute -top-2 left-24 text-[14px] text-emerald-300 animate-vibe-sparkle-2">
+          <span className="pointer-events-none absolute -top-2 left-20 text-[14px] text-emerald-300 animate-vibe-sparkle-2">
             ✨
           </span>
-          <span className="pointer-events-none absolute -top-1 right-20 text-[12px] text-cyan-300 animate-vibe-sparkle-3">
+          <span className="pointer-events-none absolute -top-1 right-16 text-[12px] text-cyan-300 animate-vibe-sparkle-3">
             ⭐
           </span>
-          <span className="pointer-events-none absolute -top-2 right-8 text-[13px] text-purple-300 animate-vibe-sparkle-4">
+          <span className="pointer-events-none absolute -top-2 right-7 text-[13px] text-purple-300 animate-vibe-sparkle-4">
             🎉
           </span>
         </div>

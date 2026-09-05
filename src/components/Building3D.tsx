@@ -41,6 +41,34 @@ export interface ProjectedPin {
   visible: boolean
 }
 
+/**
+ * What a surface is made of. The exterior painter ignores this; the interior
+ * renderer uses it to give each surface its own treatment — tile joints, plank
+ * lines, a fresnel sheen on the glazing — when realistic materials are on.
+ */
+export type Material =
+  | "default"
+  | "floor"
+  | "ceiling"
+  | "wall"
+  | "glass"
+  | "metal"
+  | "wood"
+  | "light"
+  | "concrete"
+
+const MATERIAL_IDS: Record<Material, number> = {
+  default: 0,
+  floor: 1,
+  ceiling: 2,
+  wall: 3,
+  glass: 4,
+  metal: 5,
+  wood: 6,
+  light: 7,
+  concrete: 8,
+}
+
 interface Face {
   points: V3[]
   color: string
@@ -48,6 +76,7 @@ interface Face {
   floor: number
   /** Faces flagged as glass get a lighter edge. */
   glass?: boolean
+  material?: Material
 }
 
 export interface Building3DProps {
@@ -64,6 +93,12 @@ export interface Building3DProps {
   onWalkChange?: (position: { x: number; z: number; yaw: number }) => void
   /** When true and idle in orbit mode, smoothly rotates the building. Defaults to true. */
   autoRotate?: boolean
+  /** Walk mode: light the interior on the GPU instead of drawing it flat. */
+  realistic?: boolean
+  /** A markup pinned to the model, in world metres. */
+  worldMarkup?: V3[] | null
+  /** Where that markup lands on screen this frame; null while it is hidden. */
+  onProjectMarkup?: (points: { x: number; y: number }[] | null) => void
 }
 
 /** Imperative camera controls for the on-screen buttons. */
@@ -71,6 +106,11 @@ export interface Building3DHandle {
   zoomBy: (delta: number) => void
   reset: () => void
   pauseAutoRotate?: () => void
+  /**
+   * Turn screen points into world points on the surface they were drawn over,
+   * so a markup stays on the wall instead of on the glass. Walk mode only.
+   */
+  liftToWorld?: (points: { x: number; y: number }[]) => V3[] | null
   /** First-person step, in metres, relative to where you are facing. */
   walkMove: (forward: number, strafe: number) => void
   setWalkInput: (forward: number, strafe: number) => void
@@ -90,6 +130,7 @@ function box(
   color: string,
   floor: number,
   glass = false,
+  material: Material = "default",
 ): Face[] {
   const [x0, y0, z0] = min
   const [x1, y1, z1] = max
@@ -104,12 +145,12 @@ function box(
     h: [x0, y1, z1],
   }
   return [
-    { points: [p.d, p.c, p.g, p.h], color, floor, glass }, // top
-    { points: [p.a, p.e, p.f, p.b], color, floor, glass }, // bottom
-    { points: [p.e, p.h, p.g, p.f], color, floor, glass }, // +z
-    { points: [p.b, p.c, p.d, p.a], color, floor, glass }, // -z
-    { points: [p.f, p.g, p.c, p.b], color, floor, glass }, // +x
-    { points: [p.a, p.d, p.h, p.e], color, floor, glass }, // -x
+    { points: [p.d, p.c, p.g, p.h], color, floor, glass, material }, // top
+    { points: [p.a, p.e, p.f, p.b], color, floor, glass, material }, // bottom
+    { points: [p.e, p.h, p.g, p.f], color, floor, glass, material }, // +z
+    { points: [p.b, p.c, p.d, p.a], color, floor, glass, material }, // -z
+    { points: [p.f, p.g, p.c, p.b], color, floor, glass, material }, // +x
+    { points: [p.a, p.d, p.h, p.e], color, floor, glass, material }, // -x
   ]
 }
 
@@ -221,6 +262,8 @@ export interface Blocker {
   z0: number
   x1: number
   z1: number
+  /** How tall the obstruction actually is; walls run to the ceiling. */
+  height?: number
 }
 
 const interiorBlockers: Blocker[] = []
@@ -233,9 +276,10 @@ function wall(
   z1: number,
   color = "#e2e8f0",
   height = CEIL_H,
+  material: Material = "wall",
 ) {
-  faces.push(...box([x0, 0, z0], [x1, height, z1], color, 0))
-  interiorBlockers.push({ x0, z0, x1, z1 })
+  faces.push(...box([x0, 0, z0], [x1, height, z1], color, 0, false, material))
+  interiorBlockers.push({ x0, z0, x1, z1, height })
 }
 
 function buildInterior(): Face[] {
@@ -244,34 +288,53 @@ function buildInterior(): Face[] {
   const hd = ROOM_D / 2
 
   // Floor plate and ceiling.
-  faces.push(...box([-hw, -0.12, -hd], [hw, 0, hd], "#cbd5e1", 0))
-  faces.push(...box([-hw, CEIL_H, -hd], [hw, CEIL_H + 0.12, hd], "#f1f5f9", 0))
+  faces.push(
+    ...box([-hw, -0.12, -hd], [hw, 0, hd], "#cbd5e1", 0, false, "floor"),
+  )
+  faces.push(
+    ...box(
+      [-hw, CEIL_H, -hd],
+      [hw, CEIL_H + 0.12, hd],
+      "#f1f5f9",
+      0,
+      false,
+      "ceiling",
+    ),
+  )
   // Subtle floor joints, ceiling lights and exposed services give scale when
   // looking down or up without adding textures or external assets.
   for (let x = -4; x <= 4; x++) {
-    faces.push(...box([x, 0.001, -hd], [x + 0.012, 0.003, hd], "#aab8c8", 0))
+    faces.push(
+      ...box([x, 0.001, -hd], [x + 0.012, 0.003, hd], "#aab8c8", 0, false, "floor"),
+    )
   }
   for (let z = -3; z <= 3; z++) {
-    faces.push(...box([-hw, 0.001, z], [hw, 0.003, z + 0.012], "#aab8c8", 0))
+    faces.push(
+      ...box([-hw, 0.001, z], [hw, 0.003, z + 0.012], "#aab8c8", 0, false, "floor"),
+    )
   }
   for (const x of [-2.2, 1.45, 3.2]) {
-    faces.push(...box([x, 2.83, -2.6], [x + 0.16, 2.88, 2.6], "#fff5cd", 0))
+    faces.push(
+      ...box([x, 2.83, -2.6], [x + 0.16, 2.88, 2.6], "#fff5cd", 0, false, "light"),
+    )
   }
-  faces.push(...box([-0.6, 2.55, -3.35], [0, 2.82, 3.35], "#8c9db0", 0))
+  faces.push(
+    ...box([-0.6, 2.55, -3.35], [0, 2.82, 3.35], "#8c9db0", 0, false, "metal"),
+  )
 
   // Perimeter: a spandrel below and glazing above, so the walls read as
   // curtain wall rather than solid block from the inside.
-  const bands: [number, number, string][] = [
-    [0, 0.85, "#94a3b8"],
-    [0.85, 2.45, "#7dd3fc"],
-    [2.45, CEIL_H, "#94a3b8"],
+  const bands: [number, number, string, Material][] = [
+    [0, 0.85, "#94a3b8", "wall"],
+    [0.85, 2.45, "#7dd3fc", "glass"],
+    [2.45, CEIL_H, "#94a3b8", "wall"],
   ]
-  for (const [y0, y1, color] of bands) {
+  for (const [y0, y1, color, material] of bands) {
     faces.push(
-      ...box([-hw, y0, -hd], [hw, y1, -hd + WALL_T], color, 0),
-      ...box([-hw, y0, hd - WALL_T], [hw, y1, hd], color, 0),
-      ...box([-hw, y0, -hd], [-hw + WALL_T, y1, hd], color, 0),
-      ...box([hw - WALL_T, y0, -hd], [hw, y1, hd], color, 0),
+      ...box([-hw, y0, -hd], [hw, y1, -hd + WALL_T], color, 0, false, material),
+      ...box([-hw, y0, hd - WALL_T], [hw, y1, hd], color, 0, false, material),
+      ...box([-hw, y0, -hd], [-hw + WALL_T, y1, hd], color, 0, false, material),
+      ...box([hw - WALL_T, y0, -hd], [hw, y1, hd], color, 0, false, material),
     )
   }
   interiorBlockers.push(
@@ -290,18 +353,22 @@ function buildInterior(): Face[] {
         [x + 0.05, 2.45, -hd + WALL_T + 0.02],
         "#f8fafc",
         0,
+        false,
+        "metal",
       ),
       ...box(
         [x - 0.05, 0.85, hd - WALL_T - 0.02],
         [x + 0.05, 2.45, hd],
         "#f8fafc",
         0,
+        false,
+        "metal",
       ),
     )
   }
 
   // Service core, floor to ceiling.
-  wall(faces, -1.3, -1.05, 0.9, 1.05, "#b6c2d1")
+  wall(faces, -1.3, -1.05, 0.9, 1.05, "#b6c2d1", CEIL_H, "concrete")
 
   // Partitions, each left with a doorway gap.
   wall(faces, -hw + WALL_T, -1.3, -2.6, -1.3 + WALL_T, "#e2e8f0")
@@ -311,22 +378,46 @@ function buildInterior(): Face[] {
 
   // Desks and a meeting table — something to read depth against.
   const desk = (x: number, z: number) => {
-    faces.push(...box([x, 0.68, z], [x + 1.5, 0.76, z + 0.75], "#cbd5e1", 0))
     faces.push(
-      ...box([x + 0.06, 0, z + 0.06], [x + 0.16, 0.68, z + 0.16], "#94a3b8", 0),
+      ...box([x, 0.68, z], [x + 1.5, 0.76, z + 0.75], "#cbd5e1", 0, false, "wood"),
     )
     faces.push(
-      ...box([x + 1.34, 0, z + 0.59], [x + 1.44, 0.68, z + 0.69], "#94a3b8", 0),
+      ...box(
+        [x + 0.06, 0, z + 0.06],
+        [x + 0.16, 0.68, z + 0.16],
+        "#94a3b8",
+        0,
+        false,
+        "metal",
+      ),
     )
-    interiorBlockers.push({ x0: x, z0: z, x1: x + 1.5, z1: z + 0.75 })
+    faces.push(
+      ...box(
+        [x + 1.34, 0, z + 0.59],
+        [x + 1.44, 0.68, z + 0.69],
+        "#94a3b8",
+        0,
+        false,
+        "metal",
+      ),
+    )
+    interiorBlockers.push({
+      x0: x,
+      z0: z,
+      x1: x + 1.5,
+      z1: z + 0.75,
+      height: 0.76,
+    })
   }
   desk(-4.1, -3.0)
   desk(-4.1, -2.0)
   desk(-4.1, 1.4)
   desk(-4.1, 2.4)
 
-  faces.push(...box([2.7, 0.72, -0.6], [4.1, 0.8, 1.4], "#b6c2d1", 0))
-  interiorBlockers.push({ x0: 2.7, z0: -0.6, x1: 4.1, z1: 1.4 })
+  faces.push(
+    ...box([2.7, 0.72, -0.6], [4.1, 0.8, 1.4], "#b6c2d1", 0, false, "wood"),
+  )
+  interiorBlockers.push({ x0: 2.7, z0: -0.6, x1: 4.1, z1: 1.4, height: 0.8 })
 
   return faces
 }
@@ -351,6 +442,34 @@ const DEFAULT_WALK = {
   zoomTarget: 1,
 }
 
+/**
+ * Feel, rather than geometry. A finger is a coarse, jittery pointer, so the
+ * view chases what it asked for instead of snapping to it, a flick keeps
+ * turning after the finger leaves, and the walk eases on and off.
+ */
+/** How quickly the view catches the finger. A mouse gets far less damping —
+ *  there, anything you can feel reads as lag. */
+const TOUCH_LOOK_TAU = 0.05
+const MOUSE_LOOK_TAU = 0.018
+/** How long a flick keeps turning once released, and where it gives up. */
+const GLIDE_TAU = 0.28
+const GLIDE_FLOOR = 0.06
+const GLIDE_MAX = 3.4
+/** A swipe across the whole canvas turns this far, so a phone and a desktop
+ *  browser feel the same however many pixels they have. */
+const YAW_PER_WIDTH = 2.4
+const PITCH_PER_HEIGHT = 2.0
+/** Seconds to reach walking speed, and to come to rest. */
+const MOVE_ATTACK = 0.085
+const MOVE_RELEASE = 0.11
+
+/** Exponential approach, with a snap once it is close enough to matter. */
+function approach(current: number, target: number, dt: number) {
+  const tau = Math.abs(target) > Math.abs(current) ? MOVE_ATTACK : MOVE_RELEASE
+  const next = current + (target - current) * (1 - Math.exp(-dt / tau))
+  return Math.abs(next - target) < 0.004 ? target : next
+}
+
 const WALK_SPEED = 1.9
 const SPRINT_SPEED = 3.4
 const JUMP_SPEED = 3.1
@@ -360,6 +479,61 @@ const MAX_LIFT = CEIL_H - EYE_H - 0.2
 const MAX_ZOOM = 2.6
 /** The lens the double-tap and the zoom button settle on. */
 const TAP_ZOOM = 2.1
+
+/**
+ * First surface a ray meets inside the storey, with the normal turned back
+ * towards where the ray came from. Used to pin a markup to whatever the user
+ * drew it over, and to hide it again once something comes between.
+ */
+function raycastInterior(
+  origin: V3,
+  dir: V3,
+): { distance: number; normal: V3 } | null {
+  let best = Infinity
+  let normal: V3 = [0, 1, 0]
+  const record = (t: number, n: V3) => {
+    if (t > 0.05 && t < best) {
+      best = t
+      normal = n
+    }
+  }
+  if (dir[1] < -1e-5) record((0 - origin[1]) / dir[1], [0, 1, 0])
+  if (dir[1] > 1e-5) record((CEIL_H - origin[1]) / dir[1], [0, -1, 0])
+
+  for (const block of interiorBlockers) {
+    const height = block.height ?? CEIL_H
+    const low = [block.x0, 0, block.z0]
+    const high = [block.x1, height, block.z1]
+    let enter = -Infinity
+    let exit = Infinity
+    let axis = 0
+    let miss = false
+    for (let i = 0; i < 3; i++) {
+      if (Math.abs(dir[i]) < 1e-6) {
+        if (origin[i] < low[i] || origin[i] > high[i]) miss = true
+        continue
+      }
+      let near = (low[i] - origin[i]) / dir[i]
+      let far = (high[i] - origin[i]) / dir[i]
+      if (near > far) {
+        const swap = near
+        near = far
+        far = swap
+      }
+      if (near > enter) {
+        enter = near
+        axis = i
+      }
+      if (far < exit) exit = far
+      if (enter > exit) miss = true
+    }
+    if (miss || !Number.isFinite(enter)) continue
+    const face: V3 = [0, 0, 0]
+    face[axis] = dir[axis] < 0 ? 1 : -1
+    record(enter, face)
+  }
+  return Number.isFinite(best) ? { distance: best, normal } : null
+}
 
 /** Slide along a wall rather than sticking to it. */
 function resolveWalk(x: number, z: number, px: number, pz: number) {
@@ -404,6 +578,9 @@ interface Compiled {
   fillDim: string[]
   stroke: string[]
   strokeDim: string[]
+  /** Unshaded source colour, for renderers that light the face themselves. */
+  base: string[]
+  material: Uint8Array
 }
 
 function compile(faces: Face[]): Compiled {
@@ -414,6 +591,8 @@ function compile(faces: Face[]): Compiled {
   const fillDim: string[] = new Array(count)
   const stroke: string[] = new Array(count)
   const strokeDim: string[] = new Array(count)
+  const base: string[] = new Array(count)
+  const material = new Uint8Array(count)
 
   for (let f = 0; f < count; f++) {
     const face = faces[f]
@@ -425,6 +604,8 @@ function compile(faces: Face[]): Compiled {
       verts[o + 2] = p[2]
     }
     floor[f] = face.floor
+    base[f] = face.color
+    material[f] = MATERIAL_IDS[face.material ?? "default"]
 
     // Face normal, and therefore its shading, never changes.
     const [a, b, c] = face.points
@@ -450,7 +631,7 @@ function compile(faces: Face[]): Compiled {
     strokeDim[f] = "rgba(148,163,184,0.22)"
   }
 
-  return { count, verts, floor, fill, fillDim, stroke, strokeDim }
+  return { count, verts, floor, fill, fillDim, stroke, strokeDim, base, material }
 }
 
 const DEFAULT_CAMERA = { yaw: 0, pitch: 0, dist: 24, panX: 0, panY: 0 }
@@ -467,6 +648,9 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       mode = "orbit",
       onWalkChange,
       autoRotate = true,
+      realistic = true,
+      worldMarkup = null,
+      onProjectMarkup,
     },
     ref,
   ) {
@@ -510,6 +694,13 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       moved: boolean
     } | null>(null)
     const lastTapTime = useRef(0)
+    // Look input the camera has not caught up with yet, the coast left over
+    // from a flick, and the rate the finger was travelling when it let go.
+    const lookPending = useRef({ yaw: 0, pitch: 0 })
+    const lookGlide = useRef({ yaw: 0, pitch: 0 })
+    const lookRate = useRef({ yaw: 0, pitch: 0, time: 0 })
+    const lookTau = useRef(TOUCH_LOOK_TAU)
+    const moveVelocity = useRef({ forward: 0, strafe: 0, turn: 0 })
     const lookLockedRef = useRef(false)
     const [lookLocked, setLookLocked] = useState(false)
     const [coarsePointer] = useState(
@@ -547,6 +738,9 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       mode,
       onWalkChange,
       autoRotate,
+      realistic,
+      worldMarkup,
+      onProjectMarkup,
     })
     latest.current = {
       activeFloor,
@@ -556,6 +750,9 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       mode,
       onWalkChange,
       autoRotate,
+      realistic,
+      worldMarkup,
+      onProjectMarkup,
     }
 
     if (model.current === null) setModel(floors)
@@ -585,6 +782,11 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
         frameRef.current = null
         const held = keys.current
         const wk = walk.current
+        const isWalk = latest.current.mode === "walk"
+        const pending = lookPending.current
+        const glide = lookGlide.current
+        const velocity = moveVelocity.current
+
         const forward =
           walkInput.current.forward +
           Number(held.has("w") || held.has("arrowup")) -
@@ -595,25 +797,58 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
           Number(held.has("a"))
         const turn =
           Number(held.has("arrowleft")) - Number(held.has("arrowright"))
-        const isWalk = latest.current.mode === "walk"
-        const walking = isWalk && (forward !== 0 || strafe !== 0 || turn !== 0)
+        const pushed = forward !== 0 || strafe !== 0 || turn !== 0
+        // Still carrying speed: the walk has to run on for a moment after the
+        // finger lifts, or every stop is a jolt.
+        const rolling =
+          velocity.forward !== 0 || velocity.strafe !== 0 || velocity.turn !== 0
+        const looking =
+          pending.yaw !== 0 ||
+          pending.pitch !== 0 ||
+          glide.yaw !== 0 ||
+          glide.pitch !== 0
+        const walking = isWalk && (pushed || rolling)
         const airborne = isWalk && (wk.vy !== 0 || wk.lift > 0)
         const zooming = isWalk && Math.abs(wk.zoomTarget - wk.zoom) > 0.002
-        const moving = walking || airborne || zooming
+        const moving = walking || (isWalk && looking) || airborne || zooming
         if (moving) {
           const dt =
             lastStep.current === null
               ? 0
               : Math.min((time - lastStep.current) / 1000, 0.05)
-          if (walking) {
+          if (isWalk && dt > 0) {
+            velocity.forward = approach(velocity.forward, forward, dt)
+            velocity.strafe = approach(velocity.strafe, strafe, dt)
+            velocity.turn = approach(velocity.turn, turn, dt)
+
+            // Drain what the finger asked for towards the camera, then let a
+            // flick coast to a stop.
+            const catchUp = 1 - Math.exp(-dt / lookTau.current)
+            const yawStep = pending.yaw * catchUp + glide.yaw * dt
+            const pitchStep = pending.pitch * catchUp + glide.pitch * dt
+            pending.yaw -= pending.yaw * catchUp
+            pending.pitch -= pending.pitch * catchUp
+            if (Math.abs(pending.yaw) < 1e-4) pending.yaw = 0
+            if (Math.abs(pending.pitch) < 1e-4) pending.pitch = 0
+            const settle = Math.exp(-dt / GLIDE_TAU)
+            glide.yaw *= settle
+            glide.pitch *= settle
+            if (Math.abs(glide.yaw) < GLIDE_FLOOR) glide.yaw = 0
+            if (Math.abs(glide.pitch) < GLIDE_FLOOR) glide.pitch = 0
+            if (yawStep !== 0 || pitchStep !== 0) turnCamera(yawStep, pitchStep)
+          }
+          if (walking && dt > 0) {
             const speed = held.has("shift") ? SPRINT_SPEED : WALK_SPEED
             // Only normalise inputs that exceed full deflection, so a partly
             // pushed touch pad still walks slower than a held key.
-            const length = Math.max(1, Math.hypot(forward, strafe))
-            wk.yaw += turn * dt * 1.4
+            const length = Math.max(
+              1,
+              Math.hypot(velocity.forward, velocity.strafe),
+            )
+            wk.yaw += velocity.turn * dt * 1.4
             moveWalk(
-              (forward / length) * dt * speed,
-              (strafe / length) * dt * speed,
+              (velocity.forward / length) * dt * speed,
+              (velocity.strafe / length) * dt * speed,
             )
           }
           if (airborne) {
@@ -623,7 +858,9 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
               wk.lift = MAX_LIFT
               if (wk.vy > 0) wk.vy = 0
             }
-            if (wk.lift <= 0) {
+            // Only land on the way down: the first frame of a jump has no
+            // elapsed time yet, so the eye is still at lift 0 and rising.
+            if (wk.lift <= 0 && wk.vy <= 0) {
               wk.lift = 0
               wk.vy = 0
             }
@@ -663,6 +900,39 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       })
     }
 
+    /** Standing eye, plus the jump arc and the stride bob. */
+    function eyeHeight() {
+      return (
+        EYE_H +
+        walk.current.lift +
+        Math.sin(walk.current.travelled * 4.6) * 0.021
+      )
+    }
+
+    /** Camera-space ray through a point on the walk canvas. */
+    function rayThrough(x: number, y: number, w: number, h: number, focal: number): V3 {
+      const cosY = Math.cos(walk.current.yaw)
+      const sinY = Math.sin(walk.current.yaw)
+      const cosP = Math.cos(walk.current.pitch)
+      const sinP = Math.sin(walk.current.pitch)
+      // Undo the projection at unit depth, then the pitch, then the yaw.
+      const x1 = (x - w / 2) / focal
+      const y2 = -(y - h / 2) / focal
+      const ry = y2 * cosP + sinP
+      const z1 = -y2 * sinP + cosP
+      const rx = x1 * cosY - z1 * sinY
+      const rz = x1 * sinY + z1 * cosY
+      const length = Math.hypot(rx, ry, rz) || 1
+      return [rx / length, ry / length, rz / length]
+    }
+
+    /** Turn the head, with the pitch held inside a comfortable arc. */
+    function turnCamera(dyaw: number, dpitch: number) {
+      const wc = walk.current
+      wc.yaw += dyaw
+      wc.pitch = Math.max(-1.15, Math.min(1.15, wc.pitch + dpitch))
+    }
+
     function moveWalk(forward: number, strafe: number) {
       if (latest.current.mode !== "walk" || !Number.isFinite(forward + strafe))
         return
@@ -689,11 +959,14 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       if (latest.current.mode === "walk") {
         // A couple of centimetres of sway per stride is what stops a smooth
         // glide from reading as a floating camera.
-        const eye =
-          EYE_H +
-          walk.current.lift +
-          Math.sin(walk.current.travelled * 4.6) * 0.021
-        indoorRenderer.current?.draw(walk.current, eye, walk.current.zoom)
+        const eye = eyeHeight()
+        indoorRenderer.current?.draw(
+          walk.current,
+          eye,
+          walk.current.zoom,
+          latest.current.realistic,
+          coarsePointer ? 1.5 : 2,
+        )
         const canvas = walkCanvasRef.current || canvasRef.current
         const w = canvas?.clientWidth || 390
         const h = canvas?.clientHeight || 600
@@ -734,6 +1007,55 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
             }
           }),
         )
+        const markup = latest.current.worldMarkup
+        const project = latest.current.onProjectMarkup
+        if (project) {
+          if (!markup || markup.length === 0) project(null)
+          else {
+            const screen: { x: number; y: number }[] = []
+            let ahead = true
+            let cx = 0
+            let cy = 0
+            let cz = 0
+            for (const point of markup) {
+              const rx = point[0] - walk.current.x
+              const ry = point[1] - eye
+              const rz = point[2] - walk.current.z
+              const x1 = rx * cosY + rz * sinY
+              const z1 = -rx * sinY + rz * cosY
+              const y2 = ry * cosP - z1 * sinP
+              const z2 = ry * sinP + z1 * cosP
+              // A shape with a corner behind the eye cannot be drawn without
+              // clipping it, so the whole markup steps aside instead.
+              if (z2 <= 0.3) {
+                ahead = false
+                break
+              }
+              screen.push({
+                x: w / 2 + (x1 * focal) / z2,
+                y: h / 2 - (y2 * focal) / z2,
+              })
+              cx += point[0]
+              cy += point[1]
+              cz += point[2]
+            }
+            if (!ahead) project(null)
+            else {
+              // Occlusion: one ray at the centre says whether a wall has come
+              // between you and what you drew on.
+              const count = markup.length
+              const dx = cx / count - walk.current.x
+              const dy = cy / count - eye
+              const dz = cz / count - walk.current.z
+              const span = Math.hypot(dx, dy, dz) || 1
+              const hit = raycastInterior(
+                [walk.current.x, eye, walk.current.z],
+                [dx / span, dy / span, dz / span],
+              )
+              project(hit && hit.distance < span - 0.2 ? null : screen)
+            }
+          }
+        }
         latest.current.onWalkChange?.(walk.current)
         latest.current.onCameraChange?.(
           ((((-walk.current.yaw * 180) / Math.PI) % 360) + 360) % 360,
@@ -936,6 +1258,10 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
 
     function stopWalking() {
       walkInput.current = { forward: 0, strafe: 0 }
+      moveVelocity.current = { forward: 0, strafe: 0, turn: 0 }
+      lookPending.current = { yaw: 0, pitch: 0 }
+      lookGlide.current = { yaw: 0, pitch: 0 }
+      lookRate.current = { yaw: 0, pitch: 0, time: 0 }
       keys.current.clear()
       lastStep.current = null
       walkStick.current = null
@@ -1013,13 +1339,30 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
         return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
       }
 
-      /** Turn the head. Pixel deltas, damped for the locked mouse. */
-      const look = (dx: number, dy: number, sensitivity = 1) => {
-        walk.current.yaw += dx * 0.006 * sensitivity
-        walk.current.pitch = Math.max(
-          -1.15,
-          Math.min(1.15, walk.current.pitch + dy * 0.005 * sensitivity),
+      /**
+       * Ask the view to turn. Nothing moves here — the frame loop eases the
+       * camera towards what has accumulated, which is what turns a jittery
+       * stream of touch samples into a smooth pan.
+       */
+      const look = (dx: number, dy: number, sensitivity = 1, touch = false) => {
+        const w = walkCanvas.clientWidth || 390
+        const h = walkCanvas.clientHeight || 600
+        const dyaw = (dx / w) * YAW_PER_WIDTH * sensitivity
+        const dpitch = (dy / h) * PITCH_PER_HEIGHT * sensitivity
+        lookPending.current.yaw += dyaw
+        lookPending.current.pitch += dpitch
+        lookTau.current = touch ? TOUCH_LOOK_TAU : MOUSE_LOOK_TAU
+        if (!touch) return
+        // Track how fast the finger is travelling, for the flick on release.
+        const now = performance.now()
+        const gap = Math.min(
+          0.12,
+          Math.max(0.005, (now - lookRate.current.time) / 1000),
         )
+        lookRate.current.time = now
+        lookRate.current.yaw = lookRate.current.yaw * 0.45 + (dyaw / gap) * 0.45
+        lookRate.current.pitch =
+          lookRate.current.pitch * 0.45 + (dpitch / gap) * 0.45
       }
 
       /** Displacement of the floating touch pad, as a walk vector. */
@@ -1087,6 +1430,8 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
             moved: false,
           }
         if (isWalk) {
+          lookGlide.current = { yaw: 0, pitch: 0 }
+          lookRate.current = { yaw: 0, pitch: 0, time: e.timeStamp }
           if (lookPointer.current === null) lookPointer.current = e.pointerId
           else if (!walkStick.current)
             walkStick.current = { id: e.pointerId, x: e.clientX, y: e.clientY }
@@ -1116,7 +1461,12 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
           if (stick && stick.id === e.pointerId) {
             applyStick(e.clientX - stick.x, e.clientY - stick.y)
           } else if (lookPointer.current === e.pointerId) {
-            look(e.clientX - prev.x, e.clientY - prev.y)
+            look(
+              e.clientX - prev.x,
+              e.clientY - prev.y,
+              1,
+              e.pointerType !== "mouse",
+            )
           }
         } else if (pointers.current.size === 2 && pinchStart.current) {
           // Pinch to zoom, and drag the midpoint to pan.
@@ -1149,6 +1499,25 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
         }
         if (lookPointer.current === e.pointerId) {
           lookPointer.current = null
+          // A finger that was still moving as it left keeps the view turning,
+          // decaying to a stop rather than halting under the fingertip.
+          if (
+            e.pointerType !== "mouse" &&
+            performance.now() - lookRate.current.time < 110
+          ) {
+            lookGlide.current = {
+              yaw: Math.max(
+                -GLIDE_MAX,
+                Math.min(GLIDE_MAX, lookRate.current.yaw * 0.55),
+              ),
+              pitch: Math.max(
+                -GLIDE_MAX,
+                Math.min(GLIDE_MAX, lookRate.current.pitch * 0.55),
+              ),
+            }
+            scheduleDraw()
+          }
+          lookRate.current = { yaw: 0, pitch: 0, time: 0 }
           // Hand the look role to whichever finger is still down, so lifting
           // the first one does not strand the gesture.
           for (const id of pointers.current.keys())
@@ -1205,6 +1574,7 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       const onMouseMove = (e: MouseEvent) => {
         if (!lookLockedRef.current || latest.current.mode !== "walk") return
         look(e.movementX, e.movementY, 0.55)
+        /* Locked mouse: raw movement, barely damped. */
         resetIdle()
         scheduleDraw()
       }
@@ -1329,7 +1699,7 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
     useEffect(() => {
       scheduleDraw()
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeFloor, pins, autoRotate])
+    }, [activeFloor, pins, autoRotate, realistic, worldMarkup])
 
     useImperativeHandle(ref, () => ({
       zoomBy(delta: number) {
@@ -1369,6 +1739,61 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
         if (!Number.isFinite(forward + strafe)) return
         walkInput.current = { forward, strafe }
         scheduleDraw()
+      },
+      liftToWorld(points) {
+        if (latest.current.mode !== "walk" || points.length === 0) return null
+        const canvas = walkCanvasRef.current
+        const w = canvas?.clientWidth || 390
+        const h = canvas?.clientHeight || 600
+        const focal = Math.min(w, h) * 0.78 * walk.current.zoom
+        const eye = eyeHeight()
+        const origin: V3 = [walk.current.x, eye, walk.current.z]
+
+        let sx = 0
+        let sy = 0
+        for (const point of points) {
+          sx += point.x
+          sy += point.y
+        }
+        const centre = rayThrough(
+          sx / points.length,
+          sy / points.length,
+          w,
+          h,
+          focal,
+        )
+        const hit = raycastInterior(origin, centre)
+        if (!hit) return null
+
+        // Lay the markup on the plane of whatever it was drawn over, lifted a
+        // few millimetres clear of it.
+        const n = hit.normal
+        const anchor: V3 = [
+          origin[0] + centre[0] * hit.distance + n[0] * 0.012,
+          origin[1] + centre[1] * hit.distance + n[1] * 0.012,
+          origin[2] + centre[2] * hit.distance + n[2] * 0.012,
+        ]
+        const offset =
+          (anchor[0] - origin[0]) * n[0] +
+          (anchor[1] - origin[1]) * n[1] +
+          (anchor[2] - origin[2]) * n[2]
+
+        const world: V3[] = []
+        for (const point of points) {
+          const dir = rayThrough(point.x, point.y, w, h, focal)
+          const facing = dir[0] * n[0] + dir[1] * n[1] + dir[2] * n[2]
+          if (Math.abs(facing) < 1e-4) return null
+          const t = offset / facing
+          // A corner that grazes the plane would land behind you or a room
+          // away; better to keep the markup on screen than to pin it wrongly.
+          if (t < 0.08 || t > 60) return null
+          world.push([
+            origin[0] + dir[0] * t,
+            origin[1] + dir[1] * t,
+            origin[2] + dir[2] * t,
+          ])
+        }
+        return world
       },
       getWalkPosition() {
         return { ...walk.current }

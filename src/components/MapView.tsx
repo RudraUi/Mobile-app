@@ -11,6 +11,10 @@ interface MapViewProps {
   currentPos?: { x: number; y: number }
   interactive?: boolean
   onMapTap?: (x: number, y: number) => void
+  /** Window on to the plan, in plan units. Narrow it to zoom in. */
+  viewBox?: string
+  /** Counter-scale for the markers, so they hold their size as you zoom. */
+  pinScale?: number
 }
 
 export function MapView({
@@ -22,20 +26,24 @@ export function MapView({
   currentPos,
   interactive = true,
   onMapTap,
+  viewBox = "0 0 400 560",
+  pinScale = 1,
 }: MapViewProps) {
   const handleSvgClick = (e: MouseEvent<SVGSVGElement>) => {
     if (!onMapTap) return
+    // The plan is letterboxed inside the element, so a tap has to be read
+    // through the current window on to it rather than the element's own size.
+    const [vx, vy, vw, vh] = viewBox.split(/\s+/).map(Number)
     const rect = e.currentTarget.getBoundingClientRect()
-    const scaleX = 400 / rect.width
-    const scaleY = 560 / rect.height
-    const x = (e.clientX - rect.left) * scaleX
-    const y = (e.clientY - rect.top) * scaleY
+    const scale = Math.min(rect.width / vw, rect.height / vh)
+    const x = vx + (e.clientX - rect.left - (rect.width - vw * scale) / 2) / scale
+    const y = vy + (e.clientY - rect.top - (rect.height - vh * scale) / 2) / scale
     onMapTap(Math.round(x), Math.round(y))
   }
 
   return (
     <svg
-      viewBox="0 0 400 560"
+      viewBox={viewBox}
       className="w-full h-full select-none"
       style={{ background: "#f8fafc" }}
       onClick={handleSvgClick}
@@ -453,7 +461,7 @@ export function MapView({
         return (
           <g
             key={item.id}
-            transform={`translate(${px}, ${py})`}
+            transform={`translate(${px}, ${py}) scale(${pinScale})`}
             onClick={(e) => {
               if (!interactive) return
               e.stopPropagation()
