@@ -1,7 +1,15 @@
 import { useState, useRef, useCallback } from "react"
+import {
+  Building3D,
+  FLOOR_HEIGHT,
+  pinPosition,
+  type ProjectedPin,
+  type WorldPin,
+} from "../components/Building3D"
 import { BottomNav, type MainTab } from "../components/BottomNav"
 import { MapView } from "../components/MapView"
 import type { Item } from "../data/mockData"
+import { FloatingMenu, MenuCaption, MenuItem } from "../components/FloatingMenu"
 
 interface SplitViewScreenProps {
   items: Item[]
@@ -119,6 +127,86 @@ function PanelOptionIcon({ type }: { type: PanelType }) {
         </svg>
       )
   }
+}
+
+/**
+ * The BIM model inside a split panel. Same renderer as the 3D tab — the panel
+ * is smaller and there is no level selector, so it opens a little further back
+ * and carries three pins rather than six.
+ */
+function Panel3D({
+  items,
+  onItemClick,
+}: {
+  items: Item[]
+  onItemClick: (item: Item) => void
+}) {
+  const pinRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const pinned = items.slice(0, 3)
+  const floors = [6, 3, 1]
+  const worldPins: WorldPin[] = pinned.map((item, i) => ({
+    id: item.id,
+    position: pinPosition(floors[i], i * 2),
+    floor: floors[i],
+  }))
+
+  const place = (projected: ProjectedPin[]) => {
+    for (const pin of projected) {
+      const el = pinRefs.current[pin.id]
+      if (!el) continue
+      el.style.transform = `translate3d(${pin.x}px, ${pin.y}px, 0)`
+      el.style.visibility = pin.visible ? "visible" : "hidden"
+      el.style.zIndex = String(Math.round(1000 - pin.depth * 10))
+    }
+  }
+
+  return (
+    <div className="model-stage w-full h-full relative overflow-hidden">
+      <Building3D pins={worldPins} onProjectPins={place} />
+
+      <div className="absolute inset-0 pointer-events-none">
+        {pinned.map((item, i) => {
+          const color =
+            item.type === "issue"
+              ? "#EF4444"
+              : item.type === "rfi"
+                ? "#F59E0B"
+                : "#0055ff"
+          return (
+            <div
+              key={item.id}
+              ref={(el) => {
+                pinRefs.current[item.id] = el
+              }}
+              className="absolute left-0 top-0 pointer-events-none will-change-transform"
+              style={{ visibility: "hidden" }}
+            >
+              <div className="flex flex-col items-center -translate-x-1/2 -translate-y-full">
+                <span className="mb-0.5 px-1 py-0.2 rounded bg-white/95 border border-slate-200 text-[7.5px] font-bold text-[#0055ff] tabular-nums">
+                  +{(floors[i] * FLOOR_HEIGHT).toFixed(1)}m
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onItemClick(item)}
+                  aria-label={`Open ${item.title}`}
+                  className="pointer-events-auto w-6 h-6 rounded-[12px_12px_12px_0] -rotate-45 flex items-center justify-center shadow-md shadow-black/30 cursor-pointer active:scale-95"
+                  style={{ backgroundColor: color }}
+                >
+                  <span className="rotate-45 text-white font-bold text-[9px]">
+                    {item.type === "issue"
+                      ? "!"
+                      : item.type === "rfi"
+                        ? "?"
+                        : "T"}
+                  </span>
+                </button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 function PanelContent({
@@ -299,87 +387,7 @@ function PanelContent({
   }
 
   if (type === "3d") {
-    return (
-      <div
-        className="w-full h-full relative overflow-hidden bg-gradient-to-b from-[#0F172A] via-[#1E293B] to-[#0F172A]"
-        style={{
-          backgroundImage:
-            "url(https://images.unsplash.com/photo-1486325212027-8081e485255e?w=860&h=500&fit=crop)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <div className="absolute inset-0 bg-slate-900/65" />
-        {/* Subtle grid */}
-        <svg className="absolute inset-0 w-full h-full opacity-20 pointer-events-none">
-          <defs>
-            <pattern
-              id="splitBimGrid"
-              width="30"
-              height="30"
-              patternUnits="userSpaceOnUse"
-            >
-              <path
-                d="M 30 0 L 0 0 0 30"
-                fill="none"
-                stroke="#60A5FA"
-                strokeWidth="0.8"
-              />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#splitBimGrid)" />
-        </svg>
-
-        {/* Spatial Pins */}
-        <div className="absolute inset-0 pointer-events-none">
-          {items.slice(0, 3).map((item, i) => {
-            const positions = [
-              { x: 32, y: 42, elev: "+14m" },
-              { x: 68, y: 38, elev: "+8m" },
-              { x: 50, y: 65, elev: "+0m" },
-            ]
-            const pos = positions[i] || { x: 50, y: 50, elev: "+0m" }
-            const color =
-              item.type === "issue"
-                ? "#EF4444"
-                : item.type === "rfi"
-                  ? "#F59E0B"
-                  : "#0055ff"
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => onItemClick(item)}
-                className="absolute pointer-events-auto cursor-pointer"
-                style={{
-                  left: `${pos.x}%`,
-                  top: `${pos.y}%`,
-                  transform: "translate(-50%, -100%)",
-                }}
-              >
-                <div className="flex flex-col items-center">
-                  <span className="mb-0.5 px-1 py-0.2 rounded bg-black/80 text-[7.5px] font-bold text-blue-300">
-                    {pos.elev}
-                  </span>
-                  <div
-                    className="w-6 h-6 rounded-[12px_12px_12px_0] -rotate-45 flex items-center justify-center shadow-md shadow-black/40"
-                    style={{ backgroundColor: color }}
-                  >
-                    <span className="rotate-45 text-white font-bold text-[9px]">
-                      {item.type === "issue"
-                        ? "!"
-                        : item.type === "rfi"
-                          ? "?"
-                          : "T"}
-                    </span>
-                  </div>
-                </div>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-    )
+    return <Panel3D items={items} onItemClick={onItemClick} />
   }
 
   // Drone / Walkthrough
@@ -573,9 +581,9 @@ export function SplitViewScreen({
                 setDropdownOpenA((v) => !v)
                 setDropdownOpenB(false)
               }}
-              className="flex items-center gap-1.5 bg-white/95 hover:bg-white active:scale-95 backdrop-blur-md text-slate-800 h-[26px] px-2 rounded-[8px] text-[11px] font-bold shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-100/90 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 bg-white/95 hover:bg-white active:scale-95 backdrop-blur-md text-slate-800 h-[26px] px-2 rounded-lg text-[11px] font-bold shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-100/90 transition-all cursor-pointer"
             >
-              <span className="w-3.5 h-3.5 rounded-[4px] bg-[#0055ff] text-white flex items-center justify-center text-[8.5px] font-extrabold shadow-2xs">
+              <span className="w-3.5 h-3.5 rounded bg-[#0055ff] text-white flex items-center justify-center text-[8.5px] font-extrabold shadow-2xs">
                 A
               </span>
               <span className="leading-none">
@@ -600,65 +608,40 @@ export function SplitViewScreen({
               </svg>
             </button>
 
-            {/* Dropdown Menu for Panel A */}
+            {/* Panel A view menu */}
             {dropdownOpenA && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setDropdownOpenA(false)}
-                />
-                <div className="absolute top-full left-0 mt-1.5 w-40 bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.12)] border border-slate-100 p-1.5 z-50 animate-slide-up">
-                  <div className="px-2.5 pt-1 pb-1.5 text-[9.5px] font-bold text-slate-400 uppercase tracking-wider">
-                    Panel A View
-                  </div>
-                  <div className="space-y-0.5">
-                    {PANEL_OPTIONS.map((opt) => {
-                      const isSelected = panelA === opt.id
-                      return (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          onClick={() => {
-                            setPanelA(opt.id)
-                            setDropdownOpenA(false)
-                          }}
-                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-[11.5px] font-medium transition-colors cursor-pointer ${
-                            isSelected
-                              ? "bg-blue-50/90 text-[#0055ff] font-bold shadow-2xs"
-                              : "text-slate-700 hover:bg-slate-50 active:bg-slate-100"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <div
-                              className={
-                                isSelected ? "text-[#0055ff]" : "text-slate-500"
-                              }
-                            >
-                              <PanelOptionIcon type={opt.id} />
-                            </div>
-                            <span>{opt.label}</span>
-                          </div>
-                          {isSelected && (
-                            <svg
-                              width="12"
-                              height="12"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="#0055ff"
-                              strokeWidth="2.8"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              </>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setDropdownOpenA(false)}
+              />
             )}
+            <FloatingMenu open={dropdownOpenA} widthClassName="w-36">
+              <MenuCaption>Panel A view</MenuCaption>
+              {PANEL_OPTIONS.map((opt) => {
+                const isSelected = panelA === opt.id
+                return (
+                  <MenuItem
+                    key={opt.id}
+                    selected={isSelected}
+                    onClick={() => {
+                      setPanelA(opt.id)
+                      setDropdownOpenA(false)
+                    }}
+                    leading={
+                      <span
+                        className={
+                          isSelected ? "text-[#0055ff]" : "text-slate-400"
+                        }
+                      >
+                        <PanelOptionIcon type={opt.id} />
+                      </span>
+                    }
+                  >
+                    {opt.label}
+                  </MenuItem>
+                )
+              })}
+            </FloatingMenu>
           </div>
 
           {/* Top Right Controls: Exit Split & Settings */}
@@ -666,7 +649,7 @@ export function SplitViewScreen({
             <button
               type="button"
               onClick={() => onTabChange("home")}
-              className="h-7 px-2.5 rounded-[8px] bg-white/95 hover:bg-white active:scale-95 backdrop-blur-md text-[#0055ff] flex items-center gap-1 text-[11px] font-bold shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-100/90 transition-all cursor-pointer"
+              className="h-7 px-2.5 rounded-lg bg-white/95 hover:bg-white active:scale-95 backdrop-blur-md text-[#0055ff] flex items-center gap-1 text-[11px] font-bold shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-100/90 transition-all cursor-pointer"
             >
               <svg
                 width="11"
@@ -686,7 +669,7 @@ export function SplitViewScreen({
             <button
               type="button"
               onClick={() => setIsSettingsModalOpen(true)}
-              className="w-7 h-7 rounded-[8px] bg-white/95 hover:bg-white active:scale-95 backdrop-blur-md text-slate-700 flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-100/90 transition-all cursor-pointer"
+              className="w-7 h-7 rounded-lg bg-white/95 hover:bg-white active:scale-95 backdrop-blur-md text-slate-700 flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-100/90 transition-all cursor-pointer"
               aria-label="View settings"
             >
               <svg
@@ -731,9 +714,9 @@ export function SplitViewScreen({
                 setDropdownOpenB((v) => !v)
                 setDropdownOpenA(false)
               }}
-              className="flex items-center gap-1.5 bg-white/95 hover:bg-white active:scale-95 backdrop-blur-md text-slate-800 h-[26px] px-2 rounded-[8px] text-[11px] font-bold shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-100/90 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 bg-white/95 hover:bg-white active:scale-95 backdrop-blur-md text-slate-800 h-[26px] px-2 rounded-lg text-[11px] font-bold shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-100/90 transition-all cursor-pointer"
             >
-              <span className="w-3.5 h-3.5 rounded-[4px] bg-[#0055ff] text-white flex items-center justify-center text-[8.5px] font-extrabold shadow-2xs">
+              <span className="w-3.5 h-3.5 rounded bg-[#0055ff] text-white flex items-center justify-center text-[8.5px] font-extrabold shadow-2xs">
                 B
               </span>
               <span className="leading-none">
@@ -758,65 +741,40 @@ export function SplitViewScreen({
               </svg>
             </button>
 
-            {/* Dropdown Menu for Panel B */}
+            {/* Panel B view menu */}
             {dropdownOpenB && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setDropdownOpenB(false)}
-                />
-                <div className="absolute top-full left-0 mt-1.5 w-40 bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.12)] border border-slate-100 p-1.5 z-50 animate-slide-up">
-                  <div className="px-2.5 pt-1 pb-1.5 text-[9.5px] font-bold text-slate-400 uppercase tracking-wider">
-                    Panel B View
-                  </div>
-                  <div className="space-y-0.5">
-                    {PANEL_OPTIONS.map((opt) => {
-                      const isSelected = panelB === opt.id
-                      return (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          onClick={() => {
-                            setPanelB(opt.id)
-                            setDropdownOpenB(false)
-                          }}
-                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-[11.5px] font-medium transition-colors cursor-pointer ${
-                            isSelected
-                              ? "bg-blue-50/90 text-[#0055ff] font-bold shadow-2xs"
-                              : "text-slate-700 hover:bg-slate-50 active:bg-slate-100"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <div
-                              className={
-                                isSelected ? "text-[#0055ff]" : "text-slate-500"
-                              }
-                            >
-                              <PanelOptionIcon type={opt.id} />
-                            </div>
-                            <span>{opt.label}</span>
-                          </div>
-                          {isSelected && (
-                            <svg
-                              width="12"
-                              height="12"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="#0055ff"
-                              strokeWidth="2.8"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              </>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setDropdownOpenB(false)}
+              />
             )}
+            <FloatingMenu open={dropdownOpenB} widthClassName="w-36">
+              <MenuCaption>Panel B view</MenuCaption>
+              {PANEL_OPTIONS.map((opt) => {
+                const isSelected = panelB === opt.id
+                return (
+                  <MenuItem
+                    key={opt.id}
+                    selected={isSelected}
+                    onClick={() => {
+                      setPanelB(opt.id)
+                      setDropdownOpenB(false)
+                    }}
+                    leading={
+                      <span
+                        className={
+                          isSelected ? "text-[#0055ff]" : "text-slate-400"
+                        }
+                      >
+                        <PanelOptionIcon type={opt.id} />
+                      </span>
+                    }
+                  >
+                    {opt.label}
+                  </MenuItem>
+                )
+              })}
+            </FloatingMenu>
           </div>
         </div>
 
@@ -842,7 +800,7 @@ export function SplitViewScreen({
           <div className="absolute inset-x-0 h-[2px] bg-black/20 backdrop-blur-xs pointer-events-none" />
 
           {/* Centered pill grip handle */}
-          <div className="w-12 h-3.5 bg-white shadow-md shadow-black/25 rounded-[6px] flex items-center justify-center border border-slate-200 cursor-ns-resize active:scale-105 transition-transform z-10">
+          <div className="w-12 h-3.5 bg-white shadow-md shadow-black/25 rounded-md flex items-center justify-center border border-slate-200 cursor-ns-resize active:scale-105 transition-transform z-10">
             <div className="w-5 h-0.5 bg-slate-400 rounded-full" />
           </div>
         </div>
@@ -856,7 +814,7 @@ export function SplitViewScreen({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[430px] bg-white rounded-t-[26px] shadow-2xl overflow-hidden flex flex-col animate-slide-up border-t border-slate-100 pb-6"
+            className="w-full max-w-[430px] bg-white rounded-t-[28px] shadow-2xl overflow-hidden flex flex-col animate-slide-up border-t border-slate-100 pb-6"
           >
             {/* Grab Handle */}
             <div className="w-9 h-1 bg-slate-300 rounded-full mx-auto mt-3 mb-1" />

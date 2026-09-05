@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react"
+import useOverlayPresence from "../hooks/useOverlayPresence"
+import { FloatingMenu, MenuCaption, MenuItem } from "./FloatingMenu"
 import type { UserProfileData } from "../screens/ProfileScreen"
 import type { Project } from "../data/projectsData"
 import { mockCaptureFiles } from "../data/captureFiles"
@@ -43,10 +45,15 @@ export function SideDrawer({
     if (isOpen && activeDataCategory) setIsDataExpanded(true)
   }, [isOpen, activeDataCategory])
 
-  if (!isOpen) return null
+  const isPresent = useOverlayPresence(isOpen)
+  if (!isPresent) return null
 
   return (
-    <div className="absolute inset-0 z-50 overflow-hidden flex select-none">
+    <div
+      data-overlay-state={isOpen ? "open" : "closing"}
+      inert={!isOpen}
+      className="absolute inset-0 z-50 overflow-hidden flex select-none"
+    >
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity duration-300 cursor-pointer animate-fade-in"
@@ -128,7 +135,6 @@ export function SideDrawer({
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto px-3.5 pt-2 pb-3 space-y-4 no-scrollbar">
-
           {/* SECTION 2: Projects Dropdown */}
           <div>
             <div className="flex items-center justify-between px-1 mb-2">
@@ -185,7 +191,9 @@ export function SideDrawer({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     className={`text-slate-400 transition-transform duration-200 ${
-                      isProjectsDropdownOpen ? "rotate-180 text-[#0055ff]" : "rotate-0"
+                      isProjectsDropdownOpen
+                        ? "rotate-180 text-[#0055ff]"
+                        : "rotate-0"
                     }`}
                   >
                     <path d="m6 9 6 6 6-6" />
@@ -193,65 +201,44 @@ export function SideDrawer({
                 </div>
               </button>
 
-              {/* Floating Dropdown Options List - floats over without pushing content below */}
+              {/* Floating options list — compact, floats over the content below */}
               {isProjectsDropdownOpen && (
-                <>
-                  {/* Click-outside backdrop */}
-                  <div
-                    className="fixed inset-0 z-20"
-                    onClick={() => setIsProjectsDropdownOpen(false)}
-                  />
-                  <div className="absolute top-full left-0 right-0 z-30 mt-1 p-1 bg-white rounded-xl border border-slate-200 shadow-[0_12px_32px_rgba(0,0,0,0.18)] space-y-0.5 animate-slide-up origin-top max-h-[210px] overflow-y-auto">
-                    {projects.map((project) => {
-                      const isSelected = selectedProject.id === project.id
-                      return (
-                        <button
-                          key={project.id}
-                          type="button"
-                          onClick={() => {
-                            onSelectProject(project)
-                            setIsProjectsDropdownOpen(false)
-                          }}
-                          className={`w-full py-2 px-2.5 rounded-lg flex items-center justify-between text-left transition-all cursor-pointer ${
-                            isSelected
-                              ? "bg-blue-50/90 text-[#0055ff]"
-                              : "hover:bg-slate-50 active:bg-slate-100 text-slate-700"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <div
-                              className="w-5.5 h-5.5 rounded-md flex items-center justify-center font-extrabold text-white text-[11px] shadow-2xs shrink-0"
-                              style={{ backgroundColor: project.badgeBg }}
-                            >
-                              {project.badge}
-                            </div>
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <span
-                                className={`text-[12px] truncate ${
-                                  isSelected
-                                    ? "font-bold text-[#0055ff]"
-                                    : "font-semibold text-slate-800"
-                                }`}
-                              >
-                                {project.name}
-                              </span>
-                              <span className="text-[8.5px] font-bold px-1 py-0.2 rounded bg-black/5 text-slate-500 font-mono shrink-0">
-                                {project.code}
-                              </span>
-                            </div>
-                          </div>
-
-                          {isSelected && (
-                            <span className="px-2 py-0.5 rounded-full bg-[#0055ff] text-white text-[9px] font-bold tracking-tight shadow-2xs shrink-0 ml-1.5">
-                              Active
-                            </span>
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </>
+                <div
+                  className="fixed inset-0 z-20"
+                  onClick={() => setIsProjectsDropdownOpen(false)}
+                />
               )}
+              <FloatingMenu
+                open={isProjectsDropdownOpen}
+                widthClassName="w-full"
+                maxHeightClassName="max-h-[196px]"
+              >
+                <MenuCaption>Switch project</MenuCaption>
+                {projects.map((project) => {
+                  const isSelected = selectedProject.id === project.id
+                  return (
+                    <MenuItem
+                      key={project.id}
+                      selected={isSelected}
+                      onClick={() => {
+                        onSelectProject(project)
+                        setIsProjectsDropdownOpen(false)
+                      }}
+                      leading={
+                        <span
+                          className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded font-extrabold text-white text-[9px] shadow-2xs"
+                          style={{ backgroundColor: project.badgeBg }}
+                        >
+                          {project.badge}
+                        </span>
+                      }
+                      hint={<span className="font-mono">{project.code}</span>}
+                    >
+                      {project.name}
+                    </MenuItem>
+                  )
+                })}
+              </FloatingMenu>
             </div>
           </div>
 
@@ -276,7 +263,7 @@ export function SideDrawer({
                 >
                   <div className="flex items-center gap-2.5">
                     <span
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors ${
                         isDataExpanded
                           ? "bg-[#0055ff] text-white"
                           : "bg-blue-50 text-[#0055ff] group-hover:bg-[#0055ff] group-hover:text-white"
@@ -350,9 +337,10 @@ export function SideDrawer({
                       const isActive = activeDataCategory === category.id
                       /* Survey Data opens the capture library, so it counts
                          captures rather than uploaded files. */
-                      const count = category.id === "survey"
-                        ? mockCaptureFiles.length
-                        : categoryFileCount(category)
+                      const count =
+                        category.id === "survey"
+                          ? mockCaptureFiles.length
+                          : categoryFileCount(category)
                       return (
                         <button
                           type="button"
@@ -407,7 +395,12 @@ export function SideDrawer({
                             }`}
                             aria-hidden="true"
                           >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                            >
                               <circle cx="5" cy="12" r="1.6" />
                               <circle cx="12" cy="12" r="1.6" />
                               <circle cx="19" cy="12" r="1.6" />
@@ -428,7 +421,7 @@ export function SideDrawer({
                 className="w-full p-2.5 rounded-xl flex items-center justify-between text-left cursor-not-allowed opacity-70"
               >
                 <div className="flex items-center gap-2.5">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
                     <svg
                       width="16"
                       height="16"

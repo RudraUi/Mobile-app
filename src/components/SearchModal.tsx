@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import type { Item, ItemType } from "../data/mockData"
+import { Chip } from "./Chip"
 
 interface SearchModalProps {
   isOpen: boolean
@@ -221,41 +222,34 @@ export function SearchModal({
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {recentList.map((s) => (
-                    <div
+                    <Chip
                       key={s}
-                      className="h-7 inline-flex items-center gap-1.5 pl-2.5 pr-1.5 rounded-full bg-slate-100 hover:bg-slate-200/80 border border-slate-200/60 text-slate-700 text-[11.5px] font-medium transition-all group cursor-pointer active:scale-95"
+                      size="md"
                       onClick={() => setQuery(s)}
-                    >
-                      <svg
-                        width="11"
-                        height="11"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-slate-400 shrink-0"
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <polyline points="12 6 12 12 16 14" />
-                      </svg>
-                      <span>{s}</span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setRecentList((prev) => prev.filter((item) => item !== s))
-                        }}
-                        className="w-4 h-4 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-300/60 transition-colors cursor-pointer ml-0.5"
-                        aria-label={`Remove ${s}`}
-                      >
-                        <svg width="8" height="8" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" fill="none">
-                          <line x1="18" y1="6" x2="6" y2="18" />
-                          <line x1="6" y1="6" x2="18" y2="18" />
+                      onRemove={() =>
+                        setRecentList((prev) =>
+                          prev.filter((item) => item !== s),
+                        )}
+                      removeLabel={`Remove ${s}`}
+                      icon={
+                        <svg
+                          width="11"
+                          height="11"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-slate-400"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="12 6 12 12 16 14" />
                         </svg>
-                      </button>
-                    </div>
+                      }
+                    >
+                      {s}
+                    </Chip>
                   ))}
                 </div>
               </div>

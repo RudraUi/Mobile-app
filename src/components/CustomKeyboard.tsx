@@ -55,7 +55,7 @@ export function CustomKeyboard({
                   type="button"
                   key={`num-backspace-${idx}`}
                   onClick={() => onBackspace?.()}
-                  className="h-[46px] rounded-[9px] flex items-center justify-center text-slate-700 active:bg-slate-300/80 transition-colors cursor-pointer"
+                  className="h-[46px] rounded-lg flex items-center justify-center text-slate-700 active:bg-slate-300/80 transition-colors cursor-pointer"
                   aria-label="Backspace"
                 >
                   <svg
@@ -85,7 +85,7 @@ export function CustomKeyboard({
                 type="button"
                 key={item.num}
                 onClick={() => onKeyPress?.(item.num)}
-                className="h-[46px] rounded-[9px] bg-white shadow-[0_1px_1px_rgba(0,0,0,0.22)] active:bg-slate-100 flex flex-col items-center justify-center transition-all duration-75 cursor-pointer active:scale-[0.98]"
+                className="h-[46px] rounded-lg bg-white shadow-[0_1px_1px_rgba(0,0,0,0.22)] active:bg-slate-100 flex flex-col items-center justify-center transition-all duration-75 cursor-pointer active:scale-[0.98]"
               >
                 <span className="text-[20px] font-semibold text-slate-800 leading-none">
                   {item.num}
@@ -128,7 +128,7 @@ export function CustomKeyboard({
                 type="button"
                 key={char}
                 onClick={() => onKeyPress?.(displayChar)}
-                className="flex-1 max-w-[34px] h-[42px] bg-white rounded-[6px] shadow-[0_1px_1px_rgba(0,0,0,0.28)] flex items-center justify-center text-[18px] text-slate-900 font-normal active:bg-slate-100 active:scale-[0.97] transition-all cursor-pointer"
+                className="flex-1 max-w-[34px] h-[42px] bg-white rounded-md shadow-[0_1px_1px_rgba(0,0,0,0.28)] flex items-center justify-center text-[18px] text-slate-900 font-normal active:bg-slate-100 active:scale-[0.97] transition-all cursor-pointer"
               >
                 {displayChar}
               </button>
@@ -146,7 +146,7 @@ export function CustomKeyboard({
                 type="button"
                 key={char}
                 onClick={() => onKeyPress?.(displayChar)}
-                className="flex-1 max-w-[34px] h-[42px] bg-white rounded-[6px] shadow-[0_1px_1px_rgba(0,0,0,0.28)] flex items-center justify-center text-[18px] text-slate-900 font-normal active:bg-slate-100 active:scale-[0.97] transition-all cursor-pointer"
+                className="flex-1 max-w-[34px] h-[42px] bg-white rounded-md shadow-[0_1px_1px_rgba(0,0,0,0.28)] flex items-center justify-center text-[18px] text-slate-900 font-normal active:bg-slate-100 active:scale-[0.97] transition-all cursor-pointer"
               >
                 {displayChar}
               </button>
@@ -160,7 +160,7 @@ export function CustomKeyboard({
           <button
             type="button"
             onClick={() => setIsShift(!isShift)}
-            className={`w-[42px] h-[42px] rounded-[6px] flex items-center justify-center transition-all cursor-pointer active:scale-[0.97] ${
+            className={`w-[42px] h-[42px] rounded-md flex items-center justify-center transition-all cursor-pointer active:scale-[0.97] ${
               isShift
                 ? "bg-white text-slate-900 shadow-[0_1px_1px_rgba(0,0,0,0.28)]"
                 : "bg-[#BAC0CA] text-slate-800 shadow-[0_1px_1px_rgba(0,0,0,0.2)]"
@@ -191,7 +191,7 @@ export function CustomKeyboard({
                   type="button"
                   key={char}
                   onClick={() => onKeyPress?.(displayChar)}
-                  className="flex-1 max-w-[34px] h-[42px] bg-white rounded-[6px] shadow-[0_1px_1px_rgba(0,0,0,0.28)] flex items-center justify-center text-[18px] text-slate-900 font-normal active:bg-slate-100 active:scale-[0.97] transition-all cursor-pointer"
+                  className="flex-1 max-w-[34px] h-[42px] bg-white rounded-md shadow-[0_1px_1px_rgba(0,0,0,0.28)] flex items-center justify-center text-[18px] text-slate-900 font-normal active:bg-slate-100 active:scale-[0.97] transition-all cursor-pointer"
                 >
                   {displayChar}
                 </button>
@@ -203,7 +203,7 @@ export function CustomKeyboard({
           <button
             type="button"
             onClick={() => onBackspace?.()}
-            className="w-[42px] h-[42px] bg-[#BAC0CA] text-slate-800 rounded-[6px] shadow-[0_1px_1px_rgba(0,0,0,0.2)] flex items-center justify-center transition-all active:scale-[0.97] cursor-pointer"
+            className="w-[42px] h-[42px] bg-[#BAC0CA] text-slate-800 rounded-md shadow-[0_1px_1px_rgba(0,0,0,0.2)] flex items-center justify-center transition-all active:scale-[0.97] cursor-pointer"
             aria-label="Backspace"
           >
             <svg
@@ -229,7 +229,7 @@ export function CustomKeyboard({
           <button
             type="button"
             onClick={() => setIsSymbols(!isSymbols)}
-            className="w-[48px] h-[42px] bg-[#BAC0CA] rounded-[6px] shadow-[0_1px_1px_rgba(0,0,0,0.2)] flex items-center justify-center text-[13px] font-semibold text-slate-800 active:bg-white transition-all cursor-pointer"
+            className="w-[48px] h-[42px] bg-[#BAC0CA] rounded-md shadow-[0_1px_1px_rgba(0,0,0,0.2)] flex items-center justify-center text-[13px] font-semibold text-slate-800 active:bg-white transition-all cursor-pointer"
           >
             {isSymbols ? "ABC" : "123"}
           </button>
@@ -238,7 +238,7 @@ export function CustomKeyboard({
           <button
             type="button"
             onClick={() => onKeyPress?.("@")}
-            className="w-[38px] h-[42px] bg-[#BAC0CA] rounded-[6px] shadow-[0_1px_1px_rgba(0,0,0,0.2)] flex items-center justify-center text-slate-800 active:bg-white transition-all cursor-pointer"
+            className="w-[38px] h-[42px] bg-[#BAC0CA] rounded-md shadow-[0_1px_1px_rgba(0,0,0,0.2)] flex items-center justify-center text-slate-800 active:bg-white transition-all cursor-pointer"
             aria-label="Symbols"
             title="@"
           >
@@ -249,7 +249,7 @@ export function CustomKeyboard({
           <button
             type="button"
             onClick={() => onKeyPress?.(" ")}
-            className="flex-1 h-[42px] bg-white rounded-[6px] shadow-[0_1px_1px_rgba(0,0,0,0.28)] flex items-center justify-center text-[13.5px] text-slate-500 font-medium active:bg-slate-100 transition-all cursor-pointer"
+            className="flex-1 h-[42px] bg-white rounded-md shadow-[0_1px_1px_rgba(0,0,0,0.28)] flex items-center justify-center text-[13.5px] text-slate-500 font-medium active:bg-slate-100 transition-all cursor-pointer"
           >
             space
           </button>
@@ -258,7 +258,7 @@ export function CustomKeyboard({
           <button
             type="button"
             onClick={() => onSubmit?.()}
-            className="w-[74px] h-[42px] bg-[#0055ff] rounded-[6px] shadow-[0_1px_2px_rgba(0,85,255,0.35)] flex items-center justify-center text-[14px] font-bold text-white active:bg-blue-600 transition-all cursor-pointer"
+            className="w-[74px] h-[42px] bg-[#0055ff] rounded-md shadow-[0_1px_2px_rgba(0,85,255,0.35)] flex items-center justify-center text-[14px] font-bold text-white active:bg-blue-600 transition-all cursor-pointer"
           >
             {actionLabel}
           </button>

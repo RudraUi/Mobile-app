@@ -1,6 +1,8 @@
 import { useState, useRef } from "react"
+import useOverlayPresence from "../hooks/useOverlayPresence"
 import type { KeyboardEvent, ChangeEvent } from "react"
 import { CustomKeyboard } from "./CustomKeyboard"
+import { Chip } from "./Chip"
 
 interface InviteModalProps {
   isOpen: boolean
@@ -14,7 +16,8 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  if (!isOpen) return null
+  const isPresent = useOverlayPresence(isOpen)
+  if (!isPresent) return null
 
   // Process text input into email tags on space, comma, or enter
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -81,6 +84,8 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
 
   return (
     <div
+      data-overlay-state={isOpen ? "open" : "closing"}
+      inert={!isOpen}
       onClick={() => {
         setIsKeyboardOpen(false)
         onClose()
@@ -173,22 +178,16 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
             >
               {/* Email Chips */}
               {emailsList.map((em) => (
-                <span
+                <Chip
                   key={em}
-                  className="inline-flex items-center gap-1 bg-blue-50 dark:bg-blue-500/15 text-[#0055ff] dark:text-blue-400 border border-blue-200/80 dark:border-blue-500/30 px-2.5 py-1 rounded-full text-[11px] font-semibold animate-scale-in"
+                  size="md"
+                  color="#0055ff"
+                  onRemove={() => removeEmail(em)}
+                  removeLabel={`Remove ${em}`}
+                  className="max-w-[180px] animate-scale-in"
                 >
-                  <span className="truncate max-w-[150px]">{em}</span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      removeEmail(em)
-                    }}
-                    className="hover:text-red-500 text-[11px] font-bold cursor-pointer leading-none ml-0.5"
-                  >
-                    ✕
-                  </button>
-                </span>
+                  {em}
+                </Chip>
               ))}
 
               {/* Text Input */}

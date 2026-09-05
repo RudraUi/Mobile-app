@@ -847,7 +847,7 @@ export function CreateItemScreen({
                     setActiveField(null)
                     setActivePropertySheet("status")
                   }}
-                  className={`flex h-5.5 items-center justify-center rounded-[5px] px-2 text-[9.5px] font-bold text-white transition-all active:scale-95 shadow-xs ${selectedStatusInfo.bg}`}
+                  className={`flex h-5.5 items-center justify-center rounded-md px-2 text-[9.5px] font-bold text-white transition-all active:scale-95 shadow-xs ${selectedStatusInfo.bg}`}
                   style={{ fontWeight: 700, fontSize: "9.5px" }}
                   title={`Status: ${selectedStatusInfo.label}`}
                 >
@@ -861,7 +861,7 @@ export function CreateItemScreen({
                     setActiveField(null)
                     setActivePropertySheet("priority")
                   }}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg transition-all active:scale-95 hover:bg-slate-50"
+                  className="flex h-8 w-8 items-center justify-center rounded-xl transition-all active:scale-95 hover:bg-slate-50"
                   title={`Priority: ${priority.label}`}
                 >
                   <div
@@ -879,7 +879,7 @@ export function CreateItemScreen({
                     setActiveField(null)
                     setActivePropertySheet("tags")
                   }}
-                  className="relative flex h-8 w-8 items-center justify-center rounded-lg transition-all active:scale-95 hover:bg-slate-50"
+                  className="relative flex h-8 w-8 items-center justify-center rounded-xl transition-all active:scale-95 hover:bg-slate-50"
                   title={`Tags: ${
                     selectedTags.length ? selectedTags.join(", ") : "None"
                   }`}
@@ -907,7 +907,7 @@ export function CreateItemScreen({
                     setActiveField(null)
                     setActivePropertySheet("attachments")
                   }}
-                  className="relative flex h-8 w-8 items-center justify-center rounded-lg transition-all active:scale-95 hover:bg-slate-50"
+                  className="relative flex h-8 w-8 items-center justify-center rounded-xl transition-all active:scale-95 hover:bg-slate-50"
                   title={`Files: ${
                     attachedPhotos.length
                       ? attachedPhotos.length + " attached"
@@ -1000,7 +1000,7 @@ export function CreateItemScreen({
               <button
                 type="button"
                 onClick={() => setActivePropertySheet(null)}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-slate-600 hover:bg-slate-100"
                 aria-label="Back to create form"
               >
                 <svg

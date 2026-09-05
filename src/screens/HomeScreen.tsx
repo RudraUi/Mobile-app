@@ -532,11 +532,11 @@ export function HomeScreen({
 
         {/* Shimmer Skeleton Loader on Refresh */}
         {isRefreshing ? (
-          <div className="p-4 space-y-3 flex-1 bg-[#F5F6F8] rounded-t-[26px] min-h-full">
+          <div className="p-4 space-y-3 flex-1 bg-[#F5F6F8] rounded-t-[28px] min-h-full">
             <HomeSkeleton />
           </div>
         ) : isSearchingOrFiltering ? (
-          <div className="p-4 space-y-3 flex-1 bg-[#F5F6F8] rounded-t-[26px] min-h-full">
+          <div className="p-4 space-y-3 flex-1 bg-[#F5F6F8] rounded-t-[28px] min-h-full">
             {/* Filter tags bar */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -719,14 +719,14 @@ export function HomeScreen({
                         viewMode: "list",
                       })
                     }}
-                    className="group flex items-center gap-2 rounded-[14px] px-2.5 py-2 text-left transition-all duration-200 active:scale-[0.97] flex-shrink-0 cursor-pointer bg-white/[0.16] hover:bg-white/[0.24] ring-1 ring-white/[0.12] backdrop-blur-md text-white"
+                    className="group flex items-center gap-2 rounded-xl px-2.5 py-2 text-left transition-all duration-200 active:scale-[0.97] flex-shrink-0 cursor-pointer bg-white/[0.16] hover:bg-white/[0.24] ring-1 ring-white/[0.12] backdrop-blur-md text-white"
                     style={{
                       width: "138px",
                       height: "56px",
                     }}
                   >
                     {/* Icon Badge in translucent light-blue / white box */}
-                    <div className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[8px] bg-white/20 text-white transition-colors group-hover:bg-white/30">
+                    <div className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-lg bg-white/20 text-white transition-colors group-hover:bg-white/30">
                       <StatIcon id={card.id} color="#ffffff" />
                     </div>
 
@@ -749,7 +749,7 @@ export function HomeScreen({
             </section>
 
             {/* Rounded Top White Bottom Container Sheet */}
-            <div className="rounded-t-[30px] bg-white pt-5 pb-8 shadow-[0_-10px_35px_rgba(0,0,0,0.08)] flex-1 min-h-full flex flex-col -mt-3 z-10 relative">
+            <div className="rounded-t-[28px] bg-white pt-5 pb-8 shadow-[0_-10px_35px_rgba(0,0,0,0.08)] flex-1 min-h-full flex flex-col -mt-3 z-10 relative">
               {/* Recents Section for Current Tab */}
               <section className="px-4" aria-labelledby="recents-heading">
                 <div

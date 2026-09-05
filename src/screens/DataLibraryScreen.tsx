@@ -9,6 +9,8 @@ import {
   type DataEntryKind,
   type DataTab,
 } from "../data/dataLibrary"
+import { SwoopTabs } from "../components/SwoopTabs"
+import { FloatingMenu, MenuCaption, MenuItem } from "../components/FloatingMenu"
 
 interface DataLibraryScreenProps {
   categoryId: DataCategoryId
@@ -20,10 +22,10 @@ type SortKey = "name" | "size" | "edited"
 type KindFilter = "all" | "files" | "folders"
 
 /** Which page of the library is on screen. */
-type Route =
-  | { kind: "library" }
-  | { kind: "folder"; id: string }
-  | { kind: "file"; id: string }
+type Route = { kind: "library" } | { kind: "folder" id: string } | {
+  kind: "file"
+  id: string
+}
 
 /* ------------------------------------------------------------------ icons */
 
@@ -186,10 +188,11 @@ function Icon({
 
 /* ------------------------------------------------------------- primitives */
 
-const kindStyles: Record<
-  DataEntryKind,
-  { label: string; text: string; bg: string }
-> = {
+const kindStyles: Record<DataEntryKind, {
+  label: string
+  text: string
+  bg: string
+}> = {
   pdf: { label: "PDF", text: "text-rose-600", bg: "bg-rose-50" },
   csv: { label: "CSV", text: "text-emerald-600", bg: "bg-emerald-50" },
   xlsx: { label: "XLS", text: "text-green-700", bg: "bg-green-50" },
@@ -238,10 +241,13 @@ function SharedWith({ initials }: { initials: string[] }) {
 }
 
 /** The square tile an entry shows as, ahead of its name. */
-function EntryGlyph({ entry, size }: { entry: DataEntry; size: 8 | 9 | 14 }) {
-  const box = size === 14 ? "h-14 w-14 text-[13px]" : size === 9
-    ? "h-9 w-9 text-[9px]"
-    : "h-8 w-8 text-[8.5px]"
+function EntryGlyph({ entry, size }: { entry: DataEntry size: 8 | 9 | 14 }) {
+  const box =
+    size === 14
+      ? "h-14 w-14 text-[13px]"
+      : size === 9
+        ? "h-9 w-9 text-[9px]"
+        : "h-8 w-8 text-[8.5px]"
 
   if (entry.kind === "folder") {
     return (
@@ -281,7 +287,7 @@ function ToolButton({
       onClick={onClick}
       aria-label={label}
       title={label}
-      className={`relative flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border transition-colors active:scale-95 ${
+      className={`relative flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-xl border transition-colors active:scale-95 ${
         isActive
           ? "border-[#0055ff]/30 bg-blue-50 text-[#0055ff]"
           : "border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -363,23 +369,158 @@ function EntryTile({
   )
 }
 
+/* ── Tree ─────────────────────────────────────────────────────────
+   Rows at the top level carry nothing on the left. Once a folder is
+   expanded its children get a hairline elbow, one 13px step per level —
+   enough to read the nesting, cheap enough not to eat the name column.
+   ──────────────────────────────────────────────────────────────── */
+
+const TREE_STEP = 13
+const TREE_RAIL = 5
+
+interface TreeRow {
+  entry: DataEntry
+  depth: number
+  /** Last child of its parent, so the rail stops at the elbow. */
+  isLast: boolean
+  /** For each ancestor level, whether that branch still has siblings below. */
+  ancestors: boolean[]
+}
+
+function flattenTree(
+  entries: DataEntry[],
+  expanded: Set<string>,
+  depth = 0,
+  ancestors: boolean[] = [],
+): TreeRow[] {
+  return entries.flatMap((entry, index) => {
+    const isLast = index === entries.length - 1
+    const row: TreeRow = { entry, depth, isLast, ancestors }
+    const children = entry.children ?? []
+    if (!expanded.has(entry.id) || children.length === 0) return [row]
+    return [
+      row,
+      ...flattenTree(children, expanded, depth + 1, [...ancestors, !isLast]),
+    ]
+  })
+}
+
+function TreeGutter({ depth, isLast, ancestors }: Omit<TreeRow, "entry">) {
+  if (depth === 0) return null
+  // -my-2 cancels the row padding so the rail runs unbroken between rows.
+  return (
+    <span
+      aria-hidden="true"
+      className="relative -my-2 shrink-0 self-stretch"
+      style={{ width: depth * TREE_STEP }}
+    >
+      {/* Ancestor branches that continue past this row */}
+      {ancestors.map((continues, level) =>
+        continues ? (
+          <span
+            key={level}
+            className="absolute top-0 bottom-0 w-px bg-slate-200"
+            style={{ left: level * TREE_STEP + TREE_RAIL }}
+          />
+        ) : null,
+      )}
+
+      {/* This row's own branch: full height, or stopping at the elbow if last */}
+      <span
+        className="absolute top-0 w-px bg-slate-200"
+        style={{
+          left: (depth - 1) * TREE_STEP + TREE_RAIL,
+          height: isLast ? "50%" : "100%",
+        }}
+      />
+
+      {/* The elbow into the row */}
+      <span
+        className="absolute h-px bg-slate-200"
+        style={{
+          left: (depth - 1) * TREE_STEP + TREE_RAIL,
+          top: "50%",
+          width: TREE_STEP - TREE_RAIL + 1,
+        }}
+      />
+    </span>
+  )
+}
+
+/** Disclosure caret. Files get an empty slot so names stay on one axis. */
+function TreeToggle({
+  expandable,
+  expanded,
+  onToggle,
+  label,
+}: {
+  expandable: boolean
+  expanded: boolean
+  onToggle: () => void
+  label: string
+}) {
+  if (!expandable) {
+    return <span className="w-3.5 shrink-0 self-center" aria-hidden="true" />
+  }
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation()
+        onToggle()
+      }}
+      aria-expanded={expanded}
+      aria-label={`${expanded ? "Collapse" : "Expand"} ${label}`}
+      className={`flex h-3.5 w-3.5 shrink-0 self-center cursor-pointer items-center justify-center rounded text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700 ${
+        expanded ? "rotate-90" : ""
+      }`}
+    >
+      <svg
+        width="9"
+        height="9"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="m9 18 6-6-6-6" />
+      </svg>
+    </button>
+  )
+}
+
 function EntryRow({
   entry,
   isSelected,
   onToggleSelect,
   onOpen,
   onMenu,
-}: EntryViewProps) {
+  depth = 0,
+  isLast = true,
+  ancestors = [],
+  isExpanded = false,
+  onToggleExpand,
+}: EntryViewProps & {
+  depth?: number
+  isLast?: boolean
+  ancestors?: boolean[]
+  isExpanded?: boolean
+  onToggleExpand?: () => void
+}) {
+  const expandable = Boolean(onToggleExpand && (entry.children ?? []).length)
   return (
     <div
-      className={`flex items-center gap-2.5 py-2 transition-colors ${
+      className={`flex items-stretch gap-2.5 py-2 transition-colors ${
         isSelected ? "bg-blue-50/40" : ""
       }`}
     >
       <button
         type="button"
         onClick={onToggleSelect}
-        className={`flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded border transition-colors ${
+        className={`mt-[9px] flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center self-start rounded border transition-colors ${
           isSelected
             ? "border-[#0055ff] bg-[#0055ff] text-white"
             : "border-slate-300 bg-white text-transparent hover:border-slate-400"
@@ -388,6 +529,18 @@ function EntryRow({
       >
         <Icon name="check" size={9} />
       </button>
+
+      <TreeGutter depth={depth} isLast={isLast} ancestors={ancestors} />
+
+      {/* Only lists that can nest reserve the caret column. */}
+      {onToggleExpand && (
+        <TreeToggle
+          expandable={expandable}
+          expanded={isExpanded}
+          onToggle={onToggleExpand}
+          label={entry.name}
+        />
+      )}
 
       <button
         type="button"
@@ -408,14 +561,14 @@ function EntryRow({
         </span>
       </button>
 
-      <span className="w-[52px] shrink-0">
+      <span className="w-[52px] shrink-0 self-center">
         <SharedWith initials={entry.sharedWith} />
       </span>
 
       <button
         type="button"
         onClick={onMenu}
-        className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 active:scale-95"
+        className="flex h-8 w-8 shrink-0 self-center cursor-pointer items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 active:scale-95"
         aria-label={`Actions for ${entry.name}`}
       >
         <Icon name="more" size={16} />
@@ -486,7 +639,7 @@ function EntryActionSheet({
         className="absolute inset-0"
         aria-label="Close"
       />
-      <section className="relative z-10 w-full rounded-t-[22px] bg-white px-4 pb-5 pt-2 shadow-[0_-16px_40px_rgba(15,23,42,0.18)] animate-slide-up">
+      <section className="relative z-10 w-full rounded-t-[28px] bg-white px-4 pb-5 pt-2 shadow-[0_-16px_40px_rgba(15,23,42,0.18)] animate-slide-up">
         <div className="flex flex-col items-center">
           <span className="h-1 w-9 rounded-full bg-slate-300" />
         </div>
@@ -615,46 +768,42 @@ function FolderPage({
 
       <div className="min-h-0 flex-1 overflow-y-auto pb-8">
         <div key={folder.id} className="animate-task-tab-panel">
-          {children.length === 0
-            ? (
-              <div className="mx-4 mt-4 flex min-h-[220px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 px-8 text-center">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50 text-slate-300">
-                  <Icon name="folder" size={20} />
-                </span>
-                <h3 className="mt-3 text-[13.5px] font-bold text-slate-800">
-                  This folder is empty
-                </h3>
-              </div>
-            )
-            : isGrid
-            ? (
-              <div className="grid grid-cols-2 gap-2.5 px-4 pt-3">
-                {children.map((child) => (
-                  <EntryTile
-                    key={child.id}
-                    entry={child}
-                    isSelected={selected.has(child.id)}
-                    onToggleSelect={() => toggleSelect(child.id)}
-                    onOpen={() => onOpenFile(child)}
-                    onMenu={() => setMenuEntry(child)}
-                  />
-                ))}
-              </div>
-            )
-            : (
-              <div className="divide-y divide-slate-100 px-4">
-                {children.map((child) => (
-                  <EntryRow
-                    key={child.id}
-                    entry={child}
-                    isSelected={selected.has(child.id)}
-                    onToggleSelect={() => toggleSelect(child.id)}
-                    onOpen={() => onOpenFile(child)}
-                    onMenu={() => setMenuEntry(child)}
-                  />
-                ))}
-              </div>
-            )}
+          {children.length === 0 ? (
+            <div className="mx-4 mt-4 flex min-h-[220px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 px-8 text-center">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50 text-slate-300">
+                <Icon name="folder" size={20} />
+              </span>
+              <h3 className="mt-3 text-[13.5px] font-bold text-slate-800">
+                This folder is empty
+              </h3>
+            </div>
+          ) : isGrid ? (
+            <div className="grid grid-cols-2 gap-2.5 px-4 pt-3">
+              {children.map((child) => (
+                <EntryTile
+                  key={child.id}
+                  entry={child}
+                  isSelected={selected.has(child.id)}
+                  onToggleSelect={() => toggleSelect(child.id)}
+                  onOpen={() => onOpenFile(child)}
+                  onMenu={() => setMenuEntry(child)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100 px-4">
+              {children.map((child) => (
+                <EntryRow
+                  key={child.id}
+                  entry={child}
+                  isSelected={selected.has(child.id)}
+                  onToggleSelect={() => toggleSelect(child.id)}
+                  onOpen={() => onOpenFile(child)}
+                  onMenu={() => setMenuEntry(child)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -727,7 +876,7 @@ function FilePage({
   onBack: () => void
   onAction: (label: string) => void
 }) {
-  const facts: { label: string; value: string }[] = [
+  const facts: { label: string value: string }[] = [
     { label: "Type", value: kindStyles[entry.kind].label },
     { label: "Size", value: formatEntrySize(entry.sizeKb) },
     { label: "Created on", value: entry.createdOn },
@@ -850,6 +999,7 @@ export function DataLibraryScreen({
   const [sortAsc, setSortAsc] = useState(false)
   const [kindFilter, setKindFilter] = useState<KindFilter>("all")
   const [isGrid, setIsGrid] = useState(true)
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchDraft, setSearchDraft] = useState("")
   const [openMenu, setOpenMenu] = useState<"filter" | "sort" | null>(null)
@@ -858,13 +1008,6 @@ export function DataLibraryScreen({
   const [route, setRoute] = useState<Route>({ kind: "library" })
   const [toast, setToast] = useState("")
 
-  const tabListRef = useRef<HTMLDivElement>(null)
-  const [tabIndicator, setTabIndicator] = useState({
-    left: 0,
-    width: 0,
-    ready: false,
-  })
-  const [isInitialTabRender, setIsInitialTabRender] = useState(true)
   const toastRef = useRef<number | null>(null)
 
   /* Switching buckets from the drawer swaps the whole dataset. */
@@ -881,33 +1024,6 @@ export function DataLibraryScreen({
     },
     [],
   )
-
-  useEffect(() => {
-    const activeEl = tabListRef.current?.querySelector<HTMLElement>(
-      `#data-tab-${tab}`,
-    )
-    if (activeEl && tabListRef.current) {
-      setTabIndicator({
-        left: activeEl.offsetLeft,
-        width: activeEl.offsetWidth,
-        ready: true,
-      })
-      const container = tabListRef.current
-      container.scrollTo({
-        left: Math.max(
-          0,
-          activeEl.offsetLeft -
-            container.offsetWidth / 2 +
-            activeEl.offsetWidth / 2,
-        ),
-        behavior: "smooth",
-      })
-    }
-    if (isInitialTabRender) {
-      const timer = setTimeout(() => setIsInitialTabRender(false), 80)
-      return () => clearTimeout(timer)
-    }
-  }, [tab, isInitialTabRender, category, route])
 
   const showToast = (message: string) => {
     setToast(message)
@@ -950,9 +1066,10 @@ export function DataLibraryScreen({
     return flat
   }, [entries])
 
-  const routedEntry = route.kind === "library"
-    ? null
-    : (allEntries.find((item) => item.id === route.id) ?? null)
+  const routedEntry =
+    route.kind === "library"
+      ? null
+      : (allEntries.find((item) => item.id === route.id) ?? null)
 
   /* The search screen looks across all three tabs, not just the open one. */
   const searchResults = useMemo(() => {
@@ -1091,7 +1208,8 @@ export function DataLibraryScreen({
         onBack={() =>
           setRoute(
             parent ? { kind: "folder", id: parent.id } : { kind: "library" },
-          )}
+          )
+        }
         onAction={(label) => {
           if (label === "Delete") {
             setEntries((current) => ({
@@ -1135,7 +1253,8 @@ export function DataLibraryScreen({
               icon="filter"
               label="Filter items"
               onClick={() =>
-                setOpenMenu(openMenu === "filter" ? null : "filter")}
+                setOpenMenu(openMenu === "filter" ? null : "filter")
+              }
               isActive={isFiltered || openMenu === "filter"}
             />
             <ToolButton
@@ -1157,7 +1276,7 @@ export function DataLibraryScreen({
             <button
               type="button"
               onClick={uploadFile}
-              className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-[#0055ff] text-white shadow-2xs transition-colors hover:bg-blue-700 active:scale-95"
+              className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-[#0055ff] text-white shadow-2xs transition-colors hover:bg-blue-700 active:scale-95"
               aria-label="Upload a file"
             >
               <Icon name="upload" size={15} />
@@ -1166,78 +1285,61 @@ export function DataLibraryScreen({
 
           {/* Filter / Sort popovers */}
           {openMenu && (
-            <>
-              <div
-                className="fixed inset-0 z-30"
-                onClick={() => setOpenMenu(null)}
-              />
-              <div
-                className={`absolute top-full z-40 mt-1.5 w-44 rounded-xl border border-slate-100 bg-white p-1 shadow-[0_12px_32px_rgba(15,23,42,0.16)] animate-slide-up origin-top ${
-                  openMenu === "filter" ? "right-[104px]" : "right-[69px]"
-                }`}
-              >
-                {openMenu === "filter"
-                  ? (
-                    [
-                      { id: "all" as const, label: "All items" },
-                      { id: "files" as const, label: "Files only" },
-                      { id: "folders" as const, label: "Folders only" },
-                    ].map((option) => (
-                      <button
-                        type="button"
-                        key={option.id}
-                        onClick={() => {
-                          setKindFilter(option.id)
-                          setOpenMenu(null)
-                        }}
-                        className={`flex w-full cursor-pointer items-center justify-between rounded-lg px-2.5 py-2 text-left transition-colors ${
-                          kindFilter === option.id
-                            ? "bg-blue-50 text-[#0055ff]"
-                            : "text-slate-700 hover:bg-slate-50"
-                        }`}
-                      >
-                        <span className="text-[12px] font-medium">
-                          {option.label}
-                        </span>
-                        {kindFilter === option.id && (
-                          <Icon name="check" size={12} />
-                        )}
-                      </button>
-                    ))
-                  )
-                  : (
-                    (["name", "size", "edited"] as SortKey[]).map((key) => (
-                      <button
-                        type="button"
-                        key={key}
-                        onClick={() => {
-                          if (sortKey === key) setSortAsc((v) => !v)
-                          else {
-                            setSortKey(key)
-                            setSortAsc(true)
-                          }
-                          setOpenMenu(null)
-                        }}
-                        className={`flex w-full cursor-pointer items-center justify-between rounded-lg px-2.5 py-2 text-left transition-colors ${
-                          sortKey === key
-                            ? "bg-blue-50 text-[#0055ff]"
-                            : "text-slate-700 hover:bg-slate-50"
-                        }`}
-                      >
-                        <span className="text-[12px] font-medium">
-                          {sortLabels[key]}
-                        </span>
-                        {sortKey === key && (
-                          <span className="text-[10px] font-bold">
-                            {sortAsc ? "A→Z" : "Z→A"}
-                          </span>
-                        )}
-                      </button>
-                    ))
-                  )}
-              </div>
-            </>
+            <div
+              className="fixed inset-0 z-30"
+              onClick={() => setOpenMenu(null)}
+            />
           )}
+          <FloatingMenu
+            open={openMenu === "filter"}
+            align="right"
+            widthClassName="w-36"
+            style={{ right: 104 }}
+          >
+            <MenuCaption>Show</MenuCaption>
+            {[
+              { id: "all" as const, label: "All items" },
+              { id: "files" as const, label: "Files only" },
+              { id: "folders" as const, label: "Folders only" },
+            ].map((option) => (
+              <MenuItem
+                key={option.id}
+                selected={kindFilter === option.id}
+                onClick={() => {
+                  setKindFilter(option.id)
+                  setOpenMenu(null)
+                }}
+              >
+                {option.label}
+              </MenuItem>
+            ))}
+          </FloatingMenu>
+          <FloatingMenu
+            open={openMenu === "sort"}
+            align="right"
+            widthClassName="w-36"
+            style={{ right: 69 }}
+          >
+            <MenuCaption>Sort by</MenuCaption>
+            {(["name", "size", "edited"] as SortKey[]).map((key) => (
+              <MenuItem
+                key={key}
+                selected={sortKey === key}
+                onClick={() => {
+                  if (sortKey === key) setSortAsc((v) => !v)
+                  else {
+                    setSortKey(key)
+                    setSortAsc(true)
+                  }
+                  setOpenMenu(null)
+                }}
+                hint={sortKey === key ? (sortAsc ? "A→Z" : "Z→A") : undefined}
+                trailing={null}
+              >
+                {sortLabels[key]}
+              </MenuItem>
+            ))}
+          </FloatingMenu>
         </div>
 
         {/* Active search — the separate search screen writes the query here */}
@@ -1262,100 +1364,20 @@ export function DataLibraryScreen({
         )}
       </header>
 
-      {/* Tabs — same construction as the captures tab bar */}
-      <nav
-        className="relative shrink-0 border-t border-slate-100 bg-white"
-        aria-label="Data views"
-      >
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-[1px] bg-[#0055ff]" />
-
-        <div
-          ref={tabListRef}
-          role="tablist"
-          className="relative flex items-end overflow-x-auto pl-0 pr-3.5 pt-2.5 no-scrollbar scroll-smooth"
-        >
-          {tabIndicator.ready && (
-            <div
-              className={`pointer-events-none absolute bottom-0 z-15 h-[35px] bg-[#0055ff] shadow-xs ${
-                tabIndicator.left === 0
-                  ? "rounded-tl-none rounded-tr-xl"
-                  : "rounded-t-xl"
-              } ${
-                isInitialTabRender
-                  ? ""
-                  : "transition-all duration-320 ease-[cubic-bezier(0.34,1.45,0.64,1)]"
-              }`}
-              style={{
-                left: `${tabIndicator.left}px`,
-                width: `${tabIndicator.width}px`,
-              }}
-            >
-              {dataTabs.findIndex((t) => t.id === tab) > 0 && (
-                <svg
-                  className="pointer-events-none absolute -left-[11px] bottom-0 z-15 h-[12px] w-[12px]"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M 12 0 C 12 6.6 6.6 12 0 12 L 12 12 Z"
-                    fill="#0055ff"
-                  />
-                </svg>
-              )}
-              <svg
-                className="pointer-events-none absolute -right-[11px] bottom-0 z-15 h-[12px] w-[12px]"
-                viewBox="0 0 12 12"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path d="M 0 0 C 0 6.6 5.4 12 12 12 L 0 12 Z" fill="#0055ff" />
-              </svg>
-            </div>
-          )}
-
-          {dataTabs.map((entry) => {
-            const isActive = tab === entry.id
-            return (
-              <button
-                type="button"
-                key={entry.id}
-                id={`data-tab-${entry.id}`}
-                onClick={() => setTab(entry.id)}
-                role="tab"
-                aria-selected={isActive}
-                className={`group relative z-20 flex h-[35px] shrink-0 cursor-pointer items-center gap-1.5 px-3.5 text-left font-medium transition-all duration-200 active:scale-[0.96] ${
-                  isActive ? "text-white" : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                <Icon
-                  name={entry.icon}
-                  size={13}
-                  className={`shrink-0 transition-colors duration-200 ${
-                    isActive
-                      ? "text-white"
-                      : "text-slate-400 group-hover:text-slate-600"
-                  }`}
-                />
-                <span className="whitespace-nowrap text-[12.5px] font-medium leading-none transition-colors duration-200">
-                  {entry.label}
-                </span>
-                {counts[entry.id] > 0 && (
-                  <span
-                    className={`ml-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] tabular-nums transition-all duration-200 ${
-                      isActive
-                        ? "scale-105 bg-white/25 font-bold text-white"
-                        : "scale-100 bg-slate-100 font-semibold text-slate-500 group-hover:bg-slate-200/70"
-                    }`}
-                  >
-                    {counts[entry.id]}
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-      </nav>
+      {/* Tabs */}
+      <SwoopTabs
+        tabs={dataTabs.map((entry) => ({
+          id: entry.id,
+          label: entry.label,
+          icon: <Icon name={entry.icon} size={13} />,
+          count: counts[entry.id],
+        }))}
+        active={tab}
+        onChange={setTab}
+        idPrefix="data-tab"
+        ariaLabel="Data views"
+        deps={[category, route]}
+      />
 
       {/* Column header — the desktop table's header, reduced to what fits */}
       {!isGrid && visible.length > 0 && (
@@ -1415,67 +1437,75 @@ export function DataLibraryScreen({
       {/* Body */}
       <div className="min-h-0 flex-1 overflow-y-auto pb-8">
         <div key={`${category.id}-${tab}`} className="animate-task-tab-panel">
-          {visible.length === 0
-            ? (
-              <div className="mx-4 mt-4 flex min-h-[240px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 px-8 text-center">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50 text-slate-300">
-                  <Icon name="folder" size={20} />
-                </span>
-                <h3 className="mt-3 text-[13.5px] font-bold text-slate-800">
-                  {query ? "No matches" : "Nothing here yet"}
-                </h3>
-                <p className="mt-1 max-w-[240px] text-[11.5px] leading-[16px] text-slate-500">
-                  {query
-                    ? `No files or folders match "${query}".`
-                    : tab === "shared"
-                      ? "Files teammates share with you land here."
-                      : tab === "structure"
-                        ? "Discipline folders for this project will appear here."
-                        : "Upload a file to start this library."}
-                </p>
-                {!query && tab !== "shared" && (
-                  <button
-                    type="button"
-                    onClick={uploadFile}
-                    className="mt-4 flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-[#0055ff] px-4 text-white shadow-2xs transition-colors hover:bg-blue-700"
-                  >
-                    <Icon name="upload" size={14} />
-                    <span className="text-[12px] font-semibold">
-                      Upload a file
-                    </span>
-                  </button>
-                )}
-              </div>
-            )
-            : isGrid
-            ? (
-              <div className="grid grid-cols-2 gap-2.5 px-4 pt-3">
-                {visible.map((entry) => (
-                  <EntryTile
-                    key={entry.id}
-                    entry={entry}
-                    isSelected={selected.has(entry.id)}
-                    onToggleSelect={() => toggleSelect(entry.id)}
-                    onOpen={() => openEntry(entry)}
-                    onMenu={() => setMenuEntry(entry)}
-                  />
-                ))}
-              </div>
-            )
-            : (
-              <div className="divide-y divide-slate-100 px-4">
-                {visible.map((entry) => (
-                  <EntryRow
-                    key={entry.id}
-                    entry={entry}
-                    isSelected={selected.has(entry.id)}
-                    onToggleSelect={() => toggleSelect(entry.id)}
-                    onOpen={() => openEntry(entry)}
-                    onMenu={() => setMenuEntry(entry)}
-                  />
-                ))}
-              </div>
-            )}
+          {visible.length === 0 ? (
+            <div className="mx-4 mt-4 flex min-h-[240px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 px-8 text-center">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50 text-slate-300">
+                <Icon name="folder" size={20} />
+              </span>
+              <h3 className="mt-3 text-[13.5px] font-bold text-slate-800">
+                {query ? "No matches" : "Nothing here yet"}
+              </h3>
+              <p className="mt-1 max-w-[240px] text-[11.5px] leading-[16px] text-slate-500">
+                {query
+                  ? `No files or folders match "${query}".`
+                  : tab === "shared"
+                    ? "Files teammates share with you land here."
+                    : tab === "structure"
+                      ? "Discipline folders for this project will appear here."
+                      : "Upload a file to start this library."}
+              </p>
+              {!query && tab !== "shared" && (
+                <button
+                  type="button"
+                  onClick={uploadFile}
+                  className="mt-4 flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-[#0055ff] px-4 text-white shadow-2xs transition-colors hover:bg-blue-700"
+                >
+                  <Icon name="upload" size={14} />
+                  <span className="text-[12px] font-semibold">
+                    Upload a file
+                  </span>
+                </button>
+              )}
+            </div>
+          ) : isGrid ? (
+            <div className="grid grid-cols-2 gap-2.5 px-4 pt-3">
+              {visible.map((entry) => (
+                <EntryTile
+                  key={entry.id}
+                  entry={entry}
+                  isSelected={selected.has(entry.id)}
+                  onToggleSelect={() => toggleSelect(entry.id)}
+                  onOpen={() => openEntry(entry)}
+                  onMenu={() => setMenuEntry(entry)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100 px-4">
+              {flattenTree(visible, expanded).map((row) => (
+                <EntryRow
+                  key={`${row.depth}-${row.entry.id}`}
+                  entry={row.entry}
+                  depth={row.depth}
+                  isLast={row.isLast}
+                  ancestors={row.ancestors}
+                  isExpanded={expanded.has(row.entry.id)}
+                  onToggleExpand={() =>
+                    setExpanded((current) => {
+                      const next = new Set(current)
+                      if (next.has(row.entry.id)) next.delete(row.entry.id)
+                      else next.add(row.entry.id)
+                      return next
+                    })
+                  }
+                  isSelected={selected.has(row.entry.id)}
+                  onToggleSelect={() => toggleSelect(row.entry.id)}
+                  onOpen={() => openEntry(row.entry)}
+                  onMenu={() => setMenuEntry(row.entry)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -1598,88 +1628,85 @@ export function DataLibraryScreen({
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 py-3">
-            {!searchDraft.trim()
-              ? (
-                <div className="space-y-4 pt-1">
-                  <div>
-                    <span className="mb-1.5 block text-[9.5px] font-bold uppercase tracking-wider text-slate-400">
-                      Recent searches
-                    </span>
-                    <div className="flex flex-wrap gap-1">
-                      {recentSearches.map((term) => (
-                        <button
-                          type="button"
-                          key={term}
-                          onClick={() => setSearchDraft(term)}
-                          className="flex cursor-pointer items-center gap-1 rounded-full bg-slate-100/90 px-2.5 py-[3px] text-slate-600 transition-all hover:bg-slate-200 active:scale-95"
-                        >
-                          <Icon
-                            name="clock"
-                            size={9}
-                            className="text-slate-400"
-                          />
-                          <span className="text-[10px] font-semibold">
-                            {term}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="pt-1">
-                    <span className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Recent files
-                    </span>
-                    <div className="divide-y divide-slate-100">
-                      {entries.uploads.slice(0, 5).map((item) => (
-                        <SearchResultRow
-                          key={item.id}
-                          entry={item}
-                          meta={item.editedOn}
-                          onClick={() => {
-                            setIsSearchOpen(false)
-                            openEntry(item)
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )
-              : searchResults.length === 0
-              ? (
-                <div className="flex min-h-[220px] flex-col items-center justify-center px-8 text-center">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50 text-slate-300">
-                    <Icon name="search" size={20} />
-                  </span>
-                  <h3 className="mt-3 text-[13.5px] font-bold text-slate-800">
-                    No matches
-                  </h3>
-                  <p className="mt-1 max-w-[240px] text-[11.5px] leading-[16px] text-slate-500">
-                    Nothing in {category.label} matches &ldquo;
-                    {searchDraft.trim()}&rdquo;.
-                  </p>
-                </div>
-              )
-              : (
+            {!searchDraft.trim() ? (
+              <div className="space-y-4 pt-1">
                 <div>
-                  <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    {searchResults.length} result
-                    {searchResults.length === 1 ? "" : "s"}
+                  <span className="mb-1.5 block text-[9.5px] font-bold uppercase tracking-wider text-slate-400">
+                    Recent searches
+                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {recentSearches.map((term) => (
+                      <button
+                        type="button"
+                        key={term}
+                        onClick={() => setSearchDraft(term)}
+                        className="flex cursor-pointer items-center gap-1 rounded-full bg-slate-100/90 px-2.5 py-[3px] text-slate-600 transition-all hover:bg-slate-200 active:scale-95"
+                      >
+                        <Icon
+                          name="clock"
+                          size={9}
+                          className="text-slate-400"
+                        />
+                        <span className="text-[10px] font-semibold">
+                          {term}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-1">
+                  <span className="mb-2 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Recent files
                   </span>
                   <div className="divide-y divide-slate-100">
-                    {searchResults.map((result) => (
+                    {entries.uploads.slice(0, 5).map((item) => (
                       <SearchResultRow
-                        key={`${result.tab}-${result.entry.id}`}
-                        entry={result.entry}
-                        meta={result.label}
-                        onClick={() =>
-                          applySearch(searchDraft.trim(), result.tab)}
+                        key={item.id}
+                        entry={item}
+                        meta={item.editedOn}
+                        onClick={() => {
+                          setIsSearchOpen(false)
+                          openEntry(item)
+                        }}
                       />
                     ))}
                   </div>
                 </div>
-              )}
+              </div>
+            ) : searchResults.length === 0 ? (
+              <div className="flex min-h-[220px] flex-col items-center justify-center px-8 text-center">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50 text-slate-300">
+                  <Icon name="search" size={20} />
+                </span>
+                <h3 className="mt-3 text-[13.5px] font-bold text-slate-800">
+                  No matches
+                </h3>
+                <p className="mt-1 max-w-[240px] text-[11.5px] leading-[16px] text-slate-500">
+                  Nothing in {category.label} matches &ldquo;
+                  {searchDraft.trim()}&rdquo;.
+                </p>
+              </div>
+            ) : (
+              <div>
+                <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  {searchResults.length} result
+                  {searchResults.length === 1 ? "" : "s"}
+                </span>
+                <div className="divide-y divide-slate-100">
+                  {searchResults.map((result) => (
+                    <SearchResultRow
+                      key={`${result.tab}-${result.entry.id}`}
+                      entry={result.entry}
+                      meta={result.label}
+                      onClick={() =>
+                        applySearch(searchDraft.trim(), result.tab)
+                      }
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1718,7 +1745,7 @@ export function DataLibraryScreen({
             className="absolute inset-0"
             aria-label="Close"
           />
-          <section className="relative z-10 w-full rounded-t-[22px] bg-white px-4 pb-5 pt-2 shadow-[0_-16px_40px_rgba(15,23,42,0.18)] animate-slide-up">
+          <section className="relative z-10 w-full rounded-t-[28px] bg-white px-4 pb-5 pt-2 shadow-[0_-16px_40px_rgba(15,23,42,0.18)] animate-slide-up">
             <div className="flex flex-col items-center">
               <span className="h-1 w-9 rounded-full bg-slate-300" />
             </div>

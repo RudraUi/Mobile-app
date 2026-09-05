@@ -138,7 +138,7 @@ export function OtpScreen({
                     setActiveIndex(idx)
                     inputRefs.current[idx]?.focus()
                   }}
-                  className={`relative flex-1 max-w-[48px] h-[52px] rounded-[18px] flex items-center justify-center cursor-pointer transition-all duration-150 ${
+                  className={`relative flex-1 max-w-[48px] h-[52px] rounded-2xl flex items-center justify-center cursor-pointer transition-all duration-150 ${
                     isFilled
                       ? "bg-[#0055ff] text-white shadow-xs"
                       : isActive

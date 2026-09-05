@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { type Project, projectsList } from "../data/projectsData"
+import { FloatingMenu, MenuCaption, MenuItem } from "./FloatingMenu"
 
 export interface AppHeaderProps {
   showSearch?: boolean
@@ -303,130 +304,82 @@ export function AppHeader({
             <button
               type="button"
               onClick={handleToggleProject}
-              className="flex min-w-0 items-center gap-[6px] cursor-pointer hover:opacity-90 active:scale-98 transition-all group"
+              className="flex min-w-0 flex-col items-start cursor-pointer hover:opacity-90 active:scale-98 transition-all group"
               aria-label="Select workspace project"
             >
-              <span className="text-[18px] font-bold tracking-[-0.3px]">
-                {effectiveName}
+              <span className="text-[8px] font-bold uppercase tracking-[0.12em] leading-none text-white/55">
+                Active Project
               </span>
-              <div
-                className="transition-transform duration-200"
-                style={{
-                  transform: isDropdownVisible
-                    ? "rotate(180deg)"
-                    : "rotate(0deg)",
-                }}
-              >
-                <svg
-                  width="12"
-                  height="8"
-                  viewBox="0 0 12 8"
-                  fill="none"
-                  aria-hidden="true"
+              <span className="mt-[3px] flex min-w-0 items-center gap-[6px]">
+                <span className="truncate text-[18px] font-bold leading-none tracking-[-0.3px]">
+                  {effectiveName}
+                </span>
+                <span
+                  className="shrink-0 transition-transform duration-200"
+                  style={{
+                    transform: isDropdownVisible
+                      ? "rotate(180deg)"
+                      : "rotate(0deg)",
+                  }}
                 >
-                  <path
-                    d="m2 2 4 4 4-4"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
+                  <svg
+                    width="12"
+                    height="8"
+                    viewBox="0 0 12 8"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="m2 2 4 4 4-4"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+              </span>
             </button>
 
-            {/* Anchored Tooltip Popover directly under the project button */}
+            {/* Compact project menu anchored under the project button */}
             {isDropdownVisible && (
-              <>
-                <div
-                  className="fixed inset-0 z-40 bg-black/10 backdrop-blur-2xs cursor-default"
-                  onClick={handleCloseProject}
-                />
-                <div
-                  onClick={(e) => e.stopPropagation()}
-                  className="absolute top-full left-0 mt-2 w-60 bg-white/98 backdrop-blur-md rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.22)] border border-slate-100 p-1.5 z-50 animate-slide-up origin-top-left text-slate-800"
-                >
-                  {/* Tooltip Triangle Pointer */}
-                  <div className="absolute -top-1.5 left-5 w-3 h-3 bg-white rotate-45 border-t border-l border-slate-100 rounded-xs" />
-
-                  {/* Header */}
-                  <div className="flex items-center justify-between px-2.5 pt-1.5 pb-1">
-                    <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider">
-                      Switch Project
-                    </span>
-                    <span className="text-[9px] font-semibold text-slate-400">
-                      {projectsList.length} workspaces
-                    </span>
-                  </div>
-
-                  {/* Projects List */}
-                  <div className="space-y-0.5 max-h-[240px] overflow-y-auto">
-                    {projectsList.map((project) => {
-                      const isSelected = currentProject.id === project.id
-                      return (
-                        <button
-                          type="button"
-                          key={project.id}
-                          onClick={() => {
-                            onSelectProject?.(project)
-                            handleCloseProject()
-                          }}
-                          className={`w-full p-2 rounded-xl flex items-center justify-between text-left transition-all cursor-pointer ${
-                            isSelected
-                              ? "bg-blue-50/90 text-[#0055ff] shadow-2xs"
-                              : "text-slate-700 hover:bg-slate-50 active:bg-slate-100"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <div
-                              className="w-7 h-7 rounded-lg flex items-center justify-center font-extrabold text-white text-[12px] shadow-2xs shrink-0"
-                              style={{ backgroundColor: project.badgeBg }}
-                            >
-                              {project.badge}
-                            </div>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <span
-                                  className={`text-[12px] truncate ${
-                                    isSelected
-                                      ? "font-bold text-[#0055ff]"
-                                      : "font-semibold text-slate-800"
-                                  }`}
-                                >
-                                  {project.name}
-                                </span>
-                                <span className="text-[8.5px] font-bold px-1 py-0.2 rounded bg-black/5 text-slate-500 font-mono shrink-0">
-                                  {project.code}
-                                </span>
-                              </div>
-                              <p className="text-[10px] text-slate-400 font-medium truncate leading-tight mt-0.5">
-                                {project.location}
-                              </p>
-                            </div>
-                          </div>
-
-                          {isSelected && (
-                            <div className="w-4 h-4 rounded-full bg-[#0055ff] text-white flex items-center justify-center shrink-0 ml-1.5">
-                              <svg
-                                width="9"
-                                height="9"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="3.2"
-                                strokeLinecap="round"
-                              >
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
-                            </div>
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              </>
+              <div
+                className="fixed inset-0 z-40 cursor-default bg-black/10 backdrop-blur-2xs"
+                onClick={handleCloseProject}
+              />
             )}
+            <FloatingMenu
+              open={isDropdownVisible}
+              widthClassName="w-48"
+              maxHeightClassName="max-h-[210px]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MenuCaption>Switch project</MenuCaption>
+              {projectsList.map((project) => {
+                const isSelected = currentProject.id === project.id
+                return (
+                  <MenuItem
+                    key={project.id}
+                    selected={isSelected}
+                    onClick={() => {
+                      onSelectProject?.(project)
+                      handleCloseProject()
+                    }}
+                    leading={
+                      <span
+                        className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded font-extrabold text-white text-[9px] shadow-2xs"
+                        style={{ backgroundColor: project.badgeBg }}
+                      >
+                        {project.badge}
+                      </span>
+                    }
+                    hint={<span className="font-mono">{project.code}</span>}
+                  >
+                    {project.name}
+                  </MenuItem>
+                )
+              })}
+            </FloatingMenu>
           </div>
         </div>
 

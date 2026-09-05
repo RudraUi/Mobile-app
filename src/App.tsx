@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { LoginScreen } from "./screens/LoginScreen"
 import { OtpScreen } from "./screens/OtpScreen"
 import { SuccessScreen } from "./screens/SuccessScreen"
@@ -30,6 +30,14 @@ import {
   type AppThemeMode,
 } from "./screens/ProfileScreen"
 import { NotificationsScreen } from "./screens/NotificationsScreen"
+import { HelpCenterScreen } from "./screens/HelpCenterScreen"
+import { SupportTicketScreen } from "./screens/SupportTicketScreen"
+import { LegalScreen } from "./screens/LegalScreen"
+import {
+  mockTickets,
+  type SupportTicket,
+  type TicketMessage,
+} from "./data/supportData"
 import {
   initialNotifications,
   type AppNotification,
@@ -42,7 +50,45 @@ import type { Item, ItemType, Status } from "./data/mockData"
 import { mockItems } from "./data/mockData"
 import type { MainTab } from "./components/BottomNav"
 
-type Screen = "login" | "otp" | "success" | "logged_out" | MainTab | "list" | "detail" | "create" | "sitecapture" | "captures" | "navigate" | "profile" | "walkthrough" | "data" | "notifications"
+type Screen = "login" | "otp" | "success" | "logged_out" | MainTab | "list" | "detail" | "create" | "sitecapture" | "captures" | "navigate" | "profile" | "walkthrough" | "data" | "notifications" | "help" | "ticket" | "legal"
+
+/**
+ * How deep each screen sits in the navigation. Moving to a greater depth is a
+ * push, a lesser depth is a pop, and equal depth (tab to tab) just settles.
+ */
+const SCREEN_DEPTH: Record<string, number> = {
+  login: 0,
+  logged_out: 0,
+  otp: 1,
+  success: 2,
+
+  home: 0,
+  map: 0,
+  drawing: 0,
+  bim: 0,
+  drone: 0,
+  walkthrough: 0,
+  splitview: 0,
+
+  list: 1,
+  captures: 1,
+  data: 1,
+  notifications: 1,
+  profile: 1,
+
+  detail: 2,
+  create: 2,
+  sitecapture: 2,
+  help: 2,
+
+  navigate: 3,
+  ticket: 3,
+  legal: 3,
+}
+
+function screenDepth(screen: string) {
+  return SCREEN_DEPTH[screen] ?? 1
+}
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true)
@@ -68,6 +114,21 @@ export default function App() {
     viewMode: "list",
   })
   const [prevScreen, setPrevScreen] = useState<Screen>("home")
+  const [tickets, setTickets] = useState<SupportTicket[]>(mockTickets)
+  const [activeTicketId, setActiveTicketId] = useState<string | null>(null)
+  const [helpTab, setHelpTab] = useState<"faq" | "tickets" | "contact">("faq")
+  const [legalDoc, setLegalDoc] = useState<"terms" | "privacy">("terms")
+  // Derived during render, not in an effect: the keyed screen div starts its
+  // animation on the very first frame it mounts, so the direction has to be
+  // known by then or every transition plays the previous one's direction.
+  const previousScreenRef = useRef<Screen>(screen)
+  const transitionRef = useRef<"push" | "pop" | "settle">("settle")
+  if (previousScreenRef.current !== screen) {
+    const delta = screenDepth(screen) - screenDepth(previousScreenRef.current)
+    transitionRef.current = delta > 0 ? "push" : delta < 0 ? "pop" : "settle"
+    previousScreenRef.current = screen
+  }
+  const transition = transitionRef.current
 
   const [profile, setProfile] = useState<UserProfileData>(() => {
     const savedFont =
@@ -286,6 +347,38 @@ export default function App() {
     ? (items.find((i) => i.id === selectedItem.id) ?? selectedItem)
     : null
 
+  const activeTicket = activeTicketId
+    ? (tickets.find((t) => t.id === activeTicketId) ?? null)
+    : null
+  const openTicketCount = tickets.filter((t) => t.status !== "resolved").length
+
+  /* Support gives an agent the device context without exposing project work. */
+  const supportContext = `App 4.2.1 · ${profile.role} · ${selectedProject.name}`
+
+  const handleCreateTicket = useCallback((ticket: SupportTicket) => {
+    setTickets((prev) => [ticket, ...prev])
+    setActiveTicketId(ticket.id)
+  }, [])
+
+  const handleReplyToTicket = useCallback(
+    (ticketId: string, message: TicketMessage) => {
+      setTickets((prev) =>
+        prev.map((t) =>
+          t.id === ticketId
+            ? {
+                ...t,
+                messages: [...t.messages, message],
+                // Replying to a closed ticket reopens it for the agent.
+                status: t.status === "resolved" ? "open" : t.status,
+                updatedAt: new Date().toISOString().slice(0, 10),
+              }
+            : t,
+        ),
+      )
+    },
+    [],
+  )
+
   const mainTabProps = {
     items,
     onItemClick: handleItemClick,
@@ -338,151 +431,233 @@ export default function App() {
           />
         )}
 
-        <div key={screen} className="flex flex-col h-full animate-screen-in">
-          {screen === "login" && (
-            <LoginScreen onLogin={handleLogin} onOtp={() => setScreen("otp")} />
-          )}
+        <div className="screen-stage relative flex h-full flex-col">
+          <div
+            key={screen}
+            className={`flex h-full flex-col ${
+              transition === "push"
+                ? "animate-screen-push"
+                : transition === "pop"
+                  ? "animate-screen-pop"
+                  : "animate-screen-in"
+            }`}
+          >
+            {screen === "login" && (
+              <LoginScreen
+                onLogin={handleLogin}
+                onOtp={() => setScreen("otp")}
+              />
+            )}
 
-          {screen === "otp" && (
-            <OtpScreen
-              email={email}
-              onVerify={handleVerify}
-              onBack={() => setScreen("login")}
-            />
-          )}
+            {screen === "otp" && (
+              <OtpScreen
+                email={email}
+                onVerify={handleVerify}
+                onBack={() => setScreen("login")}
+              />
+            )}
 
-          {screen === "success" && <SuccessScreen onDone={handleSuccessDone} />}
-          {screen === "logged_out" && (
-            <LoggedOutScreen onDone={() => setScreen("login")} />
-          )}
+            {screen === "success" && (
+              <SuccessScreen onDone={handleSuccessDone} />
+            )}
+            {screen === "logged_out" && (
+              <LoggedOutScreen onDone={() => setScreen("login")} />
+            )}
 
-          {(screen === "home" ||
-            (screen === "create" && activeTab === "home")) && (
-            <HomeScreen {...mainTabProps} />
-          )}
-          {(screen === "map" ||
-            (screen === "create" && activeTab === "map")) && (
-            <MapScreen {...mainTabProps} />
-          )}
-          {(screen === "drawing" ||
-            (screen === "create" && activeTab === "drawing")) && (
-            <DrawingScreen {...mainTabProps} />
-          )}
-          {(screen === "bim" ||
-            (screen === "create" && activeTab === "bim")) && (
-            <BimScreen {...mainTabProps} />
-          )}
-          {(screen === "drone" ||
-            (screen === "create" && activeTab === "drone")) && (
-            <DroneScreen {...mainTabProps} />
-          )}
-          {(screen === "walkthrough" ||
-            (screen === "create" && activeTab === "walkthrough")) && (
-            <WalkthroughScreen {...mainTabProps} />
-          )}
-          {(screen === "splitview" ||
-            (screen === "create" && activeTab === "splitview")) && (
-            <SplitViewScreen {...mainTabProps} />
-          )}
+            {(screen === "home" ||
+              (screen === "create" && activeTab === "home")) && (
+              <HomeScreen {...mainTabProps} />
+            )}
+            {(screen === "map" ||
+              (screen === "create" && activeTab === "map")) && (
+              <MapScreen {...mainTabProps} />
+            )}
+            {(screen === "drawing" ||
+              (screen === "create" && activeTab === "drawing")) && (
+              <DrawingScreen {...mainTabProps} />
+            )}
+            {(screen === "bim" ||
+              (screen === "create" && activeTab === "bim")) && (
+              <BimScreen {...mainTabProps} />
+            )}
+            {(screen === "drone" ||
+              (screen === "create" && activeTab === "drone")) && (
+              <DroneScreen {...mainTabProps} />
+            )}
+            {(screen === "walkthrough" ||
+              (screen === "create" && activeTab === "walkthrough")) && (
+              <WalkthroughScreen {...mainTabProps} />
+            )}
+            {(screen === "splitview" ||
+              (screen === "create" && activeTab === "splitview")) && (
+              <SplitViewScreen {...mainTabProps} />
+            )}
 
-          {screen === "list" && (
-            <ListScreen
-              items={items}
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              onItemClick={handleItemClick}
-              onCreateClick={handleCreateClick}
-              onBack={() => setScreen("home")}
-              selectedProject={selectedProject}
-              onSelectProject={setSelectedProject}
-              userAvatar={profile.avatar}
-              onUpdateStatus={handleUpdateStatus}
-              initialParams={listParams}
-            />
-          )}
+            {screen === "list" && (
+              <ListScreen
+                items={items}
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                onItemClick={handleItemClick}
+                onCreateClick={handleCreateClick}
+                onBack={() => setScreen("home")}
+                selectedProject={selectedProject}
+                onSelectProject={setSelectedProject}
+                userAvatar={profile.avatar}
+                onUpdateStatus={handleUpdateStatus}
+                initialParams={listParams}
+              />
+            )}
 
-          {screen === "detail" && currentSelectedItem && (
-            <TaskDetailScreen
-              onOpenCaptures={() => openCaptures("detail")}
-              item={currentSelectedItem}
-              onBack={() => setScreen(prevScreen || activeTab)}
-              onNavigate={handleNavigate}
-              onUpdate={handleUpdate}
-            />
-          )}
+            {screen === "detail" && currentSelectedItem && (
+              <TaskDetailScreen
+                onOpenCaptures={() => openCaptures("detail")}
+                item={currentSelectedItem}
+                onBack={() => setScreen(prevScreen || activeTab)}
+                onNavigate={handleNavigate}
+                onUpdate={handleUpdate}
+              />
+            )}
 
-          {screen === "create" && (
-            <CreateItemScreen
-              initialType={createType}
-              onBack={() => setScreen(activeTab)}
-              onSubmit={handleCreateSubmit}
-            />
-          )}
+            {screen === "create" && (
+              <CreateItemScreen
+                initialType={createType}
+                onBack={() => setScreen(activeTab)}
+                onSubmit={handleCreateSubmit}
+              />
+            )}
 
-          {screen === "navigate" && navigateItem && (
-            <NavigateScreen
-              item={navigateItem}
-              onBack={() => setScreen("detail")}
-              onArrived={() => setScreen(activeTab)}
-            />
-          )}
+            {screen === "navigate" && navigateItem && (
+              <NavigateScreen
+                item={navigateItem}
+                onBack={() => setScreen("detail")}
+                onArrived={() => setScreen(activeTab)}
+              />
+            )}
 
-          {screen === "sitecapture" && (
-            <SiteCaptureScreen
-              onBack={() => setScreen(activeTab)}
-              onOpenCaptures={() => openCaptures(activeTab)}
-            />
-          )}
+            {screen === "sitecapture" && (
+              <SiteCaptureScreen
+                onBack={() => setScreen(activeTab)}
+                onOpenCaptures={() => openCaptures(activeTab)}
+              />
+            )}
 
-          {screen === "data" && dataCategory && (
-            <DataLibraryScreen
-              categoryId={dataCategory}
-              projectName={selectedProject.name}
-              onBack={() => setScreen(activeTab)}
-            />
-          )}
+            {screen === "data" && dataCategory && (
+              <DataLibraryScreen
+                categoryId={dataCategory}
+                projectName={selectedProject.name}
+                onBack={() => setScreen(activeTab)}
+              />
+            )}
 
-          {screen === "captures" && (
-            <CapturesScreen
-              onBack={() => setScreen(capturesOrigin)}
-              onOpenCapture={() => setScreen("sitecapture")}
-            />
-          )}
+            {screen === "captures" && (
+              <CapturesScreen
+                onBack={() => setScreen(capturesOrigin)}
+                onOpenCapture={() => setScreen("sitecapture")}
+              />
+            )}
 
-          {screen === "profile" && (
-            <ProfileScreen
-              profile={profile}
-              onUpdateProfile={handleUpdateProfile}
-              onBack={() => setScreen(activeTab)}
-              onSignOut={() => setScreen("logged_out")}
-            />
-          )}
+            {screen === "profile" && (
+              <ProfileScreen
+                profile={profile}
+                onUpdateProfile={handleUpdateProfile}
+                onBack={() => setScreen(activeTab)}
+                onSignOut={() => setScreen("logged_out")}
+                openTicketCount={openTicketCount}
+                onOpenHelp={() => {
+                  setHelpTab("faq")
+                  setScreen("help")
+                }}
+                onOpenTickets={() => {
+                  setHelpTab("tickets")
+                  setScreen("help")
+                }}
+                onNewTicket={() => {
+                  setActiveTicketId(null)
+                  setScreen("ticket")
+                }}
+                onOpenTerms={() => {
+                  setLegalDoc("terms")
+                  setScreen("legal")
+                }}
+                onOpenPrivacy={() => {
+                  setLegalDoc("privacy")
+                  setScreen("legal")
+                }}
+              />
+            )}
 
-          {screen === "notifications" && (
-            <NotificationsScreen
-              notifications={notifications}
-              onBack={() => setScreen(activeTab)}
-              items={items}
-              onItemClick={(item) => {
-                setSelectedItem(item)
-                setPrevScreen("notifications")
-                setScreen("detail")
-              }}
-              onMarkAllRead={() => {
-                setNotifications((prev) =>
-                  prev.map((n) => ({ ...n, read: true })),
-                )
-              }}
-              onToggleRead={(id) => {
-                setNotifications((prev) =>
-                  prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
-                )
-              }}
-              onDeleteNotification={(id) => {
-                setNotifications((prev) => prev.filter((n) => n.id !== id))
-              }}
-            />
-          )}
+            {screen === "help" && (
+              <HelpCenterScreen
+                tickets={tickets}
+                initialTab={helpTab}
+                onBack={() => setScreen("profile")}
+                onOpenTicket={(ticket) => {
+                  setActiveTicketId(ticket.id)
+                  setScreen("ticket")
+                }}
+                onNewTicket={() => {
+                  setActiveTicketId(null)
+                  setScreen("ticket")
+                }}
+                onOpenTerms={() => {
+                  setLegalDoc("terms")
+                  setScreen("legal")
+                }}
+                onOpenPrivacy={() => {
+                  setLegalDoc("privacy")
+                  setScreen("legal")
+                }}
+              />
+            )}
+
+            {screen === "ticket" && (
+              <SupportTicketScreen
+                ticket={activeTicket ?? undefined}
+                contextNote={supportContext}
+                onBack={() => {
+                  setHelpTab("tickets")
+                  setScreen("help")
+                }}
+                onCreate={handleCreateTicket}
+                onReply={handleReplyToTicket}
+              />
+            )}
+
+            {screen === "legal" && (
+              <LegalScreen
+                doc={legalDoc}
+                onBack={() => setScreen("profile")}
+                onSwitchDoc={setLegalDoc}
+              />
+            )}
+
+            {screen === "notifications" && (
+              <NotificationsScreen
+                notifications={notifications}
+                onBack={() => setScreen(activeTab)}
+                items={items}
+                onItemClick={(item) => {
+                  setSelectedItem(item)
+                  setPrevScreen("notifications")
+                  setScreen("detail")
+                }}
+                onMarkAllRead={() => {
+                  setNotifications((prev) =>
+                    prev.map((n) => ({ ...n, read: true })),
+                  )
+                }}
+                onToggleRead={(id) => {
+                  setNotifications((prev) =>
+                    prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
+                  )
+                }}
+                onDeleteNotification={(id) => {
+                  setNotifications((prev) => prev.filter((n) => n.id !== id))
+                }}
+              />
+            )}
+          </div>
         </div>
 
         {/* Left Side Navigation Drawer */}

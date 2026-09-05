@@ -7,6 +7,7 @@ import {
   type CaptureFileKind,
 } from "../data/captureFiles"
 import { BackButton } from "../components/BackButton"
+import { SwoopTabs } from "../components/SwoopTabs"
 
 interface CapturesScreenProps {
   onBack: () => void
@@ -153,13 +154,6 @@ export function CapturesScreen({ onBack, onOpenCapture }: CapturesScreenProps) {
   const [isSyncSheetOpen, setIsSyncSheetOpen] = useState(false)
   const [menuFile, setMenuFile] = useState<CaptureFile | null>(null)
   const [toast, setToast] = useState("")
-  const tabListRef = useRef<HTMLDivElement>(null)
-  const [tabIndicator, setTabIndicator] = useState({
-    left: 0,
-    width: 0,
-    ready: false,
-  })
-  const [isInitialTabRender, setIsInitialTabRender] = useState(true)
   const jobRef = useRef<number | null>(null)
   const toastRef = useRef<number | null>(null)
 
@@ -171,32 +165,6 @@ export function CapturesScreen({ onBack, onOpenCapture }: CapturesScreenProps) {
     [],
   )
 
-  useEffect(() => {
-    const activeEl = tabListRef.current?.querySelector<HTMLElement>(
-      `#capture-tab-${filter}`,
-    )
-    if (activeEl && tabListRef.current) {
-      setTabIndicator({
-        left: activeEl.offsetLeft,
-        width: activeEl.offsetWidth,
-        ready: true,
-      })
-      const container = tabListRef.current
-      container.scrollTo({
-        left: Math.max(
-          0,
-          activeEl.offsetLeft -
-            container.offsetWidth / 2 +
-            activeEl.offsetWidth / 2,
-        ),
-        behavior: "smooth",
-      })
-    }
-    if (isInitialTabRender) {
-      const timer = setTimeout(() => setIsInitialTabRender(false), 80)
-      return () => clearTimeout(timer)
-    }
-  }, [filter, isInitialTabRender])
 
   const showToast = (message: string) => {
     setToast(message)
@@ -325,7 +293,7 @@ export function CapturesScreen({ onBack, onOpenCapture }: CapturesScreenProps) {
           <button
             type="button"
             onClick={() => setIsSyncSheetOpen(true)}
-            className="relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100"
+            className="relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100"
             aria-label="Sync & storage"
           >
             <Icon name="cloud" size={17} />
@@ -336,109 +304,19 @@ export function CapturesScreen({ onBack, onOpenCapture }: CapturesScreenProps) {
         </div>
       </header>
 
-      {/* Tabs — identical construction to the task detail tab bar */}
-      <nav
-        className="relative shrink-0 border-t border-slate-100 bg-white"
-        aria-label="Storage filters"
-      >
-        {/* Continuous thin blue baseline spanning the bottom of the tab bar */}
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-[1px] bg-[#0055ff]" />
-
-        <div
-          ref={tabListRef}
-          role="tablist"
-          className="relative flex items-end overflow-x-auto pl-0 pr-3.5 pt-2.5 no-scrollbar scroll-smooth"
-        >
-          {/* Sliding elastic active tab background */}
-          {tabIndicator.ready && (
-            <div
-              className={`pointer-events-none absolute bottom-0 z-15 h-[35px] bg-[#0055ff] shadow-xs ${
-                tabIndicator.left === 0
-                  ? "rounded-tl-none rounded-tr-xl"
-                  : "rounded-t-xl"
-              } ${
-                isInitialTabRender
-                  ? ""
-                  : "transition-all duration-320 ease-[cubic-bezier(0.34,1.45,0.64,1)]"
-              }`}
-              style={{
-                left: `${tabIndicator.left}px`,
-                width: `${tabIndicator.width}px`,
-              }}
-            >
-              {/* Left swoop curve (hidden on first tab) */}
-              {filters.findIndex((f) => f.id === filter) > 0 && (
-                <svg
-                  className="pointer-events-none absolute -left-[11px] bottom-0 z-15 h-[12px] w-[12px]"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M 12 0 C 12 6.6 6.6 12 0 12 L 12 12 Z"
-                    fill="#0055ff"
-                  />
-                </svg>
-              )}
-
-              {/* Right swoop curve */}
-              <svg
-                className="pointer-events-none absolute -right-[11px] bottom-0 z-15 h-[12px] w-[12px]"
-                viewBox="0 0 12 12"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path d="M 0 0 C 0 6.6 5.4 12 12 12 L 0 12 Z" fill="#0055ff" />
-              </svg>
-            </div>
-          )}
-
-          {filters.map((entry) => {
-            const isActive = filter === entry.id
-            return (
-              <button
-                type="button"
-                key={entry.id}
-                id={`capture-tab-${entry.id}`}
-                onClick={() => setFilter(entry.id)}
-                role="tab"
-                aria-selected={isActive}
-                className={`group relative z-20 flex h-[35px] shrink-0 cursor-pointer items-center gap-1.5 px-3.5 text-left font-medium transition-all duration-200 active:scale-[0.96] ${
-                  isActive
-                    ? "text-white"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                <Icon
-                  name={entry.icon}
-                  size={13}
-                  className={`shrink-0 transition-colors duration-200 ${
-                    isActive
-                      ? "text-white"
-                      : "text-slate-400 group-hover:text-slate-600"
-                  }`}
-                />
-
-                <span className="whitespace-nowrap text-[12.5px] font-medium leading-none transition-colors duration-200">
-                  {entry.label}
-                </span>
-
-                {counts[entry.id] > 0 && (
-                  <span
-                    className={`ml-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] tabular-nums transition-all duration-200 ${
-                      isActive
-                        ? "scale-105 bg-white/25 font-bold text-white"
-                        : "scale-100 bg-slate-100 font-semibold text-slate-500 group-hover:bg-slate-200/70"
-                    }`}
-                  >
-                    {counts[entry.id]}
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-      </nav>
+      {/* Tabs */}
+      <SwoopTabs
+        tabs={filters.map((entry) => ({
+          id: entry.id,
+          label: entry.label,
+          icon: <Icon name={entry.icon} size={13} />,
+          count: counts[entry.id],
+        }))}
+        active={filter}
+        onChange={setFilter}
+        idPrefix="capture-tab"
+        ariaLabel="Storage filters"
+      />
 
       <div className="min-h-0 flex-1 overflow-y-auto pb-8">
         <div key={filter} className="mt-3 px-4 animate-task-tab-panel">
@@ -505,7 +383,7 @@ export function CapturesScreen({ onBack, onOpenCapture }: CapturesScreenProps) {
                               <img
                                 src={file.thumb}
                                 alt=""
-                                className="h-10 w-10 rounded-lg bg-slate-100 object-cover"
+                                className="h-10 w-10 rounded-xl bg-slate-100 object-cover"
                               />
                               <span
                                 className={`absolute -left-1 -top-1 rounded px-1 py-px text-[7px] font-bold leading-none ${kindStyles[file.kind].chip}`}
@@ -538,7 +416,7 @@ export function CapturesScreen({ onBack, onOpenCapture }: CapturesScreenProps) {
                           <button
                             type="button"
                             onClick={() => setMenuFile(file)}
-                            className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 active:scale-95"
+                            className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 active:scale-95"
                             aria-label={`Actions for ${file.name}`}
                           >
                             <Icon name="more" size={16} />
@@ -615,7 +493,7 @@ export function CapturesScreen({ onBack, onOpenCapture }: CapturesScreenProps) {
             className="absolute inset-0"
             aria-label="Close"
           />
-          <section className="relative z-10 w-full rounded-t-[22px] bg-white px-4 pb-5 pt-2 shadow-[0_-16px_40px_rgba(15,23,42,0.18)] animate-task-sheet">
+          <section className="relative z-10 w-full rounded-t-[28px] bg-white px-4 pb-5 pt-2 shadow-[0_-16px_40px_rgba(15,23,42,0.18)] animate-task-sheet">
             <div className="flex flex-col items-center">
               <span className="h-1 w-9 rounded-full bg-slate-300" />
             </div>
@@ -624,7 +502,7 @@ export function CapturesScreen({ onBack, onOpenCapture }: CapturesScreenProps) {
               <img
                 src={menuFile.thumb}
                 alt=""
-                className="h-10 w-10 shrink-0 rounded-lg bg-slate-100 object-cover"
+                className="h-10 w-10 shrink-0 rounded-xl bg-slate-100 object-cover"
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[12.5px] font-semibold text-slate-900">
@@ -748,7 +626,7 @@ export function CapturesScreen({ onBack, onOpenCapture }: CapturesScreenProps) {
             className="absolute inset-0"
             aria-label="Close"
           />
-          <section className="relative z-10 w-full rounded-t-[22px] bg-white px-4 pb-5 pt-2 shadow-[0_-16px_40px_rgba(15,23,42,0.18)] animate-task-sheet">
+          <section className="relative z-10 w-full rounded-t-[28px] bg-white px-4 pb-5 pt-2 shadow-[0_-16px_40px_rgba(15,23,42,0.18)] animate-task-sheet">
             <div className="flex flex-col items-center">
               <span className="h-1 w-9 rounded-full bg-slate-300" />
             </div>

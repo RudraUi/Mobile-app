@@ -801,9 +801,9 @@ select {
   to   { opacity: 1; transform: scale(1); }
 }
 
-.animate-slide-up  { animation: slideUp  0.28s cubic-bezier(0.34,1.26,0.64,1) both; }
+.animate-slide-up  { animation: slideUp  0.26s cubic-bezier(0.22,1,0.36,1) both; }
 .animate-fade-in   { animation: fadeIn   0.2s ease both; }
-.animate-scale-in  { animation: scaleIn  0.22s cubic-bezier(0.34,1.26,0.64,1) both; }
+.animate-scale-in  { animation: scaleIn  0.2s cubic-bezier(0.22,1,0.36,1) both; }
 
 @keyframes drawerSlideIn {
   0% {
@@ -822,20 +822,17 @@ select {
 
 @keyframes tabSwitchElastic {
   0% {
-    opacity: 0.82;
-    transform: translateY(4px) scale(0.995);
-  }
-  60% {
-    transform: translateY(-1px) scale(1.002);
+    opacity: 0.6;
+    transform: translateY(4px);
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
 .animate-task-tab-panel {
-  animation: tabSwitchElastic 0.3s cubic-bezier(0.34, 1.45, 0.64, 1) both;
+  animation: tabSwitchElastic 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes checkmarkCircle {
@@ -1201,25 +1198,25 @@ select {
 /* Spring pop played on the icon of the tab that was just selected */
 @keyframes navIconPop {
   0%   { transform: scale(1) translateY(0); }
-  28%  { transform: scale(0.8) translateY(1.5px); }
-  60%  { transform: scale(1.18) translateY(-2.5px); }
-  82%  { transform: scale(0.97) translateY(0.5px); }
+  28%  { transform: scale(0.94) translateY(0.5px); }
+  60%  { transform: scale(1.06) translateY(-1px); }
+  82%  { transform: scale(0.99); }
   100% { transform: scale(1) translateY(0); }
 }
 
 .animate-nav-icon-pop {
-  animation: navIconPop 0.46s cubic-bezier(0.34, 1.3, 0.5, 1) both;
+  animation: navIconPop 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* Capsule behind the active icon springs open */
 @keyframes navPillIn {
-  0%   { transform: scale(0.5); opacity: 0; }
-  55%  { transform: scale(1.1); opacity: 1; }
+  0%   { transform: scale(0.9); opacity: 0; }
+  55%  { transform: scale(1.02); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
 }
 
 .animate-nav-pill {
-  animation: navPillIn 0.38s cubic-bezier(0.34, 1.35, 0.5, 1) both;
+  animation: navPillIn 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* Label + micro dot rise into place under the active tab */
@@ -1232,22 +1229,307 @@ select {
   animation: navLabelIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* ------------------------------------------------------------------
+   Page transitions.
+
+   Navigation has a direction: going deeper pushes in from the right,
+   going back pops in from the left, and moving sideways between the main
+   tabs simply settles — a sideways push would imply a hierarchy that is
+   not there. The travelling layer sits inside an opaque holder, so the
+   screen underneath never shows through at the leading edge.
+   ------------------------------------------------------------------ */
+@keyframes screenPushIn {
+  0%   { opacity: 0; transform: translate3d(26px, 0, 0); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes screenPopIn {
+  0%   { opacity: 0; transform: translate3d(-26px, 0, 0); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
 /* Screen content settling in after a tab switch */
 @keyframes screenIn {
-  0%   { opacity: 0; transform: translateY(8px) scale(0.99); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+  0%   { opacity: 0; transform: translate3d(0, 5px, 0) scale(0.994); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
 }
 
 .animate-screen-in {
-  animation: screenIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: screenIn 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-screen-push {
+  animation: screenPushIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-screen-pop {
+  animation: screenPopIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* The holder stays put and stays painted while its child travels. */
+.screen-stage {
+  background: #ffffff;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .screen-stage,
+.dark .screen-stage {
+  background: #0e111d;
+}
+
+/* Defaults sit below utilities so intentional component feedback wins. */
+@layer base {
+  .app-phone-shell :where(button, [role="button"]) {
+    -webkit-tap-highlight-color: transparent;
+    transition-property: color, background-color, border-color, opacity, scale, transform;
+    transition-duration: 160ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .app-phone-shell :where(button, [role="button"]):not(:disabled):not([aria-disabled="true"]):not([class*="inset-0"]):active {
+    scale: 0.98;
+  }
+}
+
+/* Color-only utilities previously made their accompanying press scale jump. */
+.app-phone-shell :where(button, [role="button"]).transition-colors {
+  transition-property: color, background-color, border-color, fill, stroke, scale;
+}
+
+@keyframes overlayFadeOut {
+  to { opacity: 0; }
+}
+
+@keyframes overlaySheetOut {
+  to { transform: translateY(20px); opacity: 0; }
+}
+
+@keyframes overlayDrawerOut {
+  to { transform: translateX(-100%); }
+}
+
+[data-overlay-state="closing"] {
+  pointer-events: none;
+  animation: overlayFadeOut 180ms ease-in both;
+}
+
+[data-overlay-state="closing"] > .animate-slide-up {
+  animation: overlaySheetOut 180ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+[data-overlay-state="closing"] > .animate-drawer-slide-in {
+  animation: overlayDrawerOut 180ms cubic-bezier(0.4, 0, 1, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-nav-icon-pop,
-  .animate-nav-pill,
-  .animate-nav-label,
-  .animate-screen-in {
-    animation-duration: 0.01ms;
-    animation-iteration-count: 1;
+  .app-phone-shell,
+  .app-phone-shell *,
+  .app-phone-shell *::before,
+  .app-phone-shell *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
   }
+
+  .app-phone-shell :where(button, [role="button"]):active {
+    scale: none !important;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Compact floating menu (shared dropdown look)
+   Colours live here so the panels track the theme toggle even where the
+   Tailwind `dark:` variant is not wired to the .dark class.
+   ------------------------------------------------------------------ */
+.fm-surface {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(226, 232, 240, 0.9);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.14);
+  color: #1e293b;
+}
+
+.fm-caption {
+  color: #94a3b8;
+}
+
+.fm-hint {
+  color: #94a3b8;
+}
+
+.fm-item {
+  color: #334155;
+}
+
+.fm-item:hover {
+  background: #f1f5f9;
+}
+
+.fm-item-active,
+.fm-item-active:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.fm-surface::-webkit-scrollbar {
+  width: 4px;
+}
+
+.fm-surface::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.3);
+  border-radius: 999px;
+}
+
+[data-theme="dark"] .fm-surface,
+.dark .fm-surface {
+  background: rgba(23, 27, 45, 0.97);
+  border-color: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.55);
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .fm-caption,
+.dark .fm-caption,
+[data-theme="dark"] .fm-hint,
+.dark .fm-hint {
+  color: #64748b;
+}
+
+[data-theme="dark"] .fm-item,
+.dark .fm-item {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .fm-item:hover,
+.dark .fm-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .fm-item-active,
+.dark .fm-item-active,
+[data-theme="dark"] .fm-item-active:hover,
+.dark .fm-item-active:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+}
+
+/* ------------------------------------------------------------------
+   Chips — the neutral (unselected) tone, theme-aware.
+   ------------------------------------------------------------------ */
+.chip-neutral {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+button.chip-neutral:hover {
+  background: #e2e8f0;
+}
+
+[data-theme="dark"] .chip-neutral,
+.dark .chip-neutral {
+  background: rgba(255, 255, 255, 0.07);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] button.chip-neutral:hover,
+.dark button.chip-neutral:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ------------------------------------------------------------------
+   Neutral UI surfaces — screen, card, divider and text tones that follow
+   the theme toggle without threading an isDark prop through every screen.
+   ------------------------------------------------------------------ */
+.ui-screen {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.ui-surface {
+  background: #ffffff;
+  border-color: #eef2f7;
+}
+
+.ui-surface-sunken {
+  background: #f8fafc;
+  border-color: #eef2f7;
+}
+
+.ui-divider {
+  border-color: #eef2f7;
+}
+
+.ui-text {
+  color: #0f172a;
+}
+
+.ui-text-muted {
+  color: #475569;
+}
+
+.ui-text-dim {
+  color: #94a3b8;
+}
+
+.ui-pressable:hover {
+  background: #f8fafc;
+}
+
+[data-theme="dark"] .ui-screen,
+.dark .ui-screen {
+  background: #0e111d;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .ui-surface,
+.dark .ui-surface {
+  background: #151829;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .ui-surface-sunken,
+.dark .ui-surface-sunken {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+[data-theme="dark"] .ui-divider,
+.dark .ui-divider {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .ui-text,
+.dark .ui-text {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .ui-text-muted,
+.dark .ui-text-muted {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .ui-text-dim,
+.dark .ui-text-dim {
+  color: #64748b;
+}
+
+[data-theme="dark"] .ui-pressable:hover,
+.dark .ui-pressable:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ------------------------------------------------------------------
+   3D model stage.
+
+   index.css repaints every .bg-white as a dark surface under the dark
+   theme (with !important). The BIM viewer is a viewer canvas rather than
+   an app surface, so it opts out and stays a white studio ground in both
+   themes. Declared last so it wins the cascade.
+   ------------------------------------------------------------------ */
+.model-stage,
+[data-theme="dark"] .model-stage,
+.dark .model-stage {
+  background-color: #ffffff !important;
 }

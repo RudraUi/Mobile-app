@@ -6,6 +6,7 @@ import { SearchModal } from "../components/SearchModal"
 import { MapView } from "../components/MapView"
 import type { Item, ItemType, Severity, Status } from "../data/mockData"
 import { type Project, projectsList } from "../data/projectsData"
+import { FloatingMenu, MenuCaption, MenuItem } from "../components/FloatingMenu"
 
 interface DrawingScreenProps {
   items: Item[]
@@ -121,7 +122,7 @@ export function DrawingScreen({
             <button
               type="button"
               onClick={() => setIsLevelDropdownOpen((v) => !v)}
-              className="flex items-center gap-1.5 bg-white/95 hover:bg-white active:scale-95 backdrop-blur-md px-2 py-1 rounded-[8px] shadow-xs border border-slate-200/80 text-[10px] font-bold text-slate-800 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 bg-white/95 hover:bg-white active:scale-95 backdrop-blur-md px-2 py-1 rounded-lg shadow-xs border border-slate-200/80 text-[10px] font-bold text-slate-800 transition-all cursor-pointer"
             >
               <div className="w-3.5 h-3.5 rounded bg-blue-50 text-[#0055ff] flex items-center justify-center">
                 <svg
@@ -160,35 +161,26 @@ export function DrawingScreen({
             </button>
 
             {isLevelDropdownOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-30"
-                  onClick={() => setIsLevelDropdownOpen(false)}
-                />
-                <div className="absolute top-full left-0 mt-1 w-32 bg-white/98 backdrop-blur-md rounded-xl shadow-[0_8px_20px_rgba(0,0,0,0.12)] border border-slate-200/80 p-1 z-40 animate-slide-up">
-                  <div className="px-2 py-0.5 text-[8.5px] font-bold text-slate-400 uppercase tracking-wider">
-                    Select Level
-                  </div>
-                  {levels.map((lvl) => (
-                    <button
-                      key={lvl}
-                      type="button"
-                      onClick={() => {
-                        setCurrentLevel(lvl)
-                        setIsLevelDropdownOpen(false)
-                      }}
-                      className={`w-full text-left px-2 py-1 rounded-lg text-[10px] transition-colors cursor-pointer ${
-                        currentLevel === lvl
-                          ? "bg-blue-50 text-[#0055ff] font-bold"
-                          : "text-slate-700 hover:bg-slate-50 font-medium"
-                      }`}
-                    >
-                      {lvl}
-                    </button>
-                  ))}
-                </div>
-              </>
+              <div
+                className="fixed inset-0 z-30"
+                onClick={() => setIsLevelDropdownOpen(false)}
+              />
             )}
+            <FloatingMenu open={isLevelDropdownOpen} widthClassName="w-32">
+              <MenuCaption>Level</MenuCaption>
+              {levels.map((lvl) => (
+                <MenuItem
+                  key={lvl}
+                  selected={currentLevel === lvl}
+                  onClick={() => {
+                    setCurrentLevel(lvl)
+                    setIsLevelDropdownOpen(false)
+                  }}
+                >
+                  {lvl}
+                </MenuItem>
+              ))}
+            </FloatingMenu>
           </div>
 
           {/* Sheet & Scale Badge */}
@@ -274,7 +266,7 @@ export function DrawingScreen({
             <div className="bg-white/95 backdrop-blur-md p-3 rounded-2xl shadow-xl shadow-black/15 border border-slate-200/80 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div
-                  className={`w-7 h-7 rounded-xl flex items-center justify-center text-white font-bold text-[11px] shrink-0 ${
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold text-[11px] shrink-0 ${
                     selectedPinItem.type === "issue"
                       ? "bg-red-500"
                       : selectedPinItem.type === "rfi"

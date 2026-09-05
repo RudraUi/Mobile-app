@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react"
 import { BackButton } from "../components/BackButton"
 import { NotificationDetailSheet } from "../components/NotificationDetailSheet"
+import { FloatingMenu, MenuCaption, MenuItem } from "../components/FloatingMenu"
 import type {
   AppNotification,
   NotificationType,
@@ -258,59 +259,30 @@ export function NotificationsScreen({
                 </svg>
               </button>
 
-              {/* Dropdown Menu - Tiny & Compact */}
-              {showFilterDropdown && (
-                <div className="absolute right-0 mt-1 w-38 rounded-xl bg-white dark:bg-[#161a2b] shadow-xl border border-slate-100 dark:border-white/[0.08] py-1 z-50 animate-in fade-in zoom-in-95 duration-150">
-                  {tabs.map((tab) => {
-                    const isSelected = activeTab === tab.key
-                    return (
-                      <button
-                        key={tab.key}
-                        type="button"
-                        onClick={() => {
-                          setActiveTab(tab.key)
-                          setShowFilterDropdown(false)
-                        }}
-                        className={`w-full px-2.5 py-1.5 text-[11px] flex items-center justify-between transition-colors cursor-pointer text-left ${
-                          isSelected
-                            ? "bg-blue-50/80 dark:bg-blue-500/15 text-[#0055ff] dark:text-blue-400 font-semibold"
-                            : "text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                        }`}
-                      >
-                        <span className="flex items-center gap-1.5 truncate">
-                          {isSelected ? (
-                            <svg
-                              width="10"
-                              height="10"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="3"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="shrink-0 text-[#0055ff] dark:text-blue-400"
-                            >
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          ) : (
-                            <span className="w-2.5 shrink-0" />
-                          )}
-                          <span className="truncate">{tab.label}</span>
-                        </span>
-                        <span
-                          className={`text-[9px] px-1 py-0.2 rounded-full font-bold ml-1.5 shrink-0 ${
-                            isSelected
-                              ? "bg-[#0055ff] text-white"
-                              : "bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400"
-                          }`}
-                        >
-                          {tab.count}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
+              {/* Compact filter menu */}
+              <FloatingMenu
+                open={showFilterDropdown}
+                align="right"
+                widthClassName="w-36"
+              >
+                <MenuCaption>Filter</MenuCaption>
+                {tabs.map((tab) => {
+                  const isSelected = activeTab === tab.key
+                  return (
+                    <MenuItem
+                      key={tab.key}
+                      selected={isSelected}
+                      onClick={() => {
+                        setActiveTab(tab.key)
+                        setShowFilterDropdown(false)
+                      }}
+                      hint={tab.count}
+                    >
+                      {tab.label}
+                    </MenuItem>
+                  )
+                })}
+              </FloatingMenu>
             </div>
 
             <button
@@ -319,7 +291,12 @@ export function NotificationsScreen({
               className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 transition-all hover:bg-slate-200 dark:hover:bg-white/15 active:scale-95"
               aria-label="More options"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
                 <circle cx="12" cy="5" r="1.8" />
                 <circle cx="12" cy="12" r="1.8" />
                 <circle cx="12" cy="19" r="1.8" />
@@ -336,7 +313,16 @@ export function NotificationsScreen({
             {/* Bell icon illustration with red 0 badge */}
             <div className="relative mb-4">
               <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-white/[0.06] flex items-center justify-center text-slate-400 dark:text-slate-500">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                   <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                 </svg>
@@ -350,7 +336,8 @@ export function NotificationsScreen({
               No Notification to show
             </h3>
             <p className="text-[13px] text-slate-400 dark:text-slate-500 max-w-[240px] mt-1.5 leading-relaxed">
-              You currently have no notifications. We will notify you when something new happens!
+              You currently have no notifications. We will notify you when
+              something new happens!
             </p>
 
             <button
@@ -399,7 +386,9 @@ export function NotificationsScreen({
                               className="w-9 h-9 rounded-full object-cover"
                             />
                           ) : (
-                            <div className={`w-9 h-9 rounded-full flex items-center justify-center ${style.tile}`}>
+                            <div
+                              className={`w-9 h-9 rounded-full flex items-center justify-center ${style.tile}`}
+                            >
                               {style.icon}
                             </div>
                           )}

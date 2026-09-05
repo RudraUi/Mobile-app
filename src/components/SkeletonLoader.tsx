@@ -6,7 +6,7 @@ export function HomeSkeleton() {
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="flex-1 min-w-[88px] h-[78px] rounded-[18px] bg-slate-100 p-2.5 flex flex-col justify-between"
+            className="flex-1 min-w-[88px] h-[78px] rounded-2xl bg-slate-100 p-2.5 flex flex-col justify-between"
           >
             <div className="w-7 h-7 rounded-full animate-shimmer" />
             <div className="space-y-1.5">
@@ -28,9 +28,9 @@ export function HomeSkeleton() {
         {[1, 2].map((i) => (
           <div
             key={i}
-            className="w-[260px] shrink-0 rounded-[20px] bg-white border border-slate-100 p-3.5 space-y-3 shadow-xs"
+            className="w-[260px] shrink-0 rounded-2xl bg-white border border-slate-100 p-3.5 space-y-3 shadow-xs"
           >
-            <div className="w-full h-[120px] rounded-[14px] animate-shimmer" />
+            <div className="w-full h-[120px] rounded-xl animate-shimmer" />
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="w-16 h-3 rounded-full animate-shimmer" />
@@ -48,7 +48,7 @@ export function HomeSkeleton() {
       </div>
 
       {/* Phase Progress Card Skeleton */}
-      <div className="w-full rounded-[22px] bg-white border border-slate-100 p-4 space-y-3 shadow-xs">
+      <div className="w-full rounded-3xl bg-white border border-slate-100 p-4 space-y-3 shadow-xs">
         <div className="flex items-center justify-between">
           <div className="w-28 h-4 rounded animate-shimmer" />
           <div className="w-10 h-3 rounded animate-shimmer" />
@@ -69,7 +69,7 @@ export function ListSkeleton() {
       {[1, 2, 3, 4, 5, 6, 7].map((i) => (
         <div
           key={i}
-          className="w-full min-h-[58px] py-3.5 px-4 rounded-[16px] bg-white border border-slate-100 flex items-center justify-between gap-3 shadow-2xs"
+          className="w-full min-h-[58px] py-3.5 px-4 rounded-2xl bg-white border border-slate-100 flex items-center justify-between gap-3 shadow-2xs"
         >
           <div className="flex-1 space-y-2">
             {/* Title Line */}

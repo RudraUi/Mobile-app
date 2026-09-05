@@ -10,6 +10,14 @@ import { type Project, projectsList } from "../data/projectsData"
 import { SearchModal } from "../components/SearchModal"
 import { ListSkeleton, PullIndicator } from "../components/SkeletonLoader"
 import { BackButton } from "../components/BackButton"
+import { Chip } from "../components/Chip"
+import { BottomSheet, SheetSection } from "../components/BottomSheet"
+import {
+  FloatingMenu,
+  MenuCaption,
+  MenuDot,
+  MenuItem,
+} from "../components/FloatingMenu"
 
 export type ViewMode = "list" | "kanban"
 
@@ -214,6 +222,32 @@ function getItemTypeColors(type: ItemType) {
     case "fieldnote":
       return "bg-emerald-50 text-emerald-600"
   }
+}
+
+const STATUS_DOT: Record<string, string> = {
+  COMPLETED: "#059669",
+  "IN PROGRESS": "#7c3aed",
+  REVIEW: "#d97706",
+  BLOCKED: "#e11d48",
+  "TO DO": "#2563eb",
+}
+
+function statusDotColor(status: string) {
+  return STATUS_DOT[status] ?? "#94a3b8"
+}
+
+/** "2026-08-30" reads as "30 Aug" in a list — the year is rarely the point. */
+function formatDueDate(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number)
+  if (!y || !m || !d) return iso
+  const date = new Date(y, m - 1, d)
+  if (Number.isNaN(date.getTime())) return iso
+  const sameYear = date.getFullYear() === new Date().getFullYear()
+  return date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    ...(sameYear ? {} : { year: "numeric" }),
+  })
 }
 
 function FlagIcon({ color }: { color: string }) {
@@ -759,178 +793,96 @@ export function ListScreen({
         </nav>
       </header>
 
-      {/* Modern, Compact Filter & Sort Modal */}
-      {isFilterModalOpen && (
-        <div
-          onClick={() => setIsFilterModalOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 select-none animate-fade-in"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[305px] bg-white rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.22)] overflow-hidden flex flex-col border border-slate-100 animate-slide-up"
-          >
-            {/* Header */}
-            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-[14px] font-bold text-slate-900 tracking-tight">
-                  Filters
-                </span>
-                {activeFiltersCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-blue-50 text-[#0055ff] text-[10px] font-bold">
-                    {activeFiltersCount} active
-                  </span>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsFilterModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors cursor-pointer text-[12px]"
-                aria-label="Close"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Scrollable Filter Sections with modern rounded-full pills */}
-            <div className="p-3.5 space-y-3 overflow-y-auto max-h-[44vh] no-scrollbar">
-              {/* Status */}
-              <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
-                  Status
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {CANONICAL_STATUSES.map((s) => {
-                    const isSelected = statusFilter === s.id
-                    return (
-                      <button
-                        type="button"
-                        key={s.id}
-                        onClick={() => setStatusFilter(s.id)}
-                        className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 ${
-                          isSelected
-                            ? "bg-[#0055ff] text-white font-bold shadow-xs"
-                            : "bg-slate-100/90 text-slate-700 hover:bg-slate-200/80"
-                        }`}
-                      >
-                        {s.dot && (
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                              isSelected ? "bg-white" : ""
-                            }`}
-                            style={
-                              isSelected
-                                ? undefined
-                                : { backgroundColor: s.dot }
-                            }
-                          />
-                        )}
-                        <span>{s.label}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Phase */}
-              <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
-                  Phase
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {CANONICAL_PHASES.map((p) => {
-                    const isSelected = phaseFilter === p.id
-                    return (
-                      <button
-                        type="button"
-                        key={p.id}
-                        onClick={() => setPhaseFilter(p.id)}
-                        className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer active:scale-95 ${
-                          isSelected
-                            ? "bg-[#0055ff] text-white font-bold shadow-xs"
-                            : "bg-slate-100/90 text-slate-700 hover:bg-slate-200/80"
-                        }`}
-                      >
-                        {p.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Category */}
-              <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
-                  Category
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {CANONICAL_CATEGORIES.map((c) => {
-                    const isSelected = categoryFilter === c.id
-                    return (
-                      <button
-                        type="button"
-                        key={c.id}
-                        onClick={() => setCategoryFilter(c.id)}
-                        className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer active:scale-95 ${
-                          isSelected
-                            ? "bg-[#0055ff] text-white font-bold shadow-xs"
-                            : "bg-slate-100/90 text-slate-700 hover:bg-slate-200/80"
-                        }`}
-                      >
-                        {c.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Sort By */}
-              <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
-                  Sort By
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {CANONICAL_SORTS.map((s) => {
-                    const isSelected = sortBy === s.id
-                    return (
-                      <button
-                        type="button"
-                        key={s.id}
-                        onClick={() => setSortBy(s.id)}
-                        className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer active:scale-95 ${
-                          isSelected
-                            ? "bg-[#0055ff] text-white font-bold shadow-xs"
-                            : "bg-slate-100/90 text-slate-700 hover:bg-slate-200/80"
-                        }`}
-                      >
-                        {s.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="px-4 py-2.5 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={handleResetFilters}
-                disabled={activeFiltersCount === 0}
-                className="text-[11.5px] font-bold text-slate-400 hover:text-slate-700 disabled:opacity-35 disabled:hover:text-slate-400 cursor-pointer transition-colors"
-              >
-                Reset All
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsFilterModalOpen(false)}
-                className="h-8 px-5 rounded-full bg-[#0055ff] text-white text-[11.5px] font-bold hover:bg-blue-600 active:scale-95 transition-all shadow-xs cursor-pointer"
-              >
-                Apply
-              </button>
-            </div>
+      {/* Filter & sort — a bottom drawer, like every other overlay here */}
+      <BottomSheet
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        title="Filters"
+        subtitle={
+          activeFiltersCount > 0
+            ? `${activeFiltersCount} filter${
+                activeFiltersCount > 1 ? "s" : ""
+              } applied · ${filteredAndSortedItems.length} items`
+            : `Showing all ${filteredAndSortedItems.length} items`
+        }
+        footer={
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              disabled={activeFiltersCount === 0}
+              className="ui-text-muted ui-divider h-10 shrink-0 cursor-pointer rounded-full border px-5 text-[12.5px] font-semibold transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-35 dark:hover:bg-white/[0.04]"
+            >
+              Reset
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsFilterModalOpen(false)}
+              className="h-10 flex-1 cursor-pointer rounded-full bg-[#0055ff] text-[12.5px] font-semibold text-white shadow-2xs transition-colors hover:bg-blue-600 active:scale-[0.98]"
+            >
+              Show {filteredAndSortedItems.length} items
+            </button>
           </div>
+        }
+      >
+        <div className="space-y-4">
+          <SheetSection label="Status">
+            {CANONICAL_STATUSES.map((s) => {
+              const isSelected = statusFilter === s.id
+              return (
+                <Chip
+                  key={s.id}
+                  size="md"
+                  selected={isSelected}
+                  onClick={() => setStatusFilter(s.id)}
+                  dot={s.dot ? (isSelected ? "#ffffff" : s.dot) : undefined}
+                >
+                  {s.label}
+                </Chip>
+              )
+            })}
+          </SheetSection>
+
+          <SheetSection label="Phase">
+            {CANONICAL_PHASES.map((p) => (
+              <Chip
+                key={p.id}
+                size="md"
+                selected={phaseFilter === p.id}
+                onClick={() => setPhaseFilter(p.id)}
+              >
+                {p.label}
+              </Chip>
+            ))}
+          </SheetSection>
+
+          <SheetSection label="Category">
+            {CANONICAL_CATEGORIES.map((c) => (
+              <Chip
+                key={c.id}
+                size="md"
+                selected={categoryFilter === c.id}
+                onClick={() => setCategoryFilter(c.id)}
+              >
+                {c.label}
+              </Chip>
+            ))}
+          </SheetSection>
+
+          <SheetSection label="Sort by">
+            {CANONICAL_SORTS.map((s) => (
+              <Chip
+                key={s.id}
+                size="md"
+                selected={sortBy === s.id}
+                onClick={() => setSortBy(s.id)}
+              >
+                {s.label}
+              </Chip>
+            ))}
+          </SheetSection>
         </div>
-      )}
+      </BottomSheet>
 
       {/* Main Content Area: View 1 (List View) or View 2 (Kanban Board) */}
       <main
@@ -959,22 +911,24 @@ export function ListScreen({
           /* ========================================================= */
           /* VIEW 1: LIST VIEW (Matching the Home Page Item UI Style)  */
           /* ========================================================= */
-          <div className="flex-1 pt-4 pb-12 bg-white divide-y divide-slate-100">
+          <div className="flex-1 pt-2 pb-12 bg-white divide-y divide-slate-100/70">
             {filteredAndSortedItems.length > 0 ? (
               filteredAndSortedItems.map((item) => {
+                // Low priority is the common case, so it stays grey — colour on
+                // the flag is reserved for the rows that actually need chasing.
                 const flagColor =
                   item.severity === "HIGH"
                     ? "#FF001F"
                     : item.severity === "MEDIUM"
                       ? "#FF6D00"
-                      : "#1558F5"
+                      : "#CBD5E1"
 
                 return (
                   <button
                     type="button"
                     key={item.id}
                     onClick={() => onItemClick(item)}
-                    className="flex min-h-[58px] w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors hover:bg-slate-50/80 active:bg-slate-100/60 cursor-pointer group"
+                    className="flex min-h-[60px] w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-50/80 active:bg-slate-100/60 cursor-pointer group"
                   >
                     {/* Item Type Icon */}
                     <div
@@ -985,58 +939,52 @@ export function ListScreen({
                       {getItemTypeIcon(item.type)}
                     </div>
 
-                    {/* Simple 2-Lined Details */}
+                    {/* Title over a single quiet meta line */}
                     <div className="min-w-0 flex-1">
-                      {/* Line 1: Title */}
-                      <h4 className="text-[13.5px] font-semibold text-[#0F172A] dark:text-slate-100 leading-snug group-hover:text-[#0055ff] transition-colors truncate">
+                      <h4 className="truncate text-[13.5px] font-semibold leading-snug text-[#0F172A] transition-colors group-hover:text-[#0055ff] dark:text-slate-100">
                         {item.title}
                       </h4>
 
-                      {/* Line 2: ID · Status · Category · Due Date */}
-                      <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400 mt-1 truncate">
-                        <span className="font-bold text-slate-500 font-mono">
+                      {/* ID · status · due date — the status dot carries the
+                          colour so the text can stay neutral. */}
+                      <div className="mt-1 flex items-center gap-1.5 truncate text-[11px] font-medium text-slate-400">
+                        <span className="shrink-0 font-mono tabular-nums">
                           {item.id}
                         </span>
-                        <span>·</span>
                         <span
-                          className={`capitalize font-semibold ${
-                            item.status === "COMPLETED"
-                              ? "text-emerald-600"
-                              : item.status === "IN PROGRESS"
-                                ? "text-purple-600"
-                                : item.status === "REVIEW"
-                                  ? "text-amber-600"
-                                  : item.status === "BLOCKED"
-                                    ? "text-rose-600"
-                                    : "text-blue-600"
-                          }`}
-                        >
-                          {item.status.toLowerCase()}
+                          className="h-2.5 w-px shrink-0 bg-slate-200"
+                          aria-hidden="true"
+                        />
+                        <span className="flex shrink-0 items-center gap-1.5">
+                          <span
+                            className="h-1.5 w-1.5 shrink-0 rounded-full"
+                            style={{
+                              backgroundColor: statusDotColor(item.status),
+                            }}
+                          />
+                          <span className="capitalize text-slate-500">
+                            {item.status.toLowerCase()}
+                          </span>
                         </span>
-                        {item.category && (
-                          <>
-                            <span>·</span>
-                            <span className="truncate max-w-[120px]">
-                              {item.category}
-                            </span>
-                          </>
-                        )}
                         {item.dueDate && (
                           <>
-                            <span>·</span>
-                            <span className="shrink-0">{item.dueDate}</span>
+                            <span
+                              className="h-2.5 w-px shrink-0 bg-slate-200"
+                              aria-hidden="true"
+                            />
+                            <span className="shrink-0">
+                              {formatDueDate(item.dueDate)}
+                            </span>
                           </>
                         )}
                       </div>
                     </div>
 
-                    {/* Right-side severity flag & chevron */}
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    {/* Priority flag — the row itself is the tap target, so
+                        there is no chevron repeated down the list. */}
+                    <span className="shrink-0 opacity-90">
                       <FlagIcon color={flagColor} />
-                      <span className="text-slate-300 group-hover:text-slate-500 transition-colors text-[14px] font-bold">
-                        ›
-                      </span>
-                    </div>
+                    </span>
                   </button>
                 )
               })
@@ -1199,37 +1147,28 @@ export function ListScreen({
                               </div>
                             </div>
 
-                            {/* Status Quick Move Menu Popover */}
-                            {statusMenuTargetId === item.id && (
-                              <div
-                                onClick={(e) => e.stopPropagation()}
-                                className="absolute right-2 top-7 w-40 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.12)] p-1 z-50 animate-slide-up"
-                              >
-                                <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                                  Move to:
-                                </div>
-                                {KANBAN_COLUMNS.map((c) => (
-                                  <button
-                                    type="button"
-                                    key={c.id}
-                                    onClick={() =>
-                                      handleMoveStatus(item.id, c.id)
-                                    }
-                                    className={`w-full flex items-center gap-2 px-2 py-1 rounded-lg text-[11px] font-bold transition-colors ${
-                                      item.status === c.id
-                                        ? "bg-slate-100 text-slate-900"
-                                        : "text-slate-600 hover:bg-slate-50"
-                                    }`}
-                                  >
-                                    <span
-                                      className="w-2 h-2 rounded-full"
-                                      style={{ backgroundColor: c.color }}
-                                    />
-                                    <span>{c.title}</span>
-                                  </button>
-                                ))}
-                              </div>
-                            )}
+                            {/* Status quick-move menu */}
+                            <FloatingMenu
+                              open={statusMenuTargetId === item.id}
+                              align="right"
+                              widthClassName="w-36"
+                              style={{ top: 28, right: 8 }}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MenuCaption>Move to</MenuCaption>
+                              {KANBAN_COLUMNS.map((c) => (
+                                <MenuItem
+                                  key={c.id}
+                                  selected={item.status === c.id}
+                                  onClick={() =>
+                                    handleMoveStatus(item.id, c.id)
+                                  }
+                                  leading={<MenuDot color={c.color} />}
+                                >
+                                  {c.title}
+                                </MenuItem>
+                              ))}
+                            </FloatingMenu>
 
                             {/* Row 2: Title (Compact, low height) */}
                             <h4 className="text-[12.5px] font-semibold text-slate-800 leading-snug group-hover:text-[#0055FF] transition-colors line-clamp-2 mt-1">

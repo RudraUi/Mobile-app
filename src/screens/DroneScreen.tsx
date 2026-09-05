@@ -5,6 +5,7 @@ import { FilterModal } from "../components/FilterModal"
 import { SearchModal } from "../components/SearchModal"
 import type { Item, ItemType, Severity, Status } from "../data/mockData"
 import { type Project, projectsList } from "../data/projectsData"
+import { FloatingMenu, MenuCaption, MenuItem } from "../components/FloatingMenu"
 
 interface DroneScreenProps {
   items: Item[]
@@ -228,7 +229,7 @@ export function DroneScreen({
             <button
               type="button"
               onClick={() => setIsFlightDateDropdownOpen((v) => !v)}
-              className="flex items-center gap-1.5 bg-white/95 hover:bg-white active:scale-95 backdrop-blur-md px-2 py-1 rounded-[8px] shadow-xs border border-slate-200/80 text-[10px] font-bold text-slate-800 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 bg-white/95 hover:bg-white active:scale-95 backdrop-blur-md px-2 py-1 rounded-lg shadow-xs border border-slate-200/80 text-[10px] font-bold text-slate-800 transition-all cursor-pointer"
             >
               <div className="w-3.5 h-3.5 rounded bg-blue-50 text-[#0055ff] flex items-center justify-center text-[9px]">
                 ✈
@@ -254,35 +255,26 @@ export function DroneScreen({
             </button>
 
             {isFlightDateDropdownOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-30"
-                  onClick={() => setIsFlightDateDropdownOpen(false)}
-                />
-                <div className="absolute top-full left-0 mt-1 w-38 bg-white/98 backdrop-blur-md rounded-xl shadow-[0_8px_20px_rgba(0,0,0,0.12)] border border-slate-200/80 p-1 z-40 animate-slide-up">
-                  <div className="px-2 py-0.5 text-[8.5px] font-bold text-slate-400 uppercase tracking-wider">
-                    Flight Missions
-                  </div>
-                  {flightDates.map((d) => (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => {
-                        setFlightDate(d)
-                        setIsFlightDateDropdownOpen(false)
-                      }}
-                      className={`w-full text-left px-2 py-1 rounded-lg text-[10px] transition-colors cursor-pointer ${
-                        flightDate === d
-                          ? "bg-blue-50 text-[#0055ff] font-bold"
-                          : "text-slate-700 hover:bg-slate-50 font-medium"
-                      }`}
-                    >
-                      {d}
-                    </button>
-                  ))}
-                </div>
-              </>
+              <div
+                className="fixed inset-0 z-30"
+                onClick={() => setIsFlightDateDropdownOpen(false)}
+              />
             )}
+            <FloatingMenu open={isFlightDateDropdownOpen} widthClassName="w-36">
+              <MenuCaption>Flight missions</MenuCaption>
+              {flightDates.map((d) => (
+                <MenuItem
+                  key={d}
+                  selected={flightDate === d}
+                  onClick={() => {
+                    setFlightDate(d)
+                    setIsFlightDateDropdownOpen(false)
+                  }}
+                >
+                  {d}
+                </MenuItem>
+              ))}
+            </FloatingMenu>
           </div>
         </div>
 
@@ -364,7 +356,7 @@ export function DroneScreen({
             <div className="bg-white/95 backdrop-blur-md p-3 rounded-2xl shadow-2xl border border-slate-200/80 flex items-center justify-between gap-3 text-slate-900">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div
-                  className="w-7 h-7 rounded-xl flex items-center justify-center text-white font-bold text-[11px] shrink-0"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold text-[11px] shrink-0"
                   style={{ backgroundColor: getPinColor(selectedPinItem.type) }}
                 >
                   {getPinIcon(selectedPinItem.type)}

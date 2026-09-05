@@ -520,7 +520,7 @@ export function MapScreen({
             <div className="bg-white/95 backdrop-blur-md p-3 rounded-2xl shadow-xl shadow-black/15 border border-slate-200/80 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div
-                  className="w-7 h-7 rounded-xl flex items-center justify-center text-white font-bold text-[11px] shrink-0"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold text-[11px] shrink-0"
                   style={{ backgroundColor: getPinColor(selectedPinItem.type) }}
                 >
                   {getPinIcon(selectedPinItem.type)}

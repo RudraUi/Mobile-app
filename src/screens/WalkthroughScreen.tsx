@@ -278,7 +278,7 @@ export function WalkthroughScreen({
             <div className="bg-slate-900/95 backdrop-blur-md p-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center justify-between gap-3 text-white">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div
-                  className="w-7 h-7 rounded-xl flex items-center justify-center text-white font-bold text-[11px] shrink-0"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold text-[11px] shrink-0"
                   style={{ backgroundColor: getPinColor(selectedPinItem.type) }}
                 >
                   {getPinIcon(selectedPinItem.type)}

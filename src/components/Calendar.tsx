@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react"
+import { SegmentedTabs } from "./SegmentedTabs"
+import { Chip } from "./Chip"
 
 export type CalendarMode = "day" | "week" | "month"
 
@@ -135,12 +137,12 @@ function buildSelection(mode: CalendarMode, date: Date): CalendarSelection {
 function Chevron({ dir }: { dir: "left" | "right" }) {
   return (
     <svg
-      width="16"
-      height="16"
+      width="14"
+      height="14"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.2"
+      strokeWidth="2.4"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
@@ -236,33 +238,19 @@ export function Calendar({
     <div className="select-none">
       {/* Mode switch */}
       {!hideModeSwitch && modes.length > 1 && (
-        <div className="flex rounded-lg bg-slate-100/80 p-0.5">
-          {modes.map((m) => {
-            const isActive = mode === m
-            return (
-              <button
-                type="button"
-                key={m}
-                onClick={() => {
-                  setMode(m)
-                  if (selectedDate) onChange(buildSelection(m, selectedDate))
-                }}
-                className={`h-6.5 flex-1 cursor-pointer rounded-[7px] text-[11px] font-semibold transition-all duration-150 ${
-                  isActive
-                    ? "bg-white text-slate-900 shadow-2xs"
-                    : "text-slate-500 hover:text-slate-700"
-                }`}
-              >
-                {MODE_LABEL[m]}
-              </button>
-            )
-          })}
-        </div>
+        <SegmentedTabs
+          tabs={modes.map((m) => ({ id: m, label: MODE_LABEL[m] }))}
+          active={mode}
+          onChange={(m) => {
+            setMode(m)
+            if (selectedDate) onChange(buildSelection(m, selectedDate))
+          }}
+        />
       )}
 
       {/* Quick chips */}
       {showQuickChips && mode === "day" && (
-        <div className="mt-2.5 flex justify-center gap-1.5">
+        <div className="mt-2 flex justify-center gap-1.5">
           {quickChips.map((chip) => {
             const target = new Date(today)
             target.setDate(target.getDate() + chip.offset)
@@ -270,31 +258,27 @@ export function Calendar({
               ? sameDay(selectedDate, target)
               : false
             return (
-              <button
-                type="button"
+              <Chip
                 key={chip.label}
+                selected={isActive}
+                color={isActive ? accent : undefined}
+                solid={isActive}
                 onClick={() => {
                   setCursor(
                     new Date(target.getFullYear(), target.getMonth(), 1),
                   )
                   commit(target)
                 }}
-                className={`h-6 cursor-pointer rounded-full px-2.5 text-[10.5px] font-semibold transition-all active:scale-95 ${
-                  isActive
-                    ? "text-white shadow-2xs"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-                style={isActive ? { backgroundColor: accent } : undefined}
               >
                 {chip.label}
-              </button>
+              </Chip>
             )
           })}
         </div>
       )}
 
       {/* Month / year navigator */}
-      <div className="mt-2.5 flex items-center justify-between">
+      <div className="mt-2 flex items-center justify-between">
         <button
           type="button"
           onClick={() => shift(-1)}
@@ -354,23 +338,19 @@ export function Calendar({
           ).map((year) => {
             const isActive = year === cursor.getFullYear()
             return (
-              <button
-                type="button"
+              <Chip
                 key={year}
+                color={isActive ? accent : undefined}
+                solid={isActive}
+                className="tabular-nums"
                 onClick={() => {
                   setSlide(year > cursor.getFullYear() ? "next" : "prev")
                   setCursor(new Date(year, cursor.getMonth(), 1))
                   setIsYearOpen(false)
                 }}
-                className={`h-6 shrink-0 cursor-pointer rounded-full px-2.5 text-[10.5px] font-semibold tabular-nums transition-all active:scale-95 ${
-                  isActive
-                    ? "text-white shadow-2xs"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-                style={isActive ? { backgroundColor: accent } : undefined}
               >
                 {year}
-              </button>
+              </Chip>
             )
           })}
         </div>
@@ -380,7 +360,7 @@ export function Calendar({
       {mode === "month" ? (
         <div
           key={cursor.getFullYear()}
-          className={`mt-2.5 grid grid-cols-3 gap-1.5 ${slideClass}`}
+          className={`mt-2 grid grid-cols-3 gap-1.5 ${slideClass}`}
         >
           {MONTHS_SHORT.map((label, index) => {
             const monthDate = new Date(cursor.getFullYear(), index, 1)
@@ -405,15 +385,15 @@ export function Calendar({
                     ? "text-white shadow-2xs"
                     : "bg-slate-50 text-slate-700 hover:bg-slate-100"
                 }`}
-                style={isSelected ? { backgroundColor: accent } : undefined}
+                style={
+                  isSelected
+                    ? { backgroundColor: accent }
+                    : isThisMonth
+                      ? { boxShadow: `inset 0 0 0 1.5px ${accent}` }
+                      : undefined
+                }
               >
                 {label}
-                {isThisMonth && !isSelected && (
-                  <span
-                    className="absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full"
-                    style={{ backgroundColor: accent }}
-                  />
-                )}
               </button>
             )
           })}
@@ -421,11 +401,11 @@ export function Calendar({
       ) : (
         <>
           {/* Weekday header */}
-          <div className="mt-2.5 grid grid-cols-7">
+          <div className="mt-2 grid grid-cols-7 pb-0.5">
             {WEEKDAYS.map((day, i) => (
               <span
                 key={`${day}-${i}`}
-                className="text-center text-[9.5px] font-bold uppercase tracking-wide text-slate-400"
+                className="text-center text-[9px] font-bold uppercase tracking-[0.08em] text-slate-400"
               >
                 {day}
               </span>
@@ -503,19 +483,17 @@ export function Calendar({
                                     }`
                           }`}
                           style={
-                            isSelected ? { backgroundColor: accent } : undefined
+                            isSelected
+                              ? { backgroundColor: accent }
+                              : isToday && !isWeekSelected
+                                ? { boxShadow: `inset 0 0 0 1.5px ${accent}` }
+                                : undefined
                           }
                         >
                           {date.getDate()}
                         </span>
 
-                        {/* Today marker — a ring when idle, a dot when covered */}
-                        {isToday && !isSelected && !isWeekSelected && (
-                          <span
-                            className="pointer-events-none absolute inset-x-0 bottom-0.5 mx-auto h-1 w-1 rounded-full"
-                            style={{ backgroundColor: accent }}
-                          />
-                        )}
+                        {/* Today, while the week pill covers it */}
                         {isToday && isWeekSelected && (
                           <span className="pointer-events-none absolute inset-x-0 bottom-0.5 mx-auto h-1 w-1 rounded-full bg-white/80" />
                         )}
@@ -531,7 +509,7 @@ export function Calendar({
 
       {/* Resolved selection */}
       {showFooter && selectedDate && (
-        <div className="mt-2.5 flex items-center gap-1.5 border-t border-slate-100 pt-2.5">
+        <div className="mt-2 flex items-center gap-1.5 border-t border-slate-100 pt-2">
           <span
             className="h-1.5 w-1.5 shrink-0 rounded-full"
             style={{ backgroundColor: accent }}

@@ -83,7 +83,7 @@ export function NavigateScreen({
         {!started && !arrived && (
           <button
             onClick={() => setStarted(true)}
-            className="px-4 h-9 rounded-xl text-white text-[13px] font-bold shrink-0 active:scale-95 transition-transform"
+            className="px-4 h-9 rounded-full text-white text-[13px] font-bold shrink-0 active:scale-95 transition-transform"
             style={{
               backgroundColor: typeColor,
               boxShadow: `0 4px 12px ${typeColor}40`,

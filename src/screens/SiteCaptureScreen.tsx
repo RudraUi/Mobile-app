@@ -13,6 +13,11 @@ import {
   type Pt,
   type SavedRange,
 } from "../components/CapturePlan"
+import {
+  FloatingMenu,
+  MenuCaption,
+  MenuItem,
+} from "../components/FloatingMenu"
 
 interface SiteCaptureScreenProps {
   onBack: () => void
@@ -802,43 +807,28 @@ export function SiteCaptureScreen({
               </button>
 
               {isPlanDropdownOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-30"
-                    onClick={() => setIsPlanDropdownOpen(false)}
-                  />
-                  <div className="absolute left-0 right-0 top-full z-40 mt-1.5 rounded-xl border border-slate-200 bg-white p-1 shadow-[0_12px_32px_rgba(15,23,42,0.18)] animate-slide-up origin-top">
-                    {DRAWING_PLANS.map((plan) => (
-                      <button
-                        key={plan.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedPlanId(plan.id)
-                          setIsPlanDropdownOpen(false)
-                        }}
-                        className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left transition-colors ${
-                          selectedPlanId === plan.id
-                            ? "bg-blue-50 text-blue-600"
-                            : "text-slate-700 hover:bg-slate-50"
-                        }`}
-                      >
-                        <span
-                          className={`text-[12px] ${
-                            selectedPlanId === plan.id
-                              ? "font-bold"
-                              : "font-semibold"
-                          }`}
-                        >
-                          {plan.name}
-                        </span>
-                        <span className="text-[9.5px] font-mono text-slate-400">
-                          {plan.code}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </>
+                <div
+                  className="fixed inset-0 z-30"
+                  onClick={() => setIsPlanDropdownOpen(false)}
+                />
               )}
+              <FloatingMenu open={isPlanDropdownOpen} widthClassName="w-full">
+                <MenuCaption>Drawing plan</MenuCaption>
+                {DRAWING_PLANS.map((plan) => (
+                  <MenuItem
+                    key={plan.id}
+                    selected={selectedPlanId === plan.id}
+                    onClick={() => {
+                      setSelectedPlanId(plan.id)
+                      setIsPlanDropdownOpen(false)
+                    }}
+                    hint={<span className="font-mono">{plan.code}</span>}
+                    trailing={null}
+                  >
+                    {plan.name}
+                  </MenuItem>
+                ))}
+              </FloatingMenu>
             </div>
 
             <button
@@ -1102,43 +1092,28 @@ export function SiteCaptureScreen({
               </button>
 
               {isPlanDropdownOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-30"
-                    onClick={() => setIsPlanDropdownOpen(false)}
-                  />
-                  <div className="absolute top-8 left-3 z-40 w-56 rounded-xl border border-slate-200 bg-white p-1 shadow-lg animate-fade-in">
-                    {DRAWING_PLANS.map((plan) => (
-                      <button
-                        key={plan.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedPlanId(plan.id)
-                          setIsPlanDropdownOpen(false)
-                        }}
-                        className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left ${
-                          selectedPlanId === plan.id
-                            ? "bg-blue-50 text-blue-600"
-                            : "text-slate-700 hover:bg-slate-50"
-                        }`}
-                      >
-                        <span
-                          className={`text-[11px] ${
-                            selectedPlanId === plan.id
-                              ? "font-bold"
-                              : "font-medium"
-                          }`}
-                        >
-                          {plan.name}
-                        </span>
-                        <span className="text-[9.5px] font-mono text-slate-400">
-                          {plan.code}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </>
+                <div
+                  className="fixed inset-0 z-30"
+                  onClick={() => setIsPlanDropdownOpen(false)}
+                />
               )}
+              <FloatingMenu open={isPlanDropdownOpen} widthClassName="w-44">
+                <MenuCaption>Drawing plan</MenuCaption>
+                {DRAWING_PLANS.map((plan) => (
+                  <MenuItem
+                    key={plan.id}
+                    selected={selectedPlanId === plan.id}
+                    onClick={() => {
+                      setSelectedPlanId(plan.id)
+                      setIsPlanDropdownOpen(false)
+                    }}
+                    hint={<span className="font-mono">{plan.code}</span>}
+                    trailing={null}
+                  >
+                    {plan.name}
+                  </MenuItem>
+                ))}
+              </FloatingMenu>
 
               <span className="text-[10px] tabular-nums text-slate-400">
                 {Math.round(walkProgress)}% of route

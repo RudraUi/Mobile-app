@@ -1,5 +1,7 @@
 import { useState, useRef } from "react"
+import type { ReactNode } from "react"
 import { BackButton } from "../components/BackButton"
+import { FloatingMenu, MenuCaption, MenuItem } from "../components/FloatingMenu"
 
 export type AppFontFamily = "proxima" | "helvena" | "mulish" | "googlesans" | "sourcesans3"
 export type AppThemeMode = "light" | "dark"
@@ -25,6 +27,12 @@ interface ProfileScreenProps {
   onBack: () => void
   onSignOut: () => void
   onOpenCaptures?: () => void
+  onOpenHelp?: () => void
+  onOpenTickets?: () => void
+  onNewTicket?: () => void
+  onOpenTerms?: () => void
+  onOpenPrivacy?: () => void
+  openTicketCount?: number
 }
 
 export function ProfileScreen({
@@ -32,6 +40,12 @@ export function ProfileScreen({
   onUpdateProfile,
   onBack,
   onSignOut,
+  onOpenHelp,
+  onOpenTickets,
+  onNewTicket,
+  onOpenTerms,
+  onOpenPrivacy,
+  openTicketCount = 0,
 }: ProfileScreenProps) {
   const [formData, setFormData] = useState<UserProfileData>(profile)
   const [savedToast, setSavedToast] = useState(false)
@@ -521,7 +535,7 @@ export function ProfileScreen({
             >
               <div className="flex items-center gap-2.5">
                 <div
-                  className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all ${
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
                     isDark
                       ? "bg-blue-500/15 text-blue-400 shadow-[0_0_12px_rgba(0,85,255,0.2)]"
                       : "bg-blue-50 text-[#0055ff]"
@@ -600,7 +614,7 @@ export function ProfileScreen({
             <div className="flex items-center justify-between pt-1">
               <div className="flex items-center gap-2.5">
                 <div
-                  className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all ${
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
                     isDark
                       ? "bg-purple-500/15 text-purple-400"
                       : "bg-purple-50 text-purple-600"
@@ -659,65 +673,119 @@ export function ProfileScreen({
                   </svg>
                 </button>
 
-                {/* Dropdown Menu (Opens to Top) */}
+                {/* Compact font menu (opens upward) */}
                 {fontDropdownOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setFontDropdownOpen(false)}
-                    />
-                    <div
-                      className={`absolute right-0 bottom-full mb-1.5 w-52 rounded-xl p-1 shadow-2xl z-50 border animate-in fade-in zoom-in-95 origin-bottom-right duration-150 ${
-                        isDark
-                          ? "bg-[#151929] border-white/10 text-slate-200 shadow-black/80 divide-y divide-white/[0.06]"
-                          : "bg-white border-slate-200 text-slate-800 shadow-slate-200 divide-y divide-slate-100"
-                      }`}
-                    >
-                      {fontOptions.map((opt) => (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          onClick={() => {
-                            handleFontChange(opt.id)
-                            setFontDropdownOpen(false)
-                          }}
-                          className={`w-full flex items-center justify-between px-3 py-2 text-left rounded-lg text-[12px] transition-colors cursor-pointer ${
-                            currentFont === opt.id
-                              ? isDark
-                                ? "bg-blue-600/20 text-blue-400 font-bold"
-                                : "bg-blue-50 text-[#0055ff] font-bold"
-                              : isDark
-                                ? "hover:bg-white/5 text-slate-300"
-                                : "hover:bg-slate-50 text-slate-700"
-                          }`}
-                        >
-                          <div className="flex flex-col">
-                            <span className={opt.fontClass}>{opt.name}</span>
-                            <span className="text-[9.5px] opacity-60 font-normal">
-                              {opt.badge}
-                            </span>
-                          </div>
-                          {currentFont === opt.id && (
-                            <svg
-                              width="12"
-                              height="12"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="3"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setFontDropdownOpen(false)}
+                  />
                 )}
+                <FloatingMenu
+                  open={fontDropdownOpen}
+                  align="right"
+                  placement="top"
+                  widthClassName="w-44"
+                >
+                  <MenuCaption>Typeface</MenuCaption>
+                  {fontOptions.map((opt) => (
+                    <MenuItem
+                      key={opt.id}
+                      selected={currentFont === opt.id}
+                      onClick={() => {
+                        handleFontChange(opt.id)
+                        setFontDropdownOpen(false)
+                      }}
+                      className={opt.fontClass}
+                    >
+                      {opt.name}
+                    </MenuItem>
+                  ))}
+                </FloatingMenu>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Support & Legal Section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block">
+              Support &amp; Legal
+            </span>
+            {openTicketCount > 0 && (
+              <span
+                className={`text-[10.5px] font-semibold px-2.5 py-0.5 rounded-full border transition-colors ${
+                  isDark
+                    ? "bg-blue-500/15 text-blue-400 border-blue-500/30"
+                    : "bg-blue-50 text-[#0055ff] border-blue-100/80"
+                }`}
+              >
+                {openTicketCount} open ticket{openTicketCount > 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+
+          <div
+            className={`rounded-2xl border divide-y overflow-hidden transition-colors ${
+              isDark
+                ? "bg-[#121524] border-white/[0.08] divide-white/[0.07] shadow-lg shadow-black/20"
+                : "bg-slate-50/60 border-slate-100/80 divide-slate-100"
+            }`}
+          >
+            <SupportRow
+              isDark={isDark}
+              tone="blue"
+              icon={
+                <>
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.4-3 4" />
+                  <line x1="12" y1="17.5" x2="12" y2="17.5" />
+                </>
+              }
+              title="Help Centre &amp; FAQ"
+              detail="Answers to the questions we get most"
+              onClick={onOpenHelp}
+            />
+            <SupportRow
+              isDark={isDark}
+              tone="violet"
+              icon={
+                <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.6-.8L3 21l1.9-5A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4Z" />
+              }
+              title="Contact support"
+              detail={
+                openTicketCount > 0
+                  ? `${openTicketCount} ticket${
+                    openTicketCount > 1 ? "s" : ""
+                  } waiting on a reply`
+                  : "Raise a ticket and talk to a person"
+              }
+              badge={openTicketCount > 0 ? openTicketCount : undefined}
+              onClick={openTicketCount > 0 ? onOpenTickets : onNewTicket}
+            />
+            <SupportRow
+              isDark={isDark}
+              tone="slate"
+              icon={
+                <>
+                  <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5Z" />
+                  <path d="M8 7.5h7M8 11h7" />
+                </>
+              }
+              title="Terms &amp; Conditions"
+              detail="Updated 1 July 2026"
+              onClick={onOpenTerms}
+            />
+            <SupportRow
+              isDark={isDark}
+              tone="emerald"
+              icon={
+                <path d="M12 3l7 3v5.5c0 4.4-2.9 8.3-7 9.5-4.1-1.2-7-5.1-7-9.5V6Z" />
+              }
+              title="Privacy Policy"
+              detail="What we collect and why"
+              onClick={onOpenPrivacy}
+            />
           </div>
         </div>
 
@@ -775,6 +843,109 @@ export function ProfileScreen({
         </div>
       )}
     </div>
+  )
+}
+
+const SUPPORT_TONES: Record<string, { light: string; dark: string }> = {
+  blue: {
+    light: "bg-blue-50 text-[#0055ff]",
+    dark: "bg-blue-500/15 text-blue-400",
+  },
+  violet: {
+    light: "bg-violet-50 text-violet-600",
+    dark: "bg-violet-500/15 text-violet-400",
+  },
+  emerald: {
+    light: "bg-emerald-50 text-emerald-600",
+    dark: "bg-emerald-500/15 text-emerald-400",
+  },
+  slate: {
+    light: "bg-slate-100 text-slate-600",
+    dark: "bg-white/10 text-slate-300",
+  },
+}
+
+/** One tappable row in the Support & Legal card. */
+function SupportRow({
+  isDark,
+  tone,
+  icon,
+  title,
+  detail,
+  badge,
+  onClick,
+}: {
+  isDark: boolean
+  tone: keyof typeof SUPPORT_TONES
+  icon: ReactNode
+  title: string
+  detail: string
+  badge?: number
+  onClick?: () => void
+}) {
+  const swatch = SUPPORT_TONES[tone]
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full flex items-center gap-2.5 px-3.5 py-3 text-left transition-colors cursor-pointer active:scale-[0.99] ${
+        isDark ? "hover:bg-white/[0.04]" : "hover:bg-white/70"
+      }`}
+    >
+      <span
+        className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all ${
+          isDark ? swatch.dark : swatch.light
+        }`}
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          {icon}
+        </svg>
+      </span>
+
+      <span className="min-w-0 flex-1">
+        <span
+          className={`block text-[12.5px] font-semibold leading-tight ${
+            isDark ? "text-white" : "text-slate-800"
+          }`}
+        >
+          {title}
+        </span>
+        <span className="block text-[10.5px] text-slate-400 leading-tight mt-0.5">
+          {detail}
+        </span>
+      </span>
+
+      {badge !== undefined && (
+        <span className="shrink-0 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#0055ff] px-1 text-[9.5px] font-bold tabular-nums text-white">
+          {badge}
+        </span>
+      )}
+
+      <svg
+        width="13"
+        height="13"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="shrink-0 text-slate-400"
+        aria-hidden="true"
+      >
+        <path d="m9 18 6-6-6-6" />
+      </svg>
+    </button>
   )
 }
 

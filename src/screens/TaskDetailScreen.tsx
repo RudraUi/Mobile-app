@@ -4,6 +4,13 @@ import { CustomKeyboard } from "../components/CustomKeyboard"
 import type { Assignee, Item, Severity, Status } from "../data/mockData"
 import { BackButton } from "../components/BackButton"
 import { Calendar, type CalendarMode } from "../components/Calendar"
+import { SwoopTabs } from "../components/SwoopTabs"
+import { SegmentedTabs } from "../components/SegmentedTabs"
+import {
+  FloatingMenu,
+  MenuCaption,
+  MenuCheck,
+} from "../components/FloatingMenu"
 
 interface TaskDetailScreenProps {
   item: Item
@@ -970,7 +977,7 @@ function IconButton({
     <button
       type="button"
       onClick={onClick}
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-blue-600 active:bg-slate-200"
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-blue-600 active:bg-slate-200"
       aria-label={label}
     >
       <Icon name={icon} size={16} />
@@ -1090,55 +1097,6 @@ function EmptyState({
       </p>
       {action && <div className="mt-4">{action}</div>}
     </div>
-  )
-}
-
-function FloatingMenu({
-  open,
-  align = "left",
-  widthClassName = "w-44",
-  children,
-}: {
-  open: boolean
-  align?: "left" | "right"
-  widthClassName?: string
-  children: ReactNode
-}) {
-  return (
-    <div
-      className={`absolute top-[calc(100%+7px)] z-50 ${
-        align === "right"
-          ? "right-0 origin-top-right"
-          : "left-0 origin-top-left"
-      } ${widthClassName} rounded-xl border border-slate-200/80 bg-white/95 p-1 shadow-[0_14px_34px_rgba(15,23,42,0.14)] ring-1 ring-white/70 backdrop-blur-xl transition-all duration-200 ease-out ${
-        open
-          ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
-          : "pointer-events-none -translate-y-1.5 scale-[0.98] opacity-0"
-      }`}
-      aria-hidden={!open}
-    >
-      {children}
-    </div>
-  )
-}
-
-function MenuCaption({ children }: { children: ReactNode }) {
-  return (
-    <div className="px-2.5 pb-1 pt-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-      {children}
-    </div>
-  )
-}
-
-function MenuCheck({ active }: { active: boolean }) {
-  return (
-    <span
-      className={`ml-auto flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#0055ff] text-white transition-all duration-150 ${
-        active ? "scale-100 opacity-100" : "scale-75 opacity-0"
-      }`}
-    >
-      <Icon name="check" size={10} />
-    </span>
   )
 }
 
@@ -1405,42 +1363,6 @@ export function TaskDetailScreen({
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [editingNoteText, setEditingNoteText] = useState("")
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
-  const tabListRef = useRef<HTMLDivElement>(null)
-
-  const [tabIndicator, setTabIndicator] = useState({
-    left: 0,
-    width: 0,
-    ready: false,
-  })
-  const [isInitialTabRender, setIsInitialTabRender] = useState(true)
-
-  useEffect(() => {
-    const updateIndicator = () => {
-      const activeTabEl = tabListRef.current?.querySelector<HTMLElement>(
-        `#task-tab-${tab}`,
-      )
-      if (activeTabEl && tabListRef.current) {
-        setTabIndicator({
-          left: activeTabEl.offsetLeft,
-          width: activeTabEl.offsetWidth,
-          ready: true,
-        })
-        const container = tabListRef.current
-        const left =
-          activeTabEl.offsetLeft -
-          container.offsetWidth / 2 +
-          activeTabEl.offsetWidth / 2
-        container.scrollTo({ left: Math.max(0, left), behavior: "smooth" })
-      }
-    }
-
-    updateIndicator()
-
-    if (isInitialTabRender) {
-      const timer = setTimeout(() => setIsInitialTabRender(false), 80)
-      return () => clearTimeout(timer)
-    }
-  }, [tab, isInitialTabRender])
   const [toastMessage, setToastMessage] = useState("")
   const [linkSearch, setLinkSearch] = useState("")
   const [previewDocument, setPreviewDocument] =
@@ -2485,10 +2407,8 @@ export function TaskDetailScreen({
                         })
                         setIsStatusDropdownOpen(false)
                       }}
-                      className={`flex min-h-8 w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11.5px] font-semibold transition-all duration-150 active:scale-[0.98] cursor-pointer ${
-                        isSelected
-                          ? "bg-slate-100 text-slate-900"
-                          : "text-slate-700 hover:bg-slate-50"
+                      className={`fm-item flex min-h-8 w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11.5px] font-semibold transition-all duration-150 active:scale-[0.98] cursor-pointer ${
+                        isSelected ? "fm-item-active" : ""
                       }`}
                     >
                       <span className="flex items-center gap-2">
@@ -2556,10 +2476,8 @@ export function TaskDetailScreen({
                         onUpdate(item.id, { severity: sev })
                         setIsPriorityDropdownOpen(false)
                       }}
-                      className={`flex min-h-8 w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11.5px] font-semibold transition-all duration-150 active:scale-[0.98] ${
-                        isSelected
-                          ? "bg-slate-100 text-slate-900"
-                          : "text-slate-700 hover:bg-slate-50"
+                      className={`fm-item flex min-h-8 w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11.5px] font-semibold transition-all duration-150 active:scale-[0.98] ${
+                        isSelected ? "fm-item-active" : ""
                       }`}
                     >
                       <span className="flex items-center gap-2">
@@ -2675,10 +2593,8 @@ export function TaskDetailScreen({
                           : [...currentAssignees, user]
                         onUpdate(item.id, { assignees: newAssignees })
                       }}
-                      className={`flex min-h-8 w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11.5px] font-semibold transition-all duration-150 active:scale-[0.98] ${
-                        isSelected
-                          ? "bg-slate-100 text-slate-900"
-                          : "text-slate-700 hover:bg-slate-50"
+                      className={`fm-item flex min-h-8 w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11.5px] font-semibold transition-all duration-150 active:scale-[0.98] ${
+                        isSelected ? "fm-item-active" : ""
                       }`}
                     >
                       <div className="flex items-center gap-2">
@@ -2828,10 +2744,8 @@ export function TaskDetailScreen({
                           setIsApproverMenuOpen(false)
                           showToast(`Approver updated to ${user.name}`)
                         }}
-                        className={`flex min-h-8 w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11.5px] font-semibold transition-all duration-150 active:scale-[0.98] ${
-                          isSelected
-                            ? "bg-slate-100 text-slate-900"
-                            : "text-slate-700 hover:bg-slate-50"
+                        className={`fm-item flex min-h-8 w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11.5px] font-semibold transition-all duration-150 active:scale-[0.98] ${
+                          isSelected ? "fm-item-active" : ""
                         }`}
                       >
                         <div className="flex items-center gap-2">
@@ -2993,7 +2907,7 @@ export function TaskDetailScreen({
                       )
                       setIsWatchersMenuOpen(false)
                     }}
-                    className="flex min-h-8 w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11.5px] font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-150 active:scale-[0.98]"
+                    className="fm-item flex min-h-8 w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11.5px] font-semibold transition-all duration-150 active:scale-[0.98]"
                   >
                     <div className="flex items-center gap-2">
                       <Icon
@@ -3070,10 +2984,8 @@ export function TaskDetailScreen({
                               : [...currentTags, tag]
                             onUpdate(item.id, { tags: next })
                           }}
-                          className={`flex min-h-7 w-full items-center justify-between rounded-lg px-2.5 py-1 text-left text-[11.5px] font-semibold transition-all ${
-                            isSelected
-                              ? "bg-slate-100 text-slate-900"
-                              : "text-slate-700 hover:bg-slate-50"
+                          className={`fm-item flex min-h-7 w-full items-center justify-between rounded-lg px-2.5 py-1 text-left text-[11.5px] font-semibold transition-all ${
+                            isSelected ? "fm-item-active" : ""
                           }`}
                         >
                           <span>#{tag}</span>
@@ -3158,10 +3070,8 @@ export function TaskDetailScreen({
                           setIsPhaseMenuOpen(false)
                           showToast(`Phase set to ${ph}`)
                         }}
-                        className={`flex min-h-8 w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11.5px] font-semibold transition-all duration-150 active:scale-[0.98] ${
-                          isSelected
-                            ? "bg-slate-100 text-slate-900"
-                            : "text-slate-700 hover:bg-slate-50"
+                        className={`fm-item flex min-h-8 w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11.5px] font-semibold transition-all duration-150 active:scale-[0.98] ${
+                          isSelected ? "fm-item-active" : ""
                         }`}
                       >
                         <span>{ph}</span>
@@ -3213,10 +3123,8 @@ export function TaskDetailScreen({
                           setIsCategoryMenuOpen(false)
                           showToast(`Category set to ${cat}`)
                         }}
-                        className={`flex min-h-8 w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11.5px] font-semibold transition-all duration-150 active:scale-[0.98] ${
-                          isSelected
-                            ? "bg-slate-100 text-slate-900"
-                            : "text-slate-700 hover:bg-slate-50"
+                        className={`fm-item flex min-h-8 w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11.5px] font-semibold transition-all duration-150 active:scale-[0.98] ${
+                          isSelected ? "fm-item-active" : ""
                         }`}
                       >
                         <span>{cat}</span>
@@ -3276,10 +3184,8 @@ export function TaskDetailScreen({
                           setIsLocationMenuOpen(false)
                           showToast(`Location set to ${loc}`)
                         }}
-                        className={`flex min-h-8 w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11.5px] font-semibold transition-all duration-150 active:scale-[0.98] ${
-                          isSelected
-                            ? "bg-slate-100 text-slate-900"
-                            : "text-slate-700 hover:bg-slate-50"
+                        className={`fm-item flex min-h-8 w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11.5px] font-semibold transition-all duration-150 active:scale-[0.98] ${
+                          isSelected ? "fm-item-active" : ""
                         }`}
                       >
                         <span>{loc}</span>
@@ -3582,7 +3488,7 @@ export function TaskDetailScreen({
             className="flex w-[calc(33.333%-7px)] cursor-pointer flex-col items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-2 py-4 transition-all duration-150 hover:border-[#0055ff]/40 hover:shadow-[0_8px_20px_rgba(15,23,42,0.07)] active:scale-[0.97]"
           >
             <span
-              className={`flex h-11 w-11 items-center justify-center rounded-xl ${source.tint} ${source.fg}`}
+              className={`flex h-11 w-11 items-center justify-center rounded-2xl ${source.tint} ${source.fg}`}
             >
               <Icon name={source.icon} size={21} />
             </span>
@@ -3775,7 +3681,7 @@ export function TaskDetailScreen({
                       showToast("Download started")
                     else removeImage(activeImage.id)
                   }}
-                  className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg bg-white/85 shadow-2xs backdrop-blur-md transition-colors active:scale-95 ${
+                  className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl bg-white/85 shadow-2xs backdrop-blur-md transition-colors active:scale-95 ${
                     tool.icon === "trash"
                       ? "text-slate-500 hover:bg-rose-50 hover:text-rose-600"
                       : "text-slate-500 hover:bg-white hover:text-[#0055ff]"
@@ -3955,7 +3861,7 @@ export function TaskDetailScreen({
               className="h-full w-full bg-slate-100 object-cover"
             />
             {numbered && (
-              <span className="absolute bottom-1 left-1 flex h-4 w-4 items-center justify-center rounded-[5px] bg-slate-950/70 text-[9px] font-bold text-white">
+              <span className="absolute bottom-1 left-1 flex h-4 w-4 items-center justify-center rounded-md bg-slate-950/70 text-[9px] font-bold text-white">
                 {index + 1}
               </span>
             )}
@@ -4279,7 +4185,7 @@ export function TaskDetailScreen({
                   className="group flex cursor-pointer items-center gap-3 py-2.5 transition-colors hover:bg-slate-50/70"
                 >
                   <span
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[10px] font-bold ${docTypeStyles[doc.type].chip}`}
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[10px] font-bold ${docTypeStyles[doc.type].chip}`}
                   >
                     {docTypeStyles[doc.type].label}
                   </span>
@@ -4379,7 +4285,7 @@ export function TaskDetailScreen({
                         type="button"
                         key={view.id}
                         onClick={() => setAttachmentView(view.id)}
-                        className={`flex h-6 w-7 cursor-pointer items-center justify-center rounded-[6px] transition-all duration-150 ${
+                        className={`flex h-6 w-7 cursor-pointer items-center justify-center rounded-md transition-all duration-150 ${
                           isActive
                             ? "bg-white text-[#0055ff] shadow-2xs"
                             : "text-slate-400 hover:text-slate-600"
@@ -4464,10 +4370,8 @@ export function TaskDetailScreen({
         <button
           type="button"
           onClick={onSelect}
-          className={`flex h-8 w-full cursor-pointer items-center gap-2 rounded-lg px-2 text-left text-[11.5px] font-medium transition-colors ${
-            options?.destructive
-              ? "text-rose-600 hover:bg-rose-50"
-              : "text-slate-700 hover:bg-slate-50"
+          className={`flex min-h-8 w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[11.5px] font-semibold transition-all duration-150 active:scale-[0.98] ${
+            options?.destructive ? "text-rose-600 hover:bg-rose-50" : "fm-item"
           }`}
         >
           <Icon
@@ -4488,12 +4392,10 @@ export function TaskDetailScreen({
 
       return (
         <div
-          className="absolute right-0 top-full z-50 mt-1 w-[184px] rounded-xl border border-slate-200/80 bg-white p-1 shadow-[0_8px_24px_rgba(15,23,42,0.12)] animate-scale-in"
+          className="fm-surface absolute right-0 top-[calc(100%+6px)] z-50 w-[176px] origin-top-right rounded-xl border p-1 backdrop-blur-xl animate-scale-in"
           onClick={(event) => event.stopPropagation()}
         >
-          <p className="px-2 pb-1 pt-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-            Assign to
-          </p>
+          <MenuCaption>Assign to</MenuCaption>
           <div className="flex items-center gap-1 overflow-x-auto px-2 pb-1.5 no-scrollbar">
             <button
               type="button"
@@ -5225,34 +5127,19 @@ export function TaskDetailScreen({
       <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-20 pt-3">
           {/* Record-type switch - full width single line */}
-          <div className="flex w-full rounded-xl bg-slate-100/80 p-0.5">
-            {linkedKinds.map((kind) => {
-              const isActive = linkedKind === kind
-              const count = linkedRecords.filter((r) => r.kind === kind).length
-              return (
-                <button
-                  type="button"
-                  key={kind}
-                  onClick={() => {
-                    setLinkedKind(kind)
-                    setLinkSearch("")
-                  }}
-                  className={`flex h-7.5 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[9px] text-[11.5px] font-semibold transition-all duration-150 ${
-                    isActive
-                      ? "bg-white text-slate-900 shadow-2xs"
-                      : "text-slate-500 hover:text-slate-700"
-                  }`}
-                >
-                  <span className="whitespace-nowrap">{kind}</span>
-                  {count > 0 && (
-                    <span className="text-[10px] tabular-nums text-slate-400">
-                      {count}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
+          <SegmentedTabs
+            size="md"
+            tabs={linkedKinds.map((kind) => ({
+              id: kind,
+              label: kind,
+              count: linkedRecords.filter((r) => r.kind === kind).length,
+            }))}
+            active={linkedKind}
+            onChange={(kind) => {
+              setLinkedKind(kind)
+              setLinkSearch("")
+            }}
+          />
 
           {visible.length > 0 ? (
             <div className="mt-3 divide-y divide-slate-100">
@@ -6306,115 +6193,19 @@ export function TaskDetailScreen({
           </div>
         </div>
 
-        <nav
-          className="relative border-t border-slate-100 bg-white"
-          aria-label="Item detail sections"
-        >
-          {/* Continuous thin blue baseline spanning the bottom of the tab bar */}
-          <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-[1px] bg-[#0055ff]" />
-
-          <div
-            ref={tabListRef}
-            role="tablist"
-            className="relative flex items-end overflow-x-auto pl-0 pr-3.5 pt-2.5 no-scrollbar scroll-smooth"
-          >
-            {/* Sliding Elastic Active Tab Background */}
-            {tabIndicator.ready && (
-              <div
-                className={`pointer-events-none absolute bottom-0 z-15 h-[35px] bg-[#0055ff] shadow-xs ${
-                  tabIndicator.left === 0
-                    ? "rounded-tl-none rounded-tr-xl"
-                    : "rounded-t-xl"
-                } ${
-                  isInitialTabRender
-                    ? ""
-                    : "transition-all duration-320 ease-[cubic-bezier(0.34,1.45,0.64,1)]"
-                }`}
-                style={{
-                  left: `${tabIndicator.left}px`,
-                  width: `${tabIndicator.width}px`,
-                }}
-              >
-                {/* Left swoop curve (hidden on first tab) */}
-                {tabs.findIndex((t) => t.id === tab) > 0 && (
-                  <svg
-                    className="pointer-events-none absolute -left-[11px] bottom-0 z-15 h-[12px] w-[12px]"
-                    viewBox="0 0 12 12"
-                    fill="none"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M 12 0 C 12 6.6 6.6 12 0 12 L 12 12 Z"
-                      fill="#0055ff"
-                    />
-                  </svg>
-                )}
-
-                {/* Right swoop curve */}
-                <svg
-                  className="pointer-events-none absolute -right-[11px] bottom-0 z-15 h-[12px] w-[12px]"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M 0 0 C 0 6.6 5.4 12 12 12 L 0 12 Z"
-                    fill="#0055ff"
-                  />
-                </svg>
-              </div>
-            )}
-
-            {tabs.map((taskTab) => {
-              const isActive = tab === taskTab.id
-              return (
-                <button
-                  type="button"
-                  key={taskTab.id}
-                  id={`task-tab-${taskTab.id}`}
-                  onClick={() => selectTab(taskTab.id)}
-                  role="tab"
-                  aria-selected={isActive}
-                  aria-controls={`task-panel-${taskTab.id}`}
-                  className={`group relative z-20 flex h-[35px] shrink-0 items-center gap-1.5 px-3.5 text-left font-medium transition-all duration-200 cursor-pointer active:scale-[0.96] ${
-                    isActive
-                      ? "text-white"
-                      : "text-slate-600 hover:text-slate-900"
-                  }`}
-                >
-                  {/* Icon */}
-                  <Icon
-                    name={tabIcons[taskTab.id]}
-                    size={13}
-                    className={`shrink-0 transition-colors duration-200 ${
-                      isActive
-                        ? "text-white"
-                        : "text-slate-400 group-hover:text-slate-600"
-                    }`}
-                  />
-
-                  {/* Label */}
-                  <span className="whitespace-nowrap text-[12.5px] font-medium leading-none transition-colors duration-200">
-                    {taskTab.label}
-                  </span>
-
-                  {/* Count badge */}
-                  {taskTab.count !== undefined && taskTab.count > 0 && (
-                    <span
-                      className={`ml-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] transition-all duration-200 ${
-                        isActive
-                          ? "bg-white/25 font-bold text-white scale-105"
-                          : "bg-slate-100 font-semibold text-slate-500 group-hover:bg-slate-200/70 scale-100"
-                      }`}
-                    >
-                      {taskTab.count}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        </nav>
+        <SwoopTabs
+          tabs={tabs.map((taskTab) => ({
+            id: taskTab.id,
+            label: taskTab.label,
+            icon: <Icon name={tabIcons[taskTab.id]} size={13} />,
+            count: taskTab.count,
+          }))}
+          active={tab}
+          onChange={selectTab}
+          idPrefix="task-tab"
+          panelIdPrefix="task-panel"
+          ariaLabel="Item detail sections"
+        />
       </header>
 
       <div
@@ -6557,7 +6348,7 @@ export function TaskDetailScreen({
             <button
               type="button"
               onClick={() => setIsPreviewOpen(false)}
-              className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 transition-colors hover:bg-slate-200"
+              className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 transition-colors hover:bg-slate-200"
               aria-label="Close preview"
             >
               <Icon name="close" size={19} />
@@ -6572,7 +6363,7 @@ export function TaskDetailScreen({
                     current === 0 ? displayPhotos.length - 1 : current - 1,
                   )
                 }
-                className="absolute left-0 z-10 flex h-11 w-11 items-center justify-center rounded-xl bg-white/90 text-slate-600 shadow-2xs backdrop-blur-md cursor-pointer transition-colors hover:text-[#0055ff]"
+                className="absolute left-0 z-10 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/90 text-slate-600 shadow-2xs backdrop-blur-md cursor-pointer transition-colors hover:text-[#0055ff]"
                 aria-label="Previous attachment"
               >
                 <Icon name="arrow-left" size={20} />
@@ -6591,7 +6382,7 @@ export function TaskDetailScreen({
                     current === displayPhotos.length - 1 ? 0 : current + 1,
                   )
                 }
-                className="absolute right-0 z-10 flex h-11 w-11 items-center justify-center rounded-xl bg-white/90 text-slate-600 shadow-2xs backdrop-blur-md cursor-pointer transition-colors hover:text-[#0055ff]"
+                className="absolute right-0 z-10 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/90 text-slate-600 shadow-2xs backdrop-blur-md cursor-pointer transition-colors hover:text-[#0055ff]"
                 aria-label="Next attachment"
               >
                 <Icon name="chevron-right" size={20} />
@@ -6635,7 +6426,7 @@ export function TaskDetailScreen({
             className="absolute inset-0"
             aria-label="Close attachment preview"
           />
-          <section className="relative z-10 w-full rounded-t-[22px] bg-white px-4 pb-4 pt-2 shadow-[0_-16px_40px_rgba(15,23,42,0.18)] animate-task-sheet">
+          <section className="relative z-10 w-full rounded-t-[28px] bg-white px-4 pb-4 pt-2 shadow-[0_-16px_40px_rgba(15,23,42,0.18)] animate-task-sheet">
             <div className="flex flex-col items-center">
               <span className="h-1 w-9 rounded-full bg-slate-300" />
             </div>
@@ -6832,7 +6623,7 @@ export function TaskDetailScreen({
             aria-label="Close dependency picker"
           />
 
-          <section className="relative z-10 flex max-h-[82%] w-full flex-col overflow-hidden rounded-t-[22px] bg-white shadow-[0_-16px_40px_rgba(15,23,42,0.18)] animate-task-sheet">
+          <section className="relative z-10 flex max-h-[82%] w-full flex-col overflow-hidden rounded-t-[28px] bg-white shadow-[0_-16px_40px_rgba(15,23,42,0.18)] animate-task-sheet">
             {/* Header */}
             <div className="shrink-0 px-4 pb-3 pt-2">
               <div className="flex flex-col items-center">
@@ -6844,7 +6635,7 @@ export function TaskDetailScreen({
                   <button
                     type="button"
                     onClick={() => setDependencyStep(dependencyStep - 1)}
-                    className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100"
+                    className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100"
                     aria-label="Previous step"
                   >
                     <Icon name="chevron-left" size={17} />
@@ -6874,7 +6665,7 @@ export function TaskDetailScreen({
                 <button
                   type="button"
                   onClick={resetDependencyDraft}
-                  className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100"
+                  className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100"
                   aria-label="Close"
                 >
                   <Icon name="close" size={17} />
@@ -6907,7 +6698,7 @@ export function TaskDetailScreen({
                         isActive ? "bg-blue-50/70" : "hover:bg-slate-50"
                       }`}
                     >
-                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white">
+                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white">
                         <RelationDiagram relation={relation.id} />
                       </span>
                       <span className="min-w-0 flex-1">
@@ -7109,7 +6900,7 @@ export function TaskDetailScreen({
                   className="mt-4 flex w-full cursor-pointer items-center gap-2.5 rounded-xl border border-slate-200 px-3 py-2.5 text-left transition-colors hover:bg-slate-50"
                 >
                   <span
-                    className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[5px] border transition-all ${
+                    className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border transition-all ${
                       dependencyBlocksTask
                         ? "border-rose-500 bg-rose-500 text-white"
                         : "border-slate-300 bg-white text-transparent"
@@ -7182,7 +6973,7 @@ export function TaskDetailScreen({
             aria-label="Close record picker"
           />
 
-          <section className="relative z-10 flex max-h-[80%] min-h-[440px] w-full flex-col overflow-hidden rounded-t-[22px] bg-white shadow-[0_-16px_40px_rgba(15,23,42,0.18)] animate-task-sheet">
+          <section className="relative z-10 flex max-h-[80%] min-h-[440px] w-full flex-col overflow-hidden rounded-t-[28px] bg-white shadow-[0_-16px_40px_rgba(15,23,42,0.18)] animate-task-sheet">
             <div className="shrink-0 px-4 pb-3 pt-2">
               <div className="flex flex-col items-center">
                 <span className="h-1 w-9 rounded-full bg-slate-300" />
@@ -7202,7 +6993,7 @@ export function TaskDetailScreen({
                     setIsLinkPickerOpen(false)
                     setLinkSearch("")
                   }}
-                  className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100"
+                  className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100"
                   aria-label="Close"
                 >
                   <Icon name="close" size={17} />
@@ -7418,50 +7209,41 @@ export function TaskDetailScreen({
                       </button>
 
                       {isCalendarModeDropdownOpen && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-30"
-                            onClick={() => setIsCalendarModeDropdownOpen(false)}
-                          />
-                          <div
-                            className="absolute left-0 top-full z-40 mt-1 w-32 rounded-xl border border-slate-200/90 bg-white p-1 shadow-lg shadow-slate-900/10 animate-scale-in"
-                            onClick={(e) => e.stopPropagation()}
-                            role="listbox"
-                          >
-                            {(["day", "week", "month"] as CalendarMode[]).map(
-                              (m) => {
-                                const isSelected = calendarMode === m
-                                return (
-                                  <button
-                                    key={m}
-                                    type="button"
-                                    onClick={() => {
-                                      setCalendarMode(m)
-                                      setIsCalendarModeDropdownOpen(false)
-                                    }}
-                                    className={`flex w-full cursor-pointer items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11px] font-semibold transition-colors ${
-                                      isSelected
-                                        ? "bg-blue-50 text-[#0055ff]"
-                                        : "text-slate-700 hover:bg-slate-50"
-                                    }`}
-                                    role="option"
-                                    aria-selected={isSelected}
-                                  >
-                                    <span className="capitalize">{m}</span>
-                                    {isSelected && (
-                                      <Icon
-                                        name="check"
-                                        size={12}
-                                        className="text-[#0055ff]"
-                                      />
-                                    )}
-                                  </button>
-                                )
-                              },
-                            )}
-                          </div>
-                        </>
+                        <div
+                          className="fixed inset-0 z-30"
+                          onClick={() => setIsCalendarModeDropdownOpen(false)}
+                        />
                       )}
+                      <FloatingMenu
+                        open={isCalendarModeDropdownOpen}
+                        widthClassName="w-28"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MenuCaption>View</MenuCaption>
+                        {(["day", "week", "month"] as CalendarMode[]).map(
+                          (m) => {
+                            const isSelected = calendarMode === m
+                            return (
+                              <button
+                                key={m}
+                                type="button"
+                                onClick={() => {
+                                  setCalendarMode(m)
+                                  setIsCalendarModeDropdownOpen(false)
+                                }}
+                                className={`fm-item flex min-h-8 w-full cursor-pointer items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[11.5px] font-semibold capitalize transition-all duration-150 active:scale-[0.98] ${
+                                  isSelected ? "fm-item-active" : ""
+                                }`}
+                                role="option"
+                                aria-selected={isSelected}
+                              >
+                                <span>{m}</span>
+                                <MenuCheck active={isSelected} />
+                              </button>
+                            )
+                          },
+                        )}
+                      </FloatingMenu>
                     </div>
 
                     <button

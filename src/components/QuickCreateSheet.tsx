@@ -1,4 +1,5 @@
 import { useState } from "react"
+import useOverlayPresence from "../hooks/useOverlayPresence"
 import type { ItemType } from "../data/mockData"
 
 interface QuickCreateSheetProps {
@@ -29,7 +30,8 @@ export function QuickCreateSheet({
 }: QuickCreateSheetProps) {
   const [showCaptureToast, setShowCaptureToast] = useState(false)
 
-  if (!isOpen) return null
+  const isPresent = useOverlayPresence(isOpen)
+  if (!isPresent) return null
 
   const handleCaptureClick = () => {
     if (onSiteCapture) {
@@ -176,6 +178,8 @@ export function QuickCreateSheet({
 
   return (
     <div
+      data-overlay-state={isOpen ? "open" : "closing"}
+      inert={!isOpen}
       onClick={onClose}
       className="absolute inset-0 z-50 flex flex-col justify-end bg-slate-950/45 backdrop-blur-xs select-none animate-fade-in"
     >
