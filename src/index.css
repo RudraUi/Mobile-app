@@ -1533,3 +1533,17 @@ button.chip-neutral:hover {
 .dark .model-stage {
   background-color: #ffffff !important;
 }
+
+/* Viewer controls sit on light glass in both themes. */
+.bim-viewport .text-slate-400,
+.bim-viewport .text-slate-500 {
+  color: #64748b !important;
+}
+.bim-viewport .text-slate-600,
+.bim-viewport .text-slate-700 {
+  color: #475569 !important;
+}
+.bim-viewport .text-slate-800,
+.bim-viewport .text-slate-900 {
+  color: #1e293b !important;
+}

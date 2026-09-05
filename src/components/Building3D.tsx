@@ -1,4 +1,11 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from "react"
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react"
+import createInteriorRenderer from "../lib/interiorRenderer"
 
 /**
  * A small software 3D renderer for a parametric building.
@@ -49,12 +56,18 @@ export interface Building3DProps {
   onProjectPins?: (projected: ProjectedPin[]) => void
   onCameraChange?: (yawDegrees: number) => void
   className?: string
+  /** "orbit" flies around the massing; "walk" puts you inside a storey. */
+  mode?: "orbit" | "walk"
+  onWalkChange?: (position: { x: number z: number yaw: number }) => void
 }
 
 /** Imperative camera controls for the on-screen buttons. */
 export interface Building3DHandle {
   zoomBy: (delta: number) => void
   reset: () => void
+  /** First-person step, in metres, relative to where you are facing. */
+  walkMove: (forward: number, strafe: number) => void
+  setWalkInput: (forward: number, strafe: number) => void
 }
 
 /* ── Geometry ─────────────────────────────────────────────────────── */
@@ -181,6 +194,156 @@ function buildModel(floors: number): Face[] {
   return faces
 }
 
+/* ── Interior ─────────────────────────────────────────────────────
+
+   The exterior is a stylised massing where one storey is 1.55 units. That
+   is far too short to stand in, so the walkable interior is modelled in
+   real metres in its own space: a 9 x 7 m plate with a 2.9 m ceiling and
+   the eye at 1.62. The two never share a camera, so the scales never meet.
+   ──────────────────────────────────────────────────────────────── */
+
+const ROOM_W = 9
+const ROOM_D = 7
+const CEIL_H = 2.9
+const EYE_H = 1.62
+const WALL_T = 0.14
+
+/** Axis-aligned footprints the walker cannot pass through. */
+export interface Blocker {
+  x0: number
+  z0: number
+  x1: number
+  z1: number
+}
+
+const interiorBlockers: Blocker[] = []
+
+function wall(
+  faces: Face[],
+  x0: number,
+  z0: number,
+  x1: number,
+  z1: number,
+  color = "#e2e8f0",
+  height = CEIL_H,
+) {
+  faces.push(...box([x0, 0, z0], [x1, height, z1], color, 0))
+  interiorBlockers.push({ x0, z0, x1, z1 })
+}
+
+function buildInterior(): Face[] {
+  const faces: Face[] = []
+  const hw = ROOM_W / 2
+  const hd = ROOM_D / 2
+
+  // Floor plate and ceiling.
+  faces.push(...box([-hw, -0.12, -hd], [hw, 0, hd], "#cbd5e1", 0))
+  faces.push(...box([-hw, CEIL_H, -hd], [hw, CEIL_H + 0.12, hd], "#f1f5f9", 0))
+  // Subtle floor joints, ceiling lights and exposed services give scale when
+  // looking down or up without adding textures or external assets.
+  for (let x = -4; x <= 4; x++) {
+    faces.push(...box([x, 0.001, -hd], [x + 0.012, 0.003, hd], "#aab8c8", 0))
+  }
+  for (let z = -3; z <= 3; z++) {
+    faces.push(...box([-hw, 0.001, z], [hw, 0.003, z + 0.012], "#aab8c8", 0))
+  }
+  for (const x of [-2.2, 1.45, 3.2]) {
+    faces.push(...box([x, 2.83, -2.6], [x + 0.16, 2.88, 2.6], "#fff5cd", 0))
+  }
+  faces.push(...box([-0.6, 2.55, -3.35], [0, 2.82, 3.35], "#8c9db0", 0))
+
+  // Perimeter: a spandrel below and glazing above, so the walls read as
+  // curtain wall rather than solid block from the inside.
+  const bands: [number, number, string][] = [
+    [0, 0.85, "#94a3b8"],
+    [0.85, 2.45, "#7dd3fc"],
+    [2.45, CEIL_H, "#94a3b8"],
+  ]
+  for (const [y0, y1, color] of bands) {
+    faces.push(
+      ...box([-hw, y0, -hd], [hw, y1, -hd + WALL_T], color, 0),
+      ...box([-hw, y0, hd - WALL_T], [hw, y1, hd], color, 0),
+      ...box([-hw, y0, -hd], [-hw + WALL_T, y1, hd], color, 0),
+      ...box([hw - WALL_T, y0, -hd], [hw, y1, hd], color, 0),
+    )
+  }
+  interiorBlockers.push(
+    { x0: -hw, z0: -hd, x1: hw, z1: -hd + WALL_T },
+    { x0: -hw, z0: hd - WALL_T, x1: hw, z1: hd },
+    { x0: -hw, z0: -hd, x1: -hw + WALL_T, z1: hd },
+    { x0: hw - WALL_T, z0: -hd, x1: hw, z1: hd },
+  )
+
+  // Mullions between the glazing bands.
+  for (let m = 1; m <= 5; m++) {
+    const x = -hw + (ROOM_W * m) / 6
+    faces.push(
+      ...box(
+        [x - 0.05, 0.85, -hd],
+        [x + 0.05, 2.45, -hd + WALL_T + 0.02],
+        "#f8fafc",
+        0,
+      ),
+      ...box(
+        [x - 0.05, 0.85, hd - WALL_T - 0.02],
+        [x + 0.05, 2.45, hd],
+        "#f8fafc",
+        0,
+      ),
+    )
+  }
+
+  // Service core, floor to ceiling.
+  wall(faces, -1.3, -1.05, 0.9, 1.05, "#b6c2d1")
+
+  // Partitions, each left with a doorway gap.
+  wall(faces, -hw + WALL_T, -1.3, -2.6, -1.3 + WALL_T, "#e2e8f0")
+  wall(faces, -1.45, -1.3, -1.3, -1.3 + WALL_T, "#e2e8f0")
+  wall(faces, 2.1, -hd + WALL_T, 2.1 + WALL_T, -1.1, "#e2e8f0")
+  wall(faces, 2.1, 0.5, 2.1 + WALL_T, hd - WALL_T, "#e2e8f0")
+
+  // Desks and a meeting table — something to read depth against.
+  const desk = (x: number, z: number) => {
+    faces.push(...box([x, 0.68, z], [x + 1.5, 0.76, z + 0.75], "#cbd5e1", 0))
+    faces.push(
+      ...box([x + 0.06, 0, z + 0.06], [x + 0.16, 0.68, z + 0.16], "#94a3b8", 0),
+    )
+    faces.push(
+      ...box([x + 1.34, 0, z + 0.59], [x + 1.44, 0.68, z + 0.69], "#94a3b8", 0),
+    )
+    interiorBlockers.push({ x0: x, z0: z, x1: x + 1.5, z1: z + 0.75 })
+  }
+  desk(-4.1, -3.0)
+  desk(-4.1, -2.0)
+  desk(-4.1, 1.4)
+  desk(-4.1, 2.4)
+
+  faces.push(...box([2.7, 0.72, -0.6], [4.1, 0.8, 1.4], "#b6c2d1", 0))
+  interiorBlockers.push({ x0: 2.7, z0: -0.6, x1: 4.1, z1: 1.4 })
+
+  return faces
+}
+
+// Shared immutable geometry; multiple viewers cannot reset each other's walls.
+const INTERIOR_FACES = buildInterior()
+export const INTERIOR_BLOCKERS: readonly Blocker[] = interiorBlockers
+const DEFAULT_WALK = { x: -2, z: 2.5, yaw: Math.PI, pitch: 0 }
+
+/** Slide along a wall rather than sticking to it. */
+function resolveWalk(x: number, z: number, px: number, pz: number) {
+  const r = 0.3
+  const hits = (tx: number, tz: number) =>
+    interiorBlockers.some(
+      (b) => tx > b.x0 - r && tx < b.x1 + r && tz > b.z0 - r && tz < b.z1 + r,
+    )
+  let nx = x
+  let nz = z
+  if (hits(nx, pz)) nx = px
+  if (hits(px, nz)) nz = pz
+  if (hits(nx, nz)) return { x: px, z: pz }
+  return { x: nx, z: nz }
+}
+
 /* ── Compilation ──────────────────────────────────────────────────
 
    Everything that does not depend on the camera is computed once: the
@@ -269,10 +432,16 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       onProjectPins,
       onCameraChange,
       className = "",
+      mode = "orbit",
+      onWalkChange,
     },
     ref,
   ) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
+    const walkCanvasRef = useRef<HTMLCanvasElement>(null)
+    const indoorRenderer =
+      useRef<ReturnType<typeof createInteriorRenderer>>(null)
+    const [walkUnavailable, setWalkUnavailable] = useState(false)
     const frameRef = useRef<number | null>(null)
 
     const camera = useRef({ ...DEFAULT_CAMERA })
@@ -290,10 +459,29 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
     const pointers = useRef(new Map<number, { x: number y: number }>())
     const pinchStart = useRef<{ gap: number dist: number } | null>(null)
     const lastMid = useRef<{ x: number y: number } | null>(null)
+    const walk = useRef({ ...DEFAULT_WALK })
+    const walkInput = useRef({ forward: 0, strafe: 0 })
+    const keys = useRef(new Set<string>())
+    const lastStep = useRef<number | null>(null)
+    const interior = useRef<Compiled | null>(null)
 
     // Latest props, read inside the imperative draw loop without re-binding it.
-    const latest = useRef({ activeFloor, pins, onProjectPins, onCameraChange })
-    latest.current = { activeFloor, pins, onProjectPins, onCameraChange }
+    const latest = useRef({
+      activeFloor,
+      pins,
+      onProjectPins,
+      onCameraChange,
+      mode,
+      onWalkChange,
+    })
+    latest.current = {
+      activeFloor,
+      pins,
+      onProjectPins,
+      onCameraChange,
+      mode,
+      onWalkChange,
+    }
 
     if (model.current === null) setModel(floors)
     useEffect(() => {
@@ -304,25 +492,90 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
 
     function setModel(count: number) {
       const compiled = compile(buildModel(count))
+      if (!interior.current) interior.current = compile(INTERIOR_FACES)
       model.current = compiled
+      const most = Math.max(compiled.count, interior.current.count)
       scratch.current = {
-        sx: new Float32Array(compiled.count * 4),
-        sy: new Float32Array(compiled.count * 4),
-        depth: new Float32Array(compiled.count),
-        order: new Int32Array(compiled.count),
-        visible: new Uint8Array(compiled.count),
+        sx: new Float32Array(most * 4),
+        sy: new Float32Array(most * 4),
+        depth: new Float32Array(most),
+        order: new Int32Array(most),
+        visible: new Uint8Array(most),
       }
     }
 
     function scheduleDraw() {
       if (frameRef.current !== null) return
-      frameRef.current = requestAnimationFrame(() => {
+      frameRef.current = requestAnimationFrame((time) => {
         frameRef.current = null
+        const held = keys.current
+        const forward =
+          walkInput.current.forward +
+          Number(held.has("w") || held.has("arrowup")) -
+          Number(held.has("s") || held.has("arrowdown"))
+        const strafe =
+          walkInput.current.strafe +
+          Number(held.has("d")) -
+          Number(held.has("a"))
+        const turn =
+          Number(held.has("arrowleft")) - Number(held.has("arrowright"))
+        const moving =
+          latest.current.mode === "walk" &&
+          (forward !== 0 || strafe !== 0 || turn !== 0)
+        if (moving) {
+          const dt =
+            lastStep.current === null
+              ? 0
+              : Math.min((time - lastStep.current) / 1000, 0.05)
+          const length = Math.max(1, Math.hypot(forward, strafe))
+          walk.current.yaw += turn * dt * 1.4
+          moveWalk((forward / length) * dt * 1.8, (strafe / length) * dt * 1.8)
+          lastStep.current = time
+        } else lastStep.current = null
         draw()
+        if (moving) scheduleDraw()
       })
     }
 
+    function moveWalk(forward: number, strafe: number) {
+      if (latest.current.mode !== "walk" || !Number.isFinite(forward + strafe))
+        return
+      const wc = walk.current
+      // Sweep short steps so even a large input cannot tunnel through a wall.
+      const length = Math.hypot(forward, strafe)
+      const steps = Math.max(1, Math.ceil(Math.min(length, 20) / 0.08))
+      const limit = length > 20 ? 20 / length : 1
+      const dx =
+        ((-Math.sin(wc.yaw) * forward + Math.cos(wc.yaw) * strafe) * limit) /
+        steps
+      const dz =
+        ((Math.cos(wc.yaw) * forward + Math.sin(wc.yaw) * strafe) * limit) /
+        steps
+      for (let i = 0; i < steps; i++) {
+        const next = resolveWalk(wc.x + dx, wc.z + dz, wc.x, wc.z)
+        wc.x = next.x
+        wc.z = next.z
+      }
+    }
+
     function draw() {
+      if (latest.current.mode === "walk") {
+        indoorRenderer.current?.draw(walk.current, EYE_H)
+        latest.current.onProjectPins?.(
+          latest.current.pins.map((pin) => ({
+            id: pin.id,
+            x: 0,
+            y: 0,
+            depth: 0,
+            visible: false,
+          })),
+        )
+        latest.current.onWalkChange?.(walk.current)
+        latest.current.onCameraChange?.(
+          ((((-walk.current.yaw * 180) / Math.PI) % 360) + 360) % 360,
+        )
+        return
+      }
       const canvas = canvasRef.current
       const ctx = canvas?.getContext("2d")
       if (!canvas || !ctx) return
@@ -341,21 +594,21 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, w, h)
 
-      const { yaw, pitch, dist, panX, panY } = camera.current
-      const cosY = Math.cos(yaw),
-        sinY = Math.sin(yaw)
-      const cosP = Math.cos(pitch),
-        sinP = Math.sin(pitch)
+      const oc = camera.current
+      const cosY = Math.cos(oc.yaw),
+        sinY = Math.sin(oc.yaw)
+      const cosP = Math.cos(oc.pitch),
+        sinP = Math.sin(oc.pitch)
+      const cx = w / 2 + oc.panX,
+        cyc = h * 0.58 + oc.panY
+      const centreY = (floors * FLOOR_H) / 2,
+        dist = oc.dist
       const focal = Math.min(w, h) * 1.15
-      const cx = w / 2 + panX
-      const cyc = h * 0.58 + panY
-      const centreY = (floors * FLOOR_H) / 2
-
       const compiled = model.current
       if (!compiled) return
       const { sx, sy, depth, order, visible } = scratch.current
 
-      /* Ground grid — two batched paths rather than one stroke per line. */
+      /* Ground grid — orbit only; indoors the floor plate replaces it. */
       ctx.lineWidth = 1
       const G = 22
       const step = interacting.current ? 4 : 2
@@ -502,9 +755,57 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
 
     /* ── Interaction ──────────────────────────────────────────────── */
 
+    function stopWalking() {
+      walkInput.current = { forward: 0, strafe: 0 }
+      keys.current.clear()
+      lastStep.current = null
+    }
+
+    useEffect(() => {
+      if (mode !== "walk" || !walkCanvasRef.current || !interior.current) return
+      const canvas = walkCanvasRef.current
+      const init = () => {
+        indoorRenderer.current?.dispose()
+        indoorRenderer.current = createInteriorRenderer(
+          canvas,
+          interior.current!,
+        )
+        setWalkUnavailable(!indoorRenderer.current)
+        scheduleDraw()
+      }
+      const lost = (event: Event) => {
+        event.preventDefault()
+        stopWalking()
+        setWalkUnavailable(true)
+      }
+      canvas.addEventListener("webglcontextlost", lost)
+      canvas.addEventListener("webglcontextrestored", init)
+      init()
+      return () => {
+        canvas.removeEventListener("webglcontextlost", lost)
+        canvas.removeEventListener("webglcontextrestored", init)
+        indoorRenderer.current?.dispose()
+        indoorRenderer.current = null
+      }
+    }, [mode])
+
+    useEffect(() => {
+      stopWalking()
+      pointers.current.clear()
+      pinchStart.current = null
+      lastMid.current = null
+      interacting.current = false
+      if (mode === "walk") {
+        walk.current = { ...DEFAULT_WALK }
+        walkCanvasRef.current?.focus({ preventScroll: true })
+      }
+      scheduleDraw()
+    }, [mode, activeFloor])
+
     useEffect(() => {
       const canvas = canvasRef.current
-      if (!canvas) return
+      const walkCanvas = walkCanvasRef.current
+      if (!canvas || !walkCanvas) return
 
       const gapOf = () => {
         const [a, b] = [...pointers.current.values()]
@@ -517,7 +818,10 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
       }
 
       const onDown = (e: PointerEvent) => {
-        canvas.setPointerCapture(e.pointerId)
+        const target = e.currentTarget as HTMLCanvasElement
+        target.setPointerCapture(e.pointerId)
+        if (latest.current.mode === "walk")
+          target.focus({ preventScroll: true })
         pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
         interacting.current = true
         if (pointers.current.size === 2) {
@@ -532,7 +836,15 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
         if (!prev) return
         pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
 
-        if (pointers.current.size === 2 && pinchStart.current) {
+        if (latest.current.mode === "walk") {
+          if (pointers.current.keys().next().value === e.pointerId) {
+            walk.current.yaw += (e.clientX - prev.x) * 0.006
+            walk.current.pitch = Math.max(
+              -1.15,
+              Math.min(1.15, walk.current.pitch + (e.clientY - prev.y) * 0.005),
+            )
+          }
+        } else if (pointers.current.size === 2 && pinchStart.current) {
           // Pinch to zoom, and drag the midpoint to pan.
           const ratio = pinchStart.current.gap / (gapOf() || 1)
           camera.current.dist = Math.max(
@@ -570,6 +882,7 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
 
       const onWheel = (e: WheelEvent) => {
         e.preventDefault()
+        if (latest.current.mode === "walk") return
         camera.current.dist = Math.max(
           12,
           Math.min(52, camera.current.dist + e.deltaY * 0.035),
@@ -577,22 +890,78 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
         scheduleDraw()
       }
 
-      canvas.addEventListener("pointerdown", onDown)
-      canvas.addEventListener("pointermove", onMove)
-      canvas.addEventListener("pointerup", onUp)
-      canvas.addEventListener("pointercancel", onUp)
-      canvas.addEventListener("wheel", onWheel, { passive: false })
+      const onKeyDown = (e: KeyboardEvent) => {
+        if (
+          e.target !== walkCanvas ||
+          latest.current.mode !== "walk" ||
+          e.altKey ||
+          e.ctrlKey ||
+          e.metaKey
+        )
+          return
+        const key = e.key.toLowerCase()
+        if (
+          ![
+            "w",
+            "a",
+            "s",
+            "d",
+            "arrowup",
+            "arrowdown",
+            "arrowleft",
+            "arrowright",
+          ].includes(key)
+        )
+          return
+        e.preventDefault()
+        keys.current.add(key)
+        scheduleDraw()
+      }
+      const onKeyUp = (e: KeyboardEvent) => {
+        keys.current.delete(e.key.toLowerCase())
+      }
+      const onBlur = () => {
+        stopWalking()
+        pointers.current.clear()
+        interacting.current = false
+      }
+      const onVisibility = () => {
+        if (document.hidden) onBlur()
+      }
+      window.addEventListener("keydown", onKeyDown)
+      window.addEventListener("keyup", onKeyUp)
+      window.addEventListener("blur", onBlur)
+      walkCanvas.addEventListener("blur", stopWalking)
+      document.addEventListener("visibilitychange", onVisibility)
+      for (const surface of [canvas, walkCanvas]) {
+        surface.addEventListener("pointerdown", onDown)
+        surface.addEventListener("pointermove", onMove)
+        surface.addEventListener("pointerup", onUp)
+        surface.addEventListener("pointercancel", onUp)
+        surface.addEventListener("lostpointercapture", onUp)
+        surface.addEventListener("wheel", onWheel, { passive: false })
+      }
 
       const observer = new ResizeObserver(() => scheduleDraw())
       observer.observe(canvas)
+      observer.observe(walkCanvas)
       scheduleDraw()
 
       return () => {
-        canvas.removeEventListener("pointerdown", onDown)
-        canvas.removeEventListener("pointermove", onMove)
-        canvas.removeEventListener("pointerup", onUp)
-        canvas.removeEventListener("pointercancel", onUp)
-        canvas.removeEventListener("wheel", onWheel)
+        stopWalking()
+        window.removeEventListener("keydown", onKeyDown)
+        window.removeEventListener("keyup", onKeyUp)
+        window.removeEventListener("blur", onBlur)
+        walkCanvas.removeEventListener("blur", stopWalking)
+        document.removeEventListener("visibilitychange", onVisibility)
+        for (const surface of [canvas, walkCanvas]) {
+          surface.removeEventListener("pointerdown", onDown)
+          surface.removeEventListener("pointermove", onMove)
+          surface.removeEventListener("pointerup", onUp)
+          surface.removeEventListener("pointercancel", onUp)
+          surface.removeEventListener("lostpointercapture", onUp)
+          surface.removeEventListener("wheel", onWheel)
+        }
         observer.disconnect()
         if (frameRef.current !== null) {
           cancelAnimationFrame(frameRef.current)
@@ -619,18 +988,52 @@ export const Building3D = forwardRef<Building3DHandle, Building3DProps>(
         scheduleDraw()
       },
       reset() {
-        camera.current = { ...DEFAULT_CAMERA }
+        stopWalking()
+        if (latest.current.mode === "walk") walk.current = { ...DEFAULT_WALK }
+        else camera.current = { ...DEFAULT_CAMERA }
         interacting.current = false
+        scheduleDraw()
+      },
+      walkMove(forward, strafe) {
+        moveWalk(forward, strafe)
+        scheduleDraw()
+      },
+      setWalkInput(forward, strafe) {
+        if (!Number.isFinite(forward + strafe)) return
+        walkInput.current = { forward, strafe }
         scheduleDraw()
       },
     }))
 
     return (
-      <canvas
-        ref={canvasRef}
-        className={`h-full w-full touch-none ${className}`}
-        aria-label="Interactive 3D building model"
-      />
+      <>
+        <canvas
+          ref={canvasRef}
+          className={`h-full w-full touch-none ${
+            mode === "walk" ? "invisible" : ""
+          } ${className}`}
+          aria-label="Interactive 3D building model"
+          aria-hidden={mode === "walk"}
+        />
+        <canvas
+          ref={walkCanvasRef}
+          className={`absolute inset-0 h-full w-full touch-none outline-none ${
+            mode === "walk" ? "" : "hidden"
+          } ${className}`}
+          tabIndex={mode === "walk" ? 0 : -1}
+          aria-label="First-person building interior. Drag to look; use W A S D or arrow keys to move."
+          aria-hidden={mode !== "walk"}
+        />
+        {mode === "walk" && walkUnavailable && (
+          <div
+            role="status"
+            className="absolute inset-0 flex items-center justify-center bg-slate-100 px-16 text-center text-sm text-slate-700"
+          >
+            Interior view needs 3D graphics support. Return to Orbit to view the
+            building.
+          </div>
+        )}
+      </>
     )
   },
 )

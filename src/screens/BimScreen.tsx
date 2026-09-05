@@ -9,6 +9,7 @@ import {
 } from "../components/Building3D"
 import { AppHeader } from "../components/AppHeader"
 import { BottomNav, type MainTab } from "../components/BottomNav"
+import WalkControls from "../components/WalkControls"
 import { FilterModal } from "../components/FilterModal"
 import { SearchModal } from "../components/SearchModal"
 import type { Item, ItemType, Severity, Status } from "../data/mockData"
@@ -52,11 +53,12 @@ export function BimScreen({
   const [filterStatus, setFilterStatus] = useState<Status | "all">("all")
   const [filterPriority, setFilterPriority] = useState<Severity | "all">("all")
 
-  const [navMode, setNavMode] = useState<"orbit" | "pan" | "walk">("orbit")
+  const [navMode, setNavMode] = useState<"orbit" | "walk">("orbit")
   const [selectedPinItem, setSelectedPinItem] = useState<Item | null>(null)
   const [activeFloor, setActiveFloor] = useState<number | null>(null)
   const [compass, setCompass] = useState(0)
   const viewerRef = useRef<Building3DHandle>(null)
+  const walkMarker = useRef<SVGGElement>(null)
 
   // Pin elements are positioned imperatively from the render loop — going
   // through React state every frame would re-render the tree on each orbit.
@@ -142,14 +144,21 @@ export function BimScreen({
       />
 
       {/* Main 3D BIM Viewport — a real model, rendered on canvas */}
-      <div className="model-stage flex-1 relative overflow-hidden">
+      <div className="model-stage bim-viewport flex-1 relative overflow-hidden">
         <Building3D
           floors={FLOOR_COUNT}
           activeFloor={activeFloor}
+          mode={navMode}
           pins={worldPins}
           ref={viewerRef}
           onProjectPins={handleProjectPins}
           onCameraChange={handleCameraChange}
+          onWalkChange={({ x, z, yaw }) => {
+            walkMarker.current?.setAttribute(
+              "transform",
+              `translate(${x} ${z}) rotate(${(yaw * 180) / Math.PI})`,
+            )
+          }}
         />
 
         {/* Spatial pins, projected through the model's own camera.
@@ -194,7 +203,10 @@ export function BimScreen({
         <div className="absolute left-3.5 top-3.5 z-20 flex flex-col gap-1">
           <button
             type="button"
-            onClick={() => setActiveFloor(null)}
+            onClick={() => {
+              setNavMode("orbit")
+              setActiveFloor(null)
+            }}
             className={`h-6 rounded-lg px-2 text-[9.5px] font-bold backdrop-blur-md border transition-all cursor-pointer ${
               activeFloor === null
                 ? "bg-[#0055ff] text-white border-[#0055ff]"
@@ -211,7 +223,9 @@ export function BimScreen({
               key={floor}
               type="button"
               onClick={() =>
-                setActiveFloor((current) => (current === floor ? null : floor))
+                setActiveFloor((current) =>
+                  navMode !== "walk" && current === floor ? null : floor,
+                )
               }
               className={`h-6 w-8 rounded-lg text-[9.5px] font-bold tabular-nums backdrop-blur-md border transition-all cursor-pointer ${
                 activeFloor === floor
@@ -259,61 +273,102 @@ export function BimScreen({
           <button
             type="button"
             onClick={() => viewerRef.current?.reset()}
-            title="Reset to isometric view"
-            aria-label="Reset to isometric view"
+            title={
+              navMode === "walk"
+                ? "Reset walking position"
+                : "Reset to isometric view"
+            }
+            aria-label={
+              navMode === "walk"
+                ? "Reset walking position"
+                : "Reset to isometric view"
+            }
             className="w-8 h-8 rounded-xl bg-white/95 hover:bg-slate-50 active:scale-95 backdrop-blur-md text-[#0055ff] flex flex-col items-center justify-center shadow-md shadow-slate-900/10 border border-slate-200 transition-all cursor-pointer"
           >
             <span className="text-[8px] font-extrabold leading-none tracking-tight">
-              ISO
+              {navMode === "walk" ? "START" : "ISO"}
             </span>
             <span className="text-[7.5px] font-bold leading-none tabular-nums text-slate-400 mt-0.5">
               {compass}&deg;
             </span>
           </button>
           {/* Zoom In */}
-          <button
-            type="button"
-            onClick={() => viewerRef.current?.zoomBy(-5)}
-            className="w-8 h-8 rounded-xl bg-white/95 hover:bg-slate-50 active:scale-95 backdrop-blur-md text-slate-700 flex items-center justify-center shadow-md shadow-slate-900/10 border border-slate-200 transition-all cursor-pointer text-[15px] font-bold"
-          >
-            +
-          </button>
-          {/* Zoom Out */}
-          <button
-            type="button"
-            onClick={() => viewerRef.current?.zoomBy(5)}
-            className="w-8 h-8 rounded-xl bg-white/95 hover:bg-slate-50 active:scale-95 backdrop-blur-md text-slate-700 flex items-center justify-center shadow-md shadow-slate-900/10 border border-slate-200 transition-all cursor-pointer text-[15px] font-bold"
-          >
-            -
-          </button>
+          {navMode === "orbit" && (
+            <>
+              <button
+                type="button"
+                aria-label="Zoom in"
+                onClick={() => viewerRef.current?.zoomBy(-5)}
+                className="w-8 h-8 rounded-xl bg-white/95 hover:bg-slate-50 active:scale-95 backdrop-blur-md text-slate-700 flex items-center justify-center shadow-md shadow-slate-900/10 border border-slate-200 transition-all cursor-pointer text-[15px] font-bold"
+              >
+                +
+              </button>
+              {/* Zoom Out */}
+              <button
+                type="button"
+                aria-label="Zoom out"
+                onClick={() => viewerRef.current?.zoomBy(5)}
+                className="w-8 h-8 rounded-xl bg-white/95 hover:bg-slate-50 active:scale-95 backdrop-blur-md text-slate-700 flex items-center justify-center shadow-md shadow-slate-900/10 border border-slate-200 transition-all cursor-pointer text-[15px] font-bold"
+              >
+                -
+              </button>
+            </>
+          )}
           {/* Mode Switcher (Orbit / Walk) */}
           <button
             type="button"
-            onClick={() =>
+            onClick={() => {
+              setSelectedPinItem(null)
+              if (navMode === "orbit") setActiveFloor((current) => current ?? 0)
               setNavMode((m) => (m === "orbit" ? "walk" : "orbit"))
-            }
+            }}
             className={`w-8 h-8 rounded-xl backdrop-blur-md flex items-center justify-center shadow-md shadow-slate-900/10 border border-slate-200 transition-all cursor-pointer ${
               navMode === "orbit"
                 ? "bg-[#0055ff] text-white"
                 : "bg-white/95 text-slate-600 hover:bg-slate-50"
             }`}
-            title={`Mode: ${navMode}`}
+            title={
+              navMode === "walk"
+                ? "Return to orbit view"
+                : "Enter first-person view"
+            }
+            aria-label={
+              navMode === "walk"
+                ? "Return to orbit view"
+                : "Enter first-person view"
+            }
+            aria-pressed={navMode === "walk"}
           >
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-            >
-              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
-            </svg>
+            <span className="text-[8px] font-extrabold">
+              {navMode === "walk" ? "ORBIT" : "FPP"}
+            </span>
           </button>
         </div>
 
+        {navMode === "walk" && (
+          <>
+            <div className="absolute top-3.5 left-1/2 -translate-x-1/2 rounded-xl bg-white/95 px-3 py-1.5 text-center pointer-events-none">
+              <p className="text-[11px] font-bold text-slate-800">
+                L{activeFloor ?? 0} · First person
+              </p>
+              <p className="text-[9px] font-medium text-slate-500">
+                Sample interior · Typical floor
+              </p>
+            </div>
+            <div
+              aria-hidden="true"
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-white/80 ring-1 ring-slate-600/30 pointer-events-none"
+            />
+            <WalkControls viewer={viewerRef} marker={walkMarker} />
+          </>
+        )}
+
         {/* Bottom-Left Model Stats Pill */}
-        <div className="absolute bottom-3.5 left-3.5 z-20 hidden sm:flex items-center gap-2 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-200 text-[9.5px] text-slate-500 font-semibold">
+        <div
+          className={`absolute bottom-3.5 left-3.5 z-20 hidden ${
+            navMode === "orbit" ? "sm:flex" : ""
+          } items-center gap-2 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-200 text-[9.5px] text-slate-500 font-semibold`}
+        >
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
           <span>IFC 4.3 · LOD 350 · 60 FPS</span>
         </div>
